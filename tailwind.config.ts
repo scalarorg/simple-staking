@@ -20,6 +20,10 @@ const config: Config = {
         primary: "#FF7C2A",
         secondary: "#0DB7BF",
         "base-400": "hsl(var(--base-400) / <alpha-value>)",
+        neutral: {
+          9: "#54565E",
+        },
+        "purplish-black": "#1B181D",
       },
       gridTemplateColumns: {
         stakingFinalityProvidersMobile: "2fr 1fr",

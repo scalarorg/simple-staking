@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import { FaBitcoin } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
-import { PiWalletBold } from "react-icons/pi";
+import { PiArrowUpRightBold, PiWalletBold } from "react-icons/pi";
 import { useOnClickOutside } from "usehooks-ts";
 
+import { buttonStyles } from "@/app/scalar/theme";
 import { getNetworkConfig } from "@/config/network.config";
 import { satoshiToBtc } from "@/utils/btcConversions";
 import { maxDecimals } from "@/utils/maxDecimals";
@@ -88,12 +89,16 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
     </div>
   ) : (
     <button
-      className="btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg"
+      className={`
+        btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg 
+        ${buttonStyles}
+        `}
       onClick={onConnect}
       disabled={!!address}
     >
       <PiWalletBold size={20} className="flex md:hidden" />
       <span className="hidden md:flex">Connect to {networkName} network</span>
+      <PiArrowUpRightBold size={20} className={"flex max-md:hidden"} />
     </button>
   );
 };

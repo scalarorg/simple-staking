@@ -56,10 +56,10 @@ input[type="number"] {
   scrollbar-width: none;
 }
 
-.fp-selected {
-  border: 1px solid var(--primary) !important;
-  filter: brightness(0.98);
-}
+/*.fp-selected {*/
+/*  border: 1px solid var(--primary) !important;*/
+/*  filter: brightness(0.98);*/
+/*}*/
 
 .no-focus {
   outline: none !important;
@@ -77,7 +77,7 @@ input[type="number"] {
   width: 1px !important;
 }
 
-[data-theme="dark"] .main-app-mainnet {
+/* [data-theme="dark"] .main-app-mainnet {
   background: rgb(43, 43, 43) url("./assets/bg-pattern.svg") left top/auto
     repeat;
 }
@@ -95,6 +95,14 @@ input[type="number"] {
 [data-theme="light"] .main-app-testnet {
   background: rgb(236, 236, 236) url("./assets/testnet-bg-pattern.svg") left
     top/auto repeat;
+} */
+
+.main-app-mainnet {
+  background-color: #0e0902;
+}
+
+.main-app-testnet {
+  background-color: #0e0902;
 }
 
 [data-theme="dark"] .react-responsive-modal-modal {
