@@ -1,5 +1,4 @@
 import { ConnectSmall } from "../Connect/ConnectSmall";
-import { TestingInfo } from "../TestingInfo/TestingInfo";
 
 import { Logo } from "./Logo";
 
@@ -36,9 +35,9 @@ export const Header: React.FC<HeaderProps> = ({
           {/*<ThemeToggle />*/}
         </div>
       </div>
-      <div className="container mx-auto flex w-full items-center p-6 pb-0 xl:hidden">
-        <TestingInfo />
-      </div>
+      {/*<div className="container mx-auto flex w-full items-center p-6 pb-0 xl:hidden">*/}
+      {/*  <TestingInfo />*/}
+      {/*</div>*/}
     </nav>
   );
 };

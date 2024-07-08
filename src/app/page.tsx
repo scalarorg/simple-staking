@@ -29,13 +29,11 @@ import {
 import { getGlobalParams } from "./api/getGlobalParams";
 import { signPsbtTransaction } from "./common/utils/psbt";
 import { Delegations } from "./components/Delegations/Delegations";
-import { FAQ } from "./components/FAQ/FAQ";
 import { Footer } from "./components/Footer/Footer";
 import { Header } from "./components/Header/Header";
 import { ConnectModal } from "./components/Modals/ConnectModal";
 import { ErrorModal } from "./components/Modals/ErrorModal";
 import { TermsModal } from "./components/Modals/Terms/TermsModal";
-import { NetworkBadge } from "./components/NetworkBadge/NetworkBadge";
 import { Staking } from "./components/Staking/Staking";
 import { Stats } from "./components/Stats/Stats";
 import { Summary } from "./components/Summary/Summary";
@@ -327,19 +325,40 @@ const Home: React.FC<HomeProps> = () => {
       className={`overflow-hidden relative h-full min-h-svh z-0 w-full ${network === Network.MAINNET ? "main-app-mainnet" : "main-app-testnet"}`}
     >
       {/*BACKGROUND start here*/}
-      <div className="absolute w-1/3 -top-[10%] aspect-square -z-10 rounded-full bg-[radial-gradient(37.54%_37.54%_at_50.07%_47.01%,rgba(3,185,216,0.30)_0%,rgba(36,93,137,0.00)_100%)]" />
+
+      {/*Left start*/}
+      <div className={"absolute -z-10 left-[9%] top-[5%]"}>
+        <div className="absolute h-full bottom-1/2 left-1/2 -translate-x-1/2 aspect-square rounded-full bg-[radial-gradient(37.54%_37.54%_at_50.07%_47.01%,rgba(3,185,216,0.30)_0%,rgba(36,93,137,0.00)_100%)]" />
+        <Image alt={"stone"} src={stone} />
+
+        {/*Radiants*/}
+        {/*in the middle*/}
+        <div
+          className={
+            "absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-1/2 h-[90%] opacity-[16%] aspect-square rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,#F9B55F_0%,rgba(249,181,95,0.00)_100%)] mix-blend-screen blur-[150px]"
+          }
+        />
+        {/*on the left*/}
+        <div
+          className={
+            "absolute rounded-full h-[200%] aspect-square bg-[radial-gradient(50%_50%_at_50%_50%,#D9D9D9_0%,rgba(217,217,217,0.00)_100%)] top-1/2 -translate-y-1/2 right-1/2 opacity-[30%] mix-blend-hard-light blur-[100px]"
+          }
+        />
+      </div>
+      {/*Left end*/}
+
+      {/*Right start*/}
       <Image
-        className={"absolute -z-10 left-[9%] top-[5%]"}
-        alt={"stone"}
-        src={stone}
-      />
-      <Image
-        className={"absolute -z-10 -right-[9%] -bottom-[17%] grayscale"}
+        className={
+          "absolute -z-10 -right-[9%] top-[70vh] grayscale-[100%] brightness-75"
+        }
         alt={"earth"}
         src={earth}
       />
+      {/*Right end*/}
+
       {/*BACKGROUND end here*/}
-      <NetworkBadge />
+      {/*<NetworkBadge />*/}
       <Header
         onConnect={handleConnectModal}
         onDisconnect={handleDisconnectBTC}
@@ -348,9 +367,15 @@ const Home: React.FC<HomeProps> = () => {
       />
       <div className="container mx-auto flex justify-center p-6">
         <div className="container flex flex-col gap-6">
-          <div className={"flex gap-4 items-end"}>
+          <div
+            className={
+              "flex gap-4 items-end max-lg:flex-col-reverse max-lg:items-stretch"
+            }
+          >
             <div className={"space-y-2 flex-1"}>
-              <h1 className={"text-[34px] font-medium"}>BTC Staking</h1>
+              <h1 className={"text-3xl md:text-[34px] font-medium"}>
+                BTC Staking
+              </h1>
               <p>
                 Select a finality provider or{" "}
                 <a
@@ -424,7 +449,7 @@ const Home: React.FC<HomeProps> = () => {
           /> */}
         </div>
       </div>
-      <FAQ />
+      {/*<FAQ />*/}
       <Footer />
       <ConnectModal
         open={connectModalOpen}
