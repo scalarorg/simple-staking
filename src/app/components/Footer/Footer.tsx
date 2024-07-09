@@ -48,7 +48,7 @@ const iconLinks = [
   // },
   {
     name: "Discord",
-    url: "https://discord.gg/mwHn5kb3",
+    url: "https://discord.com/invite/wzzYhgCggD",
     Icon: BsDiscord,
   },
 ];
