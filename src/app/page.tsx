@@ -21,6 +21,7 @@ import {
 } from "@/utils/wallet/index";
 import { Network, WalletProvider } from "@/utils/wallet/wallet_provider";
 
+import { getDApps } from "./api/getDApps";
 import { getDelegations, PaginatedDelegations } from "./api/getDelegations";
 import {
   getFinalityProviders,
@@ -118,6 +119,21 @@ const Home: React.FC<HomeProps> = () => {
   });
 
   const {
+    data: dApps,
+    isLoading: isLoadingCurrentDApps,
+    error: dAppsError,
+    isError: hasDAppsError,
+    refetch: refetchDApps,
+  } = useQuery({
+    queryKey: ["dApss"],
+    queryFn: () => getDApps(),
+    refetchInterval: 60000, // 1 minute
+    retry: (failureCount, error) => {
+      return !isErrorOpen && failureCount <= 3;
+    },
+  });
+
+  const {
     data: delegations,
     fetchNextPage: fetchNextDelegationsPage,
     hasNextPage: hasNextDelegationsPage,
@@ -177,6 +193,12 @@ const Home: React.FC<HomeProps> = () => {
       hasError: hasFinalityProvidersError,
       errorState: ErrorState.SERVER_ERROR,
       refetchFunction: refetchFinalityProvidersData,
+    });
+    handleError({
+      error: dAppsError,
+      hasError: hasDAppsError,
+      errorState: ErrorState.SERVER_ERROR,
+      refetchFunction: refetchDApps,
     });
     handleError({
       error: delegationsError,
@@ -401,6 +423,7 @@ const Home: React.FC<HomeProps> = () => {
           <Staking
             btcHeight={paramWithContext?.currentHeight}
             finalityProviders={finalityProviders?.finalityProviders}
+            dApps={dApps?.dApps}
             isWalletConnected={!!btcWallet}
             onConnect={handleConnectModal}
             finalityProvidersFetchNext={fetchNextFinalityProvidersPage}
@@ -449,6 +472,7 @@ const Home: React.FC<HomeProps> = () => {
           /> */}
         </div>
       </div>
+
       {/*<FAQ />*/}
       <Footer />
       <ConnectModal
