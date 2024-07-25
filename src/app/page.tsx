@@ -21,6 +21,7 @@ import {
 } from "@/utils/wallet/index";
 import { Network, WalletProvider } from "@/utils/wallet/wallet_provider";
 
+import { deleteDApp } from "./api/deleteDApp";
 import { getDApps } from "./api/getDApps";
 import { getDelegations, PaginatedDelegations } from "./api/getDelegations";
 import {
@@ -294,7 +295,14 @@ const Home: React.FC<HomeProps> = () => {
       });
     }
   };
-
+  const handleDelete = async (id: string) => {
+    await deleteDApp(id);
+    refetchDApps();
+  };
+  const handleAddModal = (value: boolean) => {
+    setAddDAppModalOpen(value);
+    refetchDApps();
+  };
   // Subscribe to account changes
   useEffect(() => {
     if (btcWallet) {
@@ -433,6 +441,7 @@ const Home: React.FC<HomeProps> = () => {
             isWalletConnected={!!btcWallet}
             onConnect={handleConnectModal}
             onAdd={handleAddDAppModal}
+            onDelete={handleDelete}
             finalityProvidersFetchNext={fetchNextFinalityProvidersPage}
             finalityProvidersHasNext={hasNextFinalityProvidersPage}
             finalityProvidersIsFetchingMore={
@@ -488,7 +497,7 @@ const Home: React.FC<HomeProps> = () => {
         onConnect={handleConnectBTC}
         connectDisabled={!!address}
       />
-      <AddDAppModal open={addDAppModalOpen} onClose={setAddDAppModalOpen} />
+      <AddDAppModal open={addDAppModalOpen} onClose={handleAddModal} />
       <ErrorModal
         open={isErrorOpen}
         errorMessage={error.message}

@@ -25,7 +25,6 @@ export const getDApps = async (): Promise<DApps> => {
   const response = await apiWrapper("GET", "/v1/dApp", "Error getting dApps");
   const dAppsAPIResponse: DAppsAPIResponse = response.data;
   const dAppsAPI: DAppAPI[] = dAppsAPIResponse.data;
-  console.log("dAppsAPI", dAppsAPI);
   const dApps = dAppsAPI.map(
     (da: DAppAPI): DApp => ({
       id: da.ID,

@@ -35,6 +35,7 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
     await postDApp(chainName, btcAddress, btcPubKey)
       .then(() => {
         console.log("Successfully added DApp");
+        onClose(false);
       })
       .catch((error) => {
         console.error(error);

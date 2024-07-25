@@ -25,5 +25,5 @@ export const postDApp = async (
   );
 
   // If the response status is 202, the request was accepted
-  return response.status === 202;
+  return response.status === 200;
 };

@@ -17,7 +17,6 @@ export const DApps: React.FC<DAppsProps> = ({
   onDAppChange,
 }) => {
   // If there are no dApps, show loading
-  console.log("dApps", dApps);
   if (!dApps || dApps.length === 0) {
     return <LoadingView />;
   }

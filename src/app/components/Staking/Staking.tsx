@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { networks, Transaction } from "bitcoinjs-lib";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
+import { FaPenToSquare, FaTrash } from "react-icons/fa6";
 import { Tooltip } from "react-tooltip";
 import { useLocalStorage } from "usehooks-ts";
 
@@ -56,6 +57,7 @@ interface StakingProps {
   isLoading: boolean;
   onConnect: () => void;
   onAdd: () => void;
+  onDelete: (id: string) => void;
   finalityProvidersFetchNext: () => void;
   finalityProvidersHasNext: boolean;
   finalityProvidersIsFetchingMore: boolean;
@@ -74,6 +76,7 @@ export const Staking: React.FC<StakingProps> = ({
   isWalletConnected,
   onConnect,
   onAdd,
+  onDelete,
   finalityProvidersFetchNext,
   finalityProvidersHasNext,
   finalityProvidersIsFetchingMore,
@@ -477,6 +480,12 @@ export const Staking: React.FC<StakingProps> = ({
     }
   };
 
+  const handleDelete = () => {
+    if (dApp) {
+      onDelete(dApp.id);
+    }
+  };
+
   const handlePreviewModalClose = (isOpen: boolean) => {
     setPreviewModalOpen(isOpen);
     handleFeedbackModal("cancel");
@@ -719,12 +728,17 @@ export const Staking: React.FC<StakingProps> = ({
             />
           </div>
           <div className="flex flex-1 justify-end items-center gap-2">
-            <AddDAppButton onAdd={onAdd} />
-            <button className="bg-red-500 text-white px-4 py-2 rounded">
-              Delete
+            <div className="flex mr-1">
+              <AddDAppButton onAdd={onAdd} />
+            </div>
+            <button
+              className="btn btn-circle btn-ghost btn-sm"
+              onClick={handleDelete}
+            >
+              <FaTrash />
             </button>
-            <button className="bg-yellow-500 text-white px-4 py-2 rounded">
-              Update
+            <button className="btn btn-circle btn-ghost btn-sm">
+              <FaPenToSquare />
             </button>
           </div>
         </div>

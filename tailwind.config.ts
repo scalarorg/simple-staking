@@ -28,7 +28,7 @@ const config: Config = {
       gridTemplateColumns: {
         stakingFinalityProvidersMobile: "2fr 1fr",
         stakingFinalityProvidersDesktop: "2fr 1.5fr 2fr 0.75fr",
-        stakingDAppDesktop: "1fr 1.2fr 1fr 1fr 0.4fr 0.3fr",
+        stakingDAppDesktop: "1fr 1.2fr 1fr 1fr 0.4fr",
       },
     },
   },

@@ -19,7 +19,7 @@ export const AddDAppButton: React.FC<AddDAppButtonProps> = ({ onAdd }) => {
   return (
     <button
       className={`
-        btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg 
+       btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-3 text-white md:rounded-lg 
         ${buttonStyles}
         `}
       onClick={onAdd}
