@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { networks, Transaction } from "bitcoinjs-lib";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
+import { FaPenToSquare, FaTrash } from "react-icons/fa6";
 import { Tooltip } from "react-tooltip";
 import { useLocalStorage } from "usehooks-ts";
 
@@ -10,6 +11,7 @@ import { useGlobalParams } from "@/app/context/api/GlobalParamsProvider";
 import { useStakingStats } from "@/app/context/api/StakingStatsProvider";
 import { useError } from "@/app/context/Error/ErrorContext";
 import { fpTableStyles, stakingStyles } from "@/app/scalar/theme";
+import { DApp as DAppInterface } from "@/app/types/dApps";
 import { Delegation } from "@/app/types/delegations";
 import { ErrorHandlerParam, ErrorState } from "@/app/types/errors";
 import { FinalityProvider as FinalityProviderInterface } from "@/app/types/finalityProviders";
@@ -27,10 +29,11 @@ import { isStakingSignReady } from "@/utils/isStakingSignReady";
 import { toLocalStorageDelegation } from "@/utils/local_storage/toLocalStorageDelegation";
 import { WalletProvider } from "@/utils/wallet/wallet_provider";
 
+import { AddDAppButton } from "../Button/AddDAppButton";
 import { FeedbackModal } from "../Modals/FeedbackModal";
 import { PreviewModal } from "../Modals/PreviewModal";
 
-import { FinalityProviders } from "./FinalityProviders/FinalityProviders";
+import { DApps } from "./DApps/DApps";
 import { StakingAmount } from "./Form/StakingAmount";
 import { StakingFee } from "./Form/StakingFee";
 import { StakingTime } from "./Form/StakingTime";
@@ -49,9 +52,15 @@ interface OverflowProperties {
 interface StakingProps {
   btcHeight: number | undefined;
   finalityProviders: FinalityProviderInterface[] | undefined;
+  dApps: DAppInterface[] | undefined;
   isWalletConnected: boolean;
   isLoading: boolean;
+  dApp: DAppInterface | undefined;
+  setDApp: Dispatch<SetStateAction<DAppInterface | undefined>>;
   onConnect: () => void;
+  onAdd: () => void;
+  onUpdate: () => void;
+  onDelete: (id: string) => void;
   finalityProvidersFetchNext: () => void;
   finalityProvidersHasNext: boolean;
   finalityProvidersIsFetchingMore: boolean;
@@ -66,8 +75,14 @@ interface StakingProps {
 export const Staking: React.FC<StakingProps> = ({
   btcHeight,
   finalityProviders,
+  dApps,
   isWalletConnected,
+  dApp,
+  setDApp,
   onConnect,
+  onAdd,
+  onUpdate,
+  onDelete,
   finalityProvidersFetchNext,
   finalityProvidersHasNext,
   finalityProvidersIsFetchingMore,
@@ -84,6 +99,7 @@ export const Staking: React.FC<StakingProps> = ({
   const [stakingTimeBlocks, setStakingTimeBlocks] = useState(0);
   const [finalityProvider, setFinalityProvider] =
     useState<FinalityProviderInterface>();
+
   // Selected fee rate, comes from the user input
   const [selectedFeeRate, setSelectedFeeRate] = useState(0);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
@@ -251,6 +267,7 @@ export const Staking: React.FC<StakingProps> = ({
 
   const handleResetState = () => {
     setFinalityProvider(undefined);
+    setDApp(undefined);
     setStakingAmountSat(0);
     setStakingTimeBlocks(0);
     setSelectedFeeRate(0);
@@ -271,6 +288,7 @@ export const Staking: React.FC<StakingProps> = ({
       if (!btcWalletNetwork) throw new Error("Wallet network is not connected");
       if (!finalityProvider)
         throw new Error("Finality provider is not selected");
+      if (!dApp) throw new Error("DApp is not selected");
       if (!paramWithCtx || !paramWithCtx.currentVersion)
         throw new Error("Global params not loaded");
       if (!feeRate) throw new Error("Fee rates not loaded");
@@ -421,6 +439,32 @@ export const Staking: React.FC<StakingProps> = ({
     setFinalityProvider(found);
   };
 
+  const HandleChooseDApp = (id: string) => {
+    let found: DAppInterface | undefined;
+    try {
+      if (!dApps) {
+        throw new Error("DApps not loaded");
+      }
+
+      found = dApps.find((da) => da?.id === id);
+      if (!found) {
+        throw new Error("DApp not found");
+      }
+    } catch (error: any) {
+      showError({
+        error: {
+          message: error.message,
+          errorState: ErrorState.STAKING,
+          errorTime: new Date(),
+        },
+        retryAction: () => HandleChooseDApp(id),
+      });
+      return;
+    }
+
+    setDApp(found);
+  };
+
   const handleStakingAmountSatChange = (inputAmountSat: number) => {
     setStakingAmountSat(inputAmountSat);
   };
@@ -439,6 +483,12 @@ export const Staking: React.FC<StakingProps> = ({
       if (!isFeedbackModalOpened) {
         setFeedbackModal({ type, isOpen: true });
       }
+    }
+  };
+
+  const handleDelete = () => {
+    if (dApp) {
+      onDelete(dApp.id);
     }
   };
 
@@ -645,7 +695,7 @@ export const Staking: React.FC<StakingProps> = ({
         `}
     >
       {/*<h3 className="mb-4 font-bold">Staking</h3>*/}
-      <div className="flex flex-col gap-4 lg:flex-row">
+      {/* <div className="flex flex-col gap-4 lg:flex-row">
         <div
           className={`
               flex flex-1 flex-col gap-4 lg:basis-3/5 xl:basis-2/3
@@ -661,6 +711,52 @@ export const Staking: React.FC<StakingProps> = ({
               hasMore: finalityProvidersHasNext,
               isFetchingMore: finalityProvidersIsFetchingMore,
             }}
+          />
+        </div>
+        //COMMENT THIS ONE <div className="divider m-0 lg:divider-horizontal lg:m-0" />
+        <div
+          className={`
+                flex flex-1 flex-col gap-4 lg:basis-2/5 xl:basis-1/3
+                ${fpTableStyles}
+                `}
+        >
+          {renderStakingForm()}
+        </div>
+      </div> */}
+      {/*<h3 className="mb-4 font-bold">Staking</h3>*/}
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <div className="flex flex-1 flex-row gap-4 lg:basis-3/5 xl:basis-2/3">
+          <div className="flex flex-1 justify-end items-center gap-2">
+            <div className="flex mr-1">
+              <AddDAppButton onAdd={onAdd} />
+            </div>
+            <button
+              className="btn btn-circle btn-ghost btn-sm"
+              onClick={handleDelete}
+            >
+              <FaTrash />
+            </button>
+            <button
+              className="btn btn-circle btn-ghost btn-sm"
+              onClick={onUpdate}
+            >
+              <FaPenToSquare />
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-1 flex-col gap-4 lg:basis-2/5 xl:basis-1/3"></div>
+      </div>
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <div
+          className={`
+              flex flex-1 flex-col gap-4 lg:basis-3/5 xl:basis-2/3
+              ${fpTableStyles}
+              `}
+        >
+          <DApps
+            dApps={dApps}
+            selectedDApp={dApp}
+            onDAppChange={HandleChooseDApp}
           />
         </div>
         {/*<div className="divider m-0 lg:divider-horizontal lg:m-0" />*/}
