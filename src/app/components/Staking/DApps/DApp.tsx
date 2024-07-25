@@ -4,6 +4,8 @@ import { Tooltip } from "react-tooltip";
 import { Hash } from "@/app/components/Hash/Hash";
 import { fpInnerStyles, fpSelectedStyles, fpStyles } from "@/app/scalar/theme";
 
+import Toggle from "../../Toggle/Toggle";
+
 interface DAppProps {
   id: string;
   chainName: string;
@@ -25,7 +27,7 @@ export const DApp: React.FC<DAppProps> = ({
   const generalStyles =
     "card relative cursor-pointer border bg-base-300 p-4 text-sm transition-shadow hover:shadow-md dark:border-transparent dark:bg-base-200";
 
-  const dAppHasData = chainName && btcAddress && btcPk && state;
+  const dAppHasData = chainName && btcAddress && btcPk;
 
   const handleClick = () => {
     if (dAppHasData) {
@@ -79,7 +81,7 @@ export const DApp: React.FC<DAppProps> = ({
           </div>
           <div className="flex items-center gap-1 justify-start">
             <p className="hidden sm:flex lg:hidden">State:</p>
-            {dAppHasData ? state.toString() : "-"}
+            {dAppHasData ? <Toggle state={state} id={id} /> : "-"}
             <span
               className="inline-flex cursor-pointer text-xs sm:hidden"
               data-tooltip-id={`tooltip-delegation-${btcPk}`}

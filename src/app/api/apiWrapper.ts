@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const apiWrapper = async (
-  method: "GET" | "POST" | "PUT" | "DELETE",
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   url: string,
   generalErrorMessage: string,
   params?: any,
@@ -18,6 +18,9 @@ export const apiWrapper = async (
     case "PUT":
       handler = axios.put;
       break;
+    case "PATCH":
+      handler = axios.patch;
+      break;
     case "DELETE":
       handler = axios.delete;
       break;
@@ -27,7 +30,7 @@ export const apiWrapper = async (
 
   try {
     // destructure params in case of post request
-    if (method === "POST" || method === "PUT") {
+    if (method === "POST" || method === "PUT" || method === "PATCH") {
       response = await handler(`${process.env.NEXT_PUBLIC_API_URL}${url}`, {
         ...params,
       });
