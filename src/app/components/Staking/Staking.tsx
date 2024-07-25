@@ -28,6 +28,7 @@ import { isStakingSignReady } from "@/utils/isStakingSignReady";
 import { toLocalStorageDelegation } from "@/utils/local_storage/toLocalStorageDelegation";
 import { WalletProvider } from "@/utils/wallet/wallet_provider";
 
+import { AddDAppButton } from "../Button/AddDAppButton";
 import { FeedbackModal } from "../Modals/FeedbackModal";
 import { PreviewModal } from "../Modals/PreviewModal";
 
@@ -54,6 +55,7 @@ interface StakingProps {
   isWalletConnected: boolean;
   isLoading: boolean;
   onConnect: () => void;
+  onAdd: () => void;
   finalityProvidersFetchNext: () => void;
   finalityProvidersHasNext: boolean;
   finalityProvidersIsFetchingMore: boolean;
@@ -71,6 +73,7 @@ export const Staking: React.FC<StakingProps> = ({
   dApps,
   isWalletConnected,
   onConnect,
+  onAdd,
   finalityProvidersFetchNext,
   finalityProvidersHasNext,
   finalityProvidersIsFetchingMore,
@@ -706,6 +709,27 @@ export const Staking: React.FC<StakingProps> = ({
         </div>
       </div> */}
       {/*<h3 className="mb-4 font-bold">Staking</h3>*/}
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <div className="flex flex-1 flex-row gap-4 lg:basis-3/5 xl:basis-2/3">
+          <div className="flex items-center">
+            <input
+              type="text"
+              placeholder="Search"
+              className="border rounded p-2"
+            />
+          </div>
+          <div className="flex flex-1 justify-end items-center gap-2">
+            <AddDAppButton onAdd={onAdd} />
+            <button className="bg-red-500 text-white px-4 py-2 rounded">
+              Delete
+            </button>
+            <button className="bg-yellow-500 text-white px-4 py-2 rounded">
+              Update
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-1 flex-col gap-4 lg:basis-2/5 xl:basis-1/3"></div>
+      </div>
       <div className="flex flex-col gap-4 lg:flex-row">
         <div
           className={`

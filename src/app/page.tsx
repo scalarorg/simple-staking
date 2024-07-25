@@ -32,6 +32,7 @@ import { signPsbtTransaction } from "./common/utils/psbt";
 import { Delegations } from "./components/Delegations/Delegations";
 import { Footer } from "./components/Footer/Footer";
 import { Header } from "./components/Header/Header";
+import { AddDAppModal } from "./components/Modals/AddDAppModal";
 import { ConnectModal } from "./components/Modals/ConnectModal";
 import { ErrorModal } from "./components/Modals/ErrorModal";
 import { TermsModal } from "./components/Modals/Terms/TermsModal";
@@ -50,6 +51,7 @@ const Home: React.FC<HomeProps> = () => {
   const [btcWalletBalanceSat, setBTCWalletBalanceSat] = useState(0);
   const [btcWalletNetwork, setBTCWalletNetwork] = useState<networks.Network>();
   const [publicKeyNoCoord, setPublicKeyNoCoord] = useState("");
+  const [addDAppModalOpen, setAddDAppModalOpen] = useState(false);
 
   const [address, setAddress] = useState("");
   const { error, isErrorOpen, showError, hideError, retryErrorAction } =
@@ -236,6 +238,10 @@ const Home: React.FC<HomeProps> = () => {
 
   const handleConnectModal = () => {
     setConnectModalOpen(true);
+  };
+
+  const handleAddDAppModal = () => {
+    setAddDAppModalOpen(true);
   };
 
   const handleDisconnectBTC = () => {
@@ -426,6 +432,7 @@ const Home: React.FC<HomeProps> = () => {
             dApps={dApps?.dApps}
             isWalletConnected={!!btcWallet}
             onConnect={handleConnectModal}
+            onAdd={handleAddDAppModal}
             finalityProvidersFetchNext={fetchNextFinalityProvidersPage}
             finalityProvidersHasNext={hasNextFinalityProvidersPage}
             finalityProvidersIsFetchingMore={
@@ -481,6 +488,7 @@ const Home: React.FC<HomeProps> = () => {
         onConnect={handleConnectBTC}
         connectDisabled={!!address}
       />
+      <AddDAppModal open={addDAppModalOpen} onClose={setAddDAppModalOpen} />
       <ErrorModal
         open={isErrorOpen}
         errorMessage={error.message}
