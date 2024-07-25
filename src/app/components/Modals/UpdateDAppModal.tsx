@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
-import { postDApp } from "@/app/api/postDApps";
+import { updateDApp } from "@/app/api/updateDApp";
+import { DApp as DAppInterface } from "@/app/types/dApps";
 
 import { BtcAddress } from "../Staking/Form/BtcAddress";
 import { BtcPubKey } from "../Staking/Form/BtcPubkey";
@@ -9,18 +10,27 @@ import { ChainName } from "../Staking/Form/ChainName";
 
 import { GeneralModal } from "./GeneralModal";
 
-interface AddDAppModalProps {
+interface UpdateDAppModalProps {
   open: boolean;
   onClose: (value: boolean) => void;
+  dApp: DAppInterface | undefined;
 }
 
-export const AddDAppModal: React.FC<AddDAppModalProps> = ({
+export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
   open,
   onClose,
+  dApp,
 }) => {
-  const [chainName, setChainName] = useState("");
-  const [btcAddress, setBtcAddress] = useState("");
-  const [btcPubKey, setBtcPubKey] = useState("");
+  const [chainName, setChainName] = useState(dApp?.chainName);
+  const [btcAddress, setBtcAddress] = useState(dApp?.btcAddress);
+  const [btcPubKey, setBtcPubKey] = useState(dApp?.btcPk);
+  const [id, setId] = useState(dApp?.id);
+  useEffect(() => {
+    setChainName(dApp?.chainName);
+    setBtcAddress(dApp?.btcAddress);
+    setBtcPubKey(dApp?.btcPk);
+    setId(dApp?.id);
+  }, [dApp]);
 
   const handleChainNameChange = (input: string) => {
     setChainName(input);
@@ -31,14 +41,14 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
   const handleBtcPubKeyChange = (input: string) => {
     setBtcPubKey(input);
   };
-  const handleAdd = async () => {
-    if (!chainName || !btcAddress || !btcPubKey) {
+  const handleUpdate = async () => {
+    if (!id || !chainName || !btcAddress || !btcPubKey) {
       console.error("Missing required fields");
       return;
     }
-    await postDApp(chainName, btcAddress, btcPubKey)
+    await updateDApp(id, chainName, btcAddress, btcPubKey)
       .then(() => {
-        console.log("Successfully added DApp");
+        console.log("Successfully update DApp");
         onClose(false);
       })
       .catch((error) => {
@@ -48,7 +58,7 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
   return (
     <GeneralModal open={open} onClose={onClose}>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-bold">Fill in DApp information!</h3>
+        <h3 className="font-bold">Edit DApp information!</h3>
         <button
           className="btn btn-circle btn-ghost btn-sm"
           onClick={() => onClose(false)}
@@ -61,30 +71,30 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
           <ChainName
             onChange={handleChainNameChange}
             reset={false}
-            initValue=""
+            initValue={chainName || ""}
           />
         </div>
         <div className="flex flex-1 flex-col">
           <BtcAddress
             onChange={handleBtcAddressChange}
             reset={false}
-            initValue=""
+            initValue={btcAddress || ""}
           />
         </div>
         <div className="flex flex-1 flex-col">
           <BtcPubKey
             onChange={handleBtcPubKeyChange}
             reset={false}
-            initValue=""
+            initValue={btcPubKey || ""}
           />
         </div>
       </div>
       <div className="flex justify-center">
         <button
           className="btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-lg px-5 mb-2 text-white"
-          onClick={handleAdd}
+          onClick={handleUpdate}
         >
-          Add
+          Edit
         </button>
       </div>
     </GeneralModal>

@@ -3,10 +3,15 @@ import { ChangeEvent, FocusEvent, useEffect, useState } from "react";
 interface BtcPubKeyProps {
   onChange: (input: string) => void;
   reset: boolean;
+  initValue: string;
 }
 
-export const BtcPubKey: React.FC<BtcPubKeyProps> = ({ onChange, reset }) => {
-  const [value, setValue] = useState("");
+export const BtcPubKey: React.FC<BtcPubKeyProps> = ({
+  onChange,
+  reset,
+  initValue,
+}) => {
+  const [value, setValue] = useState(initValue);
   const [error, setError] = useState("");
   // Track if the input field has been interacted with
   const [touched, setTouched] = useState(false);
@@ -15,10 +20,10 @@ export const BtcPubKey: React.FC<BtcPubKeyProps> = ({ onChange, reset }) => {
 
   // Use effect to reset the state when reset prop changes
   useEffect(() => {
-    setValue("");
+    setValue(initValue);
     setError("");
     setTouched(false);
-  }, [reset]);
+  }, [reset, initValue]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;

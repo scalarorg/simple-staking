@@ -9,6 +9,7 @@ import { useLocalStorage } from "usehooks-ts";
 
 import earth from "@/app/assets/earth.webp";
 import stone from "@/app/assets/stone.webp";
+import { DApp as DAppInterface } from "@/app/types/dApps";
 import { network } from "@/config/network.config";
 import { getCurrentGlobalParamsVersion } from "@/utils/globalParams";
 import { calculateDelegationsDiff } from "@/utils/local_storage/calculateDelegationsDiff";
@@ -37,6 +38,7 @@ import { AddDAppModal } from "./components/Modals/AddDAppModal";
 import { ConnectModal } from "./components/Modals/ConnectModal";
 import { ErrorModal } from "./components/Modals/ErrorModal";
 import { TermsModal } from "./components/Modals/Terms/TermsModal";
+import { UpdateDAppModal } from "./components/Modals/UpdateDAppModal";
 import { Staking } from "./components/Staking/Staking";
 import { Stats } from "./components/Stats/Stats";
 import { Summary } from "./components/Summary/Summary";
@@ -53,6 +55,8 @@ const Home: React.FC<HomeProps> = () => {
   const [btcWalletNetwork, setBTCWalletNetwork] = useState<networks.Network>();
   const [publicKeyNoCoord, setPublicKeyNoCoord] = useState("");
   const [addDAppModalOpen, setAddDAppModalOpen] = useState(false);
+  const [updateDAppModalOpen, setUpdateDAppModalOpen] = useState(false);
+  const [dApp, setDApp] = useState<DAppInterface>();
 
   const [address, setAddress] = useState("");
   const { error, isErrorOpen, showError, hideError, retryErrorAction } =
@@ -244,6 +248,12 @@ const Home: React.FC<HomeProps> = () => {
   const handleAddDAppModal = () => {
     setAddDAppModalOpen(true);
   };
+  const handleUpdateDAppModal = () => {
+    if (!dApp) {
+      return;
+    }
+    setUpdateDAppModalOpen(true);
+  };
 
   const handleDisconnectBTC = () => {
     setBTCWallet(undefined);
@@ -301,6 +311,10 @@ const Home: React.FC<HomeProps> = () => {
   };
   const handleAddModal = (value: boolean) => {
     setAddDAppModalOpen(value);
+    refetchDApps();
+  };
+  const handleUpdateModal = (value: boolean) => {
+    setUpdateDAppModalOpen(value);
     refetchDApps();
   };
   // Subscribe to account changes
@@ -439,8 +453,11 @@ const Home: React.FC<HomeProps> = () => {
             finalityProviders={finalityProviders?.finalityProviders}
             dApps={dApps?.dApps}
             isWalletConnected={!!btcWallet}
+            dApp={dApp}
+            setDApp={setDApp}
             onConnect={handleConnectModal}
             onAdd={handleAddDAppModal}
+            onUpdate={handleUpdateDAppModal}
             onDelete={handleDelete}
             finalityProvidersFetchNext={fetchNextFinalityProvidersPage}
             finalityProvidersHasNext={hasNextFinalityProvidersPage}
@@ -498,6 +515,11 @@ const Home: React.FC<HomeProps> = () => {
         connectDisabled={!!address}
       />
       <AddDAppModal open={addDAppModalOpen} onClose={handleAddModal} />
+      <UpdateDAppModal
+        open={updateDAppModalOpen}
+        onClose={handleUpdateModal}
+        dApp={dApp}
+      />
       <ErrorModal
         open={isErrorOpen}
         errorMessage={error.message}

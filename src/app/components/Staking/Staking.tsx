@@ -55,8 +55,11 @@ interface StakingProps {
   dApps: DAppInterface[] | undefined;
   isWalletConnected: boolean;
   isLoading: boolean;
+  dApp: DAppInterface | undefined;
+  setDApp: Dispatch<SetStateAction<DAppInterface | undefined>>;
   onConnect: () => void;
   onAdd: () => void;
+  onUpdate: () => void;
   onDelete: (id: string) => void;
   finalityProvidersFetchNext: () => void;
   finalityProvidersHasNext: boolean;
@@ -74,8 +77,11 @@ export const Staking: React.FC<StakingProps> = ({
   finalityProviders,
   dApps,
   isWalletConnected,
+  dApp,
+  setDApp,
   onConnect,
   onAdd,
+  onUpdate,
   onDelete,
   finalityProvidersFetchNext,
   finalityProvidersHasNext,
@@ -93,7 +99,7 @@ export const Staking: React.FC<StakingProps> = ({
   const [stakingTimeBlocks, setStakingTimeBlocks] = useState(0);
   const [finalityProvider, setFinalityProvider] =
     useState<FinalityProviderInterface>();
-  const [dApp, setDApp] = useState<DAppInterface>();
+
   // Selected fee rate, comes from the user input
   const [selectedFeeRate, setSelectedFeeRate] = useState(0);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
@@ -720,13 +726,6 @@ export const Staking: React.FC<StakingProps> = ({
       {/*<h3 className="mb-4 font-bold">Staking</h3>*/}
       <div className="flex flex-col gap-4 lg:flex-row">
         <div className="flex flex-1 flex-row gap-4 lg:basis-3/5 xl:basis-2/3">
-          <div className="flex items-center">
-            <input
-              type="text"
-              placeholder="Search"
-              className="border rounded p-2"
-            />
-          </div>
           <div className="flex flex-1 justify-end items-center gap-2">
             <div className="flex mr-1">
               <AddDAppButton onAdd={onAdd} />
@@ -737,7 +736,10 @@ export const Staking: React.FC<StakingProps> = ({
             >
               <FaTrash />
             </button>
-            <button className="btn btn-circle btn-ghost btn-sm">
+            <button
+              className="btn btn-circle btn-ghost btn-sm"
+              onClick={onUpdate}
+            >
               <FaPenToSquare />
             </button>
           </div>
