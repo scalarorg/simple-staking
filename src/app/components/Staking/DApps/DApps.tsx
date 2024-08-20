@@ -6,6 +6,7 @@ import { DApp } from "./DApp";
 interface DAppsProps {
   dApps: DAppInterface[] | undefined;
   selectedDApp: DAppInterface | undefined;
+  isLoading: boolean;
   // called when the user selects a dApp
   onDAppChange: (btcPkHex: string) => void;
 }
@@ -14,10 +15,11 @@ interface DAppsProps {
 export const DApps: React.FC<DAppsProps> = ({
   dApps,
   selectedDApp,
+  isLoading = true,
   onDAppChange,
 }) => {
   // If there are no dApps, show loading
-  if (!dApps || dApps.length === 0) {
+  if (isLoading) {
     return <LoadingView />;
   }
 

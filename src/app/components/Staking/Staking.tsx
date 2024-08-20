@@ -55,6 +55,7 @@ interface StakingProps {
   dApps: DAppInterface[] | undefined;
   isWalletConnected: boolean;
   isLoading: boolean;
+  isLoadingDApps: boolean;
   dApp: DAppInterface | undefined;
   setDApp: Dispatch<SetStateAction<DAppInterface | undefined>>;
   onConnect: () => void;
@@ -77,6 +78,7 @@ export const Staking: React.FC<StakingProps> = ({
   finalityProviders,
   dApps,
   isWalletConnected,
+  isLoadingDApps,
   dApp,
   setDApp,
   onConnect,
@@ -754,6 +756,7 @@ export const Staking: React.FC<StakingProps> = ({
               `}
         >
           <DApps
+            isLoading={isLoadingDApps}
             dApps={dApps}
             selectedDApp={dApp}
             onDAppChange={HandleChooseDApp}

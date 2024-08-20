@@ -426,7 +426,7 @@ const Home: React.FC<HomeProps> = () => {
               <h1 className={"text-3xl md:text-[34px] font-medium"}>
                 BTC Staking
               </h1>
-              <p>
+              {/* <p>
                 Select a finality provider or{" "}
                 <a
                   href="https://github.com/babylonchain/networks/tree/main/bbn-test-4/finality-providers"
@@ -437,7 +437,7 @@ const Home: React.FC<HomeProps> = () => {
                   create your own
                 </a>
                 .
-              </p>
+              </p> */}
             </div>
             <Stats />
           </div>
@@ -452,6 +452,7 @@ const Home: React.FC<HomeProps> = () => {
             btcHeight={paramWithContext?.currentHeight}
             finalityProviders={finalityProviders?.finalityProviders}
             dApps={dApps?.dApps}
+            isLoadingDApps={isLoadingCurrentDApps}
             isWalletConnected={!!btcWallet}
             dApp={dApp}
             setDApp={setDApp}
