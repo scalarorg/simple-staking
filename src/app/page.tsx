@@ -37,6 +37,7 @@ import { Header } from "./components/Header/Header";
 import { AddDAppModal } from "./components/Modals/AddDAppModal";
 import { ConnectModal } from "./components/Modals/ConnectModal";
 import { ErrorModal } from "./components/Modals/ErrorModal";
+import { MintTxModal } from "./components/Modals/MintTxModal";
 import { TermsModal } from "./components/Modals/Terms/TermsModal";
 import { UpdateDAppModal } from "./components/Modals/UpdateDAppModal";
 import { Staking } from "./components/Staking/Staking";
@@ -59,6 +60,7 @@ const Home: React.FC<HomeProps> = () => {
   const [dApp, setDApp] = useState<DAppInterface>();
 
   const [address, setAddress] = useState("");
+  const [pubkey, setPubkey] = useState("");
   const { error, isErrorOpen, showError, hideError, retryErrorAction } =
     useError();
   const { isTermsOpen, closeTerms } = useTerms();
@@ -219,6 +221,7 @@ const Home: React.FC<HomeProps> = () => {
       errorState: ErrorState.SERVER_ERROR,
       refetchFunction: refetchGlobalParamsVersion,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     hasFinalityProvidersError,
     hasGlobalParamsVersionError,
@@ -229,6 +232,7 @@ const Home: React.FC<HomeProps> = () => {
   // Initializing btc curve is a required one-time operation
   useEffect(() => {
     initBTCCurve();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Local storage state for delegations
@@ -243,6 +247,12 @@ const Home: React.FC<HomeProps> = () => {
 
   const handleConnectModal = () => {
     setConnectModalOpen(true);
+  };
+
+  const [mintTxModalOpen, setMintTxModalOpen] = useState(false);
+
+  const handleMintTxModal = () => {
+    setMintTxModalOpen(true);
   };
 
   const handleAddDAppModal = () => {
@@ -261,6 +271,7 @@ const Home: React.FC<HomeProps> = () => {
     setBTCWalletNetwork(undefined);
     setPublicKeyNoCoord("");
     setAddress("");
+    setPubkey("");
   };
 
   const handleConnectBTC = async (walletProvider: WalletProvider) => {
@@ -279,9 +290,9 @@ const Home: React.FC<HomeProps> = () => {
       }
 
       const balanceSat = await walletProvider.getBalance();
-      const publicKeyNoCoord = getPublicKeyNoCoord(
-        await walletProvider.getPublicKeyHex(),
-      );
+      const pubkeyHex = await walletProvider.getPublicKeyHex();
+      setPubkey(pubkeyHex);
+      const publicKeyNoCoord = getPublicKeyNoCoord(pubkeyHex);
       setBTCWallet(walletProvider);
       setBTCWalletBalanceSat(balanceSat);
       setBTCWalletNetwork(toNetwork(await walletProvider.getNetwork()));
@@ -330,6 +341,7 @@ const Home: React.FC<HomeProps> = () => {
         once = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [btcWallet]);
 
   // Clean up the local storage delegations
@@ -350,6 +362,7 @@ const Home: React.FC<HomeProps> = () => {
     };
 
     updateDelegationsLocalStorage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [delegations, setDelegationsLocalStorage, delegationsLocalStorage]);
 
   // Finality providers key-value map { pk: moniker }
@@ -410,6 +423,7 @@ const Home: React.FC<HomeProps> = () => {
       {/*BACKGROUND end here*/}
       {/*<NetworkBadge />*/}
       <Header
+        onOpenMintTxModal={handleMintTxModal}
         onConnect={handleConnectModal}
         onDisconnect={handleDisconnectBTC}
         address={address}
@@ -509,6 +523,13 @@ const Home: React.FC<HomeProps> = () => {
 
       {/*<FAQ />*/}
       <Footer />
+      <MintTxModal
+        open={mintTxModalOpen}
+        onClose={setMintTxModalOpen}
+        btcAddress={address}
+        btcPublicKey={pubkey}
+        signPsbt={btcWallet?.signPsbt}
+      />
       <ConnectModal
         open={connectModalOpen}
         onClose={setConnectModalOpen}

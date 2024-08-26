@@ -1,0 +1,8 @@
+{
+  "chains": [
+    {
+      "name": "ethereum-sepolia",
+      "chainId": "aa36a7"
+    }
+  ]
+}
