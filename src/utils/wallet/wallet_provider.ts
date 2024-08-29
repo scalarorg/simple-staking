@@ -1,3 +1,15 @@
+export interface UnisatSignInput {
+  index: number;
+  address?: string;
+  publicKey?: string;
+  sighashTypes?: number[];
+  disableTweakSigner?: boolean;
+}
+export interface UnisatOptions {
+  autoFinalized?: boolean;
+  toSignInputs?: UnisatSignInput[];
+}
+
 export type Fees = {
   // fee for inclusion in the next block
   fastestFee: number;
@@ -73,7 +85,7 @@ export abstract class WalletProvider {
    * @param psbtHex - The hex string of the unsigned PSBT to sign.
    * @returns A promise that resolves to the hex string of the signed PSBT.
    */
-  abstract signPsbt(psbtHex: string): Promise<string>;
+  abstract signPsbt(psbtHex: string, options?: UnisatOptions): Promise<string>;
 
   /**
    * Signs multiple PSBTs in hex format.

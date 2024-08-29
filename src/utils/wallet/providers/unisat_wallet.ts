@@ -15,6 +15,7 @@ import {
   Fees,
   Network,
   UTXO,
+  UnisatOptions,
   WalletInfo,
   WalletProvider,
 } from "../wallet_provider";
@@ -133,12 +134,15 @@ export class UnisatWallet extends WalletProvider {
     return this.unisatWalletInfo.publicKeyHex;
   };
 
-  signPsbt = async (psbtHex: string): Promise<string> => {
+  signPsbt = async (
+    psbtHex: string,
+    options?: UnisatOptions,
+  ): Promise<string> => {
     if (!this.unisatWalletInfo) {
       throw new Error("unisat Wallet not connected");
     }
     // Use signPsbt since it shows the fees
-    return await this.bitcoinNetworkProvider.signPsbt(psbtHex);
+    return await this.bitcoinNetworkProvider.signPsbt(psbtHex, options);
   };
 
   signPsbts = async (psbtsHexes: string[]): Promise<string[]> => {

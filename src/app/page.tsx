@@ -35,6 +35,7 @@ import { Delegations } from "./components/Delegations/Delegations";
 import { Footer } from "./components/Footer/Footer";
 import { Header } from "./components/Header/Header";
 import { AddDAppModal } from "./components/Modals/AddDAppModal";
+import { BurnTokenModal } from "./components/Modals/BurnTokenModal";
 import { ConnectModal } from "./components/Modals/ConnectModal";
 import { ErrorModal } from "./components/Modals/ErrorModal";
 import { MintTxModal } from "./components/Modals/MintTxModal";
@@ -249,6 +250,12 @@ const Home: React.FC<HomeProps> = () => {
     setConnectModalOpen(true);
   };
 
+  const [burnTokenModalOpen, setBurnTokenModalOpen] = useState(false);
+
+  const handleBurnTokenModal = () => {
+    setBurnTokenModalOpen(true);
+  };
+
   const [mintTxModalOpen, setMintTxModalOpen] = useState(false);
 
   const handleMintTxModal = () => {
@@ -423,6 +430,7 @@ const Home: React.FC<HomeProps> = () => {
       {/*BACKGROUND end here*/}
       {/*<NetworkBadge />*/}
       <Header
+        onOpenBurnTokenModal={handleBurnTokenModal}
         onOpenMintTxModal={handleMintTxModal}
         onConnect={handleConnectModal}
         onDisconnect={handleDisconnectBTC}
@@ -523,7 +531,15 @@ const Home: React.FC<HomeProps> = () => {
 
       {/*<FAQ />*/}
       <Footer />
+      <BurnTokenModal
+        btcWalletNetwork={btcWalletNetwork}
+        open={burnTokenModalOpen}
+        onClose={setBurnTokenModalOpen}
+        btcAddress={address}
+        signPsbt={btcWallet?.signPsbt}
+      />
       <MintTxModal
+        btcWalletNetwork={btcWalletNetwork}
         open={mintTxModalOpen}
         onClose={setMintTxModalOpen}
         btcAddress={address}
