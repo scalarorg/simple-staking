@@ -3,13 +3,15 @@ import { Inter } from "next/font/google";
 import "react-responsive-modal/styles.css";
 import "react-tooltip/dist/react-tooltip.css";
 
+import { Toaster } from "@/app/components/ui/toaster";
+
 import "./globals.css";
 import Providers from "./providers";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Babylon - Staking Dashboard",
+  title: "Staking Dashboard",
   description: "BTC Staking Dashboard",
 };
 
@@ -43,6 +45,7 @@ export default function RootLayout({
       <meta name="twitter:image:height" content="1170" />
       <body className={inter.className}>
         <Providers>{children}</Providers>
+        <Toaster />
       </body>
     </html>
   );

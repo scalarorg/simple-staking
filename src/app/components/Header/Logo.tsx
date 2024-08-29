@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import darkLogo from "@/app/assets/logo-black.svg";
 import lightLogo from "@/app/assets/logo-white.svg";
+import { logoStyles } from "@/app/scalar/theme";
 
 interface LogoProps {}
 
@@ -25,7 +26,11 @@ export const Logo: React.FC<LogoProps> = () => {
 
   return (
     <div className="flex">
-      <Image src={lightSelected ? darkLogo : lightLogo} alt="Babylon" />
+      <Image
+        src={lightSelected ? darkLogo : lightLogo}
+        alt="Babylon"
+        className={logoStyles}
+      />
     </div>
   );
 };

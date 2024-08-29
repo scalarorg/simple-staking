@@ -1,7 +1,5 @@
 import Image from "next/image";
 import { Fragment, useEffect, useState } from "react";
-import { AiOutlineInfoCircle } from "react-icons/ai";
-import { Tooltip } from "react-tooltip";
 
 import { useGlobalParams } from "@/app/context/api/GlobalParamsProvider";
 import {
@@ -27,9 +25,6 @@ import { maxDecimals } from "@/utils/maxDecimals";
 
 import confirmedTvl from "./icons/confirmed-tvl.svg";
 import delegations from "./icons/delegations.svg";
-import pendingStake from "./icons/pending-stake.svg";
-import stakers from "./icons/stakers.svg";
-import stakingTvlCap from "./icons/staking-tvl-cap.svg";
 
 const buildNextCapText = (
   coinName: string,
@@ -134,11 +129,11 @@ export const Stats: React.FC = () => {
 
   const sections = [
     [
-      {
-        title: stakingCapText.title,
-        value: stakingCapText.value,
-        icon: stakingTvlCap,
-      },
+      // {
+      //   title: stakingCapText.title,
+      //   value: stakingCapText.value,
+      //   icon: stakingTvlCap,
+      // },
       {
         title: "Confirmed TVL",
         value: stakingStats?.activeTVLSat
@@ -146,15 +141,13 @@ export const Stats: React.FC = () => {
           : 0,
         icon: confirmedTvl,
       },
-      {
-        title: "Pending Stake",
-        value: stakingStats?.unconfirmedTVLSat
-          ? `${maxDecimals(satoshiToBtc(stakingStats.unconfirmedTVLSat - stakingStats.activeTVLSat), 8)} ${coinName}`
-          : 0,
-        icon: pendingStake,
-      },
-    ],
-    [
+      // {
+      //   title: "Pending Stake",
+      //   value: stakingStats?.unconfirmedTVLSat
+      //     ? `${maxDecimals(satoshiToBtc(stakingStats.unconfirmedTVLSat - stakingStats.activeTVLSat), 8)} ${coinName}`
+      //     : 0,
+      //   icon: pendingStake,
+      // },
       {
         title: "Delegations",
         value: stakingStats?.activeDelegations
@@ -163,14 +156,24 @@ export const Stats: React.FC = () => {
         icon: delegations,
         tooltip: "Total number of stake delegations",
       },
-      {
-        title: "Stakers",
-        value: stakingStats?.totalStakers
-          ? formatter.format(stakingStats.totalStakers as number)
-          : 0,
-        icon: stakers,
-      },
     ],
+    // [
+    // {
+    //   title: "Delegations",
+    //   value: stakingStats?.activeDelegations
+    //     ? formatter.format(stakingStats.activeDelegations as number)
+    //     : 0,
+    //   icon: delegations,
+    //   tooltip: "Total number of stake delegations",
+    // },
+    // {
+    //   title: "Stakers",
+    //   value: stakingStats?.totalStakers
+    //     ? formatter.format(stakingStats.totalStakers as number)
+    //     : 0,
+    //   icon: stakers,
+    // },
+    // ],
   ];
 
   return (
@@ -212,19 +215,19 @@ export const Stats: React.FC = () => {
                     >
                       {subSection.title}
                     </p>
-                    {subSection.tooltip && (
-                      <>
-                        <span
-                          className="cursor-pointer text-xs"
-                          data-tooltip-id={`tooltip-${subSection.title}`}
-                          data-tooltip-content={subSection.tooltip}
-                          data-tooltip-place="top"
-                        >
-                          <AiOutlineInfoCircle />
-                        </span>
-                        <Tooltip id={`tooltip-${subSection.title}`} />
-                      </>
-                    )}
+                    {/*{subSection.tooltip && (*/}
+                    {/*  <>*/}
+                    {/*    <span*/}
+                    {/*      className="cursor-pointer text-xs"*/}
+                    {/*      data-tooltip-id={`tooltip-${subSection.title}`}*/}
+                    {/*      data-tooltip-content={subSection.tooltip}*/}
+                    {/*      data-tooltip-place="top"*/}
+                    {/*    >*/}
+                    {/*      <AiOutlineInfoCircle />*/}
+                    {/*    </span>*/}
+                    {/*    <Tooltip id={`tooltip-${subSection.title}`} />*/}
+                    {/*  </>*/}
+                    {/*)}*/}
                   </div>
                 </div>
                 <div>

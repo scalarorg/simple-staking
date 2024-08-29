@@ -6,6 +6,7 @@ import { useLocalStorage } from "usehooks-ts";
 import { SignPsbtTransaction } from "@/app/common/utils/psbt";
 import { LoadingTableList } from "@/app/components/Loading/Loading";
 import { useError } from "@/app/context/Error/ErrorContext";
+import { historyContainerStyles } from "@/app/scalar/theme";
 import { QueryMeta } from "@/app/types/api";
 import {
   Delegation as DelegationInterface,
@@ -213,7 +214,12 @@ export const Delegations: React.FC<DelegationsProps> = ({
       delegationsLocalStorage;
 
   return (
-    <div className="card flex flex-col gap-2 bg-base-300 p-4 shadow-sm lg:flex-1">
+    <div
+      className={`
+          card flex flex-col gap-2 bg-base-300 p-4 shadow-sm lg:flex-1
+          ${historyContainerStyles}
+          `}
+    >
       <h3 className="mb-4 font-bold">Staking history</h3>
       {combinedDelegationsData.length === 0 ? (
         <div className="rounded-2xl border border-neutral-content p-4 text-center dark:border-neutral-content/20">

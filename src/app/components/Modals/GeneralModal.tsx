@@ -6,6 +6,7 @@ interface GeneralModalProps {
   onClose: (value: boolean) => void;
   small?: boolean;
   children: ReactNode;
+  big?: boolean;
 }
 
 export const GeneralModal: React.FC<GeneralModalProps> = ({
@@ -13,6 +14,7 @@ export const GeneralModal: React.FC<GeneralModalProps> = ({
   onClose,
   children,
   small,
+  big,
 }) => {
   const modalRef = useRef(null);
 
@@ -31,6 +33,8 @@ export const GeneralModal: React.FC<GeneralModalProps> = ({
   const getSize = () => {
     if (small) {
       return "md:max-w-[25rem]";
+    } else if (big) {
+      return "md:w-full md:max-w-[35rem] lg:max-w-[45rem]";
     } else {
       return "md:max-w-[45rem] lg:max-w-[55rem]";
     }

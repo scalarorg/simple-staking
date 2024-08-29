@@ -38,7 +38,7 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
   return address ? (
     <div className="relative mr-[-10px] flex text-sm" ref={ref}>
       <button
-        className="flex cursor-pointer outline-none"
+        className="flex cursor-pointer outline-none max-md:flex-col-reverse max-md:items-end"
         onClick={() => setShowMenu(!showMenu)}
       >
         <div className="rounded-lg border border-base-200/75 p-2 pr-4">

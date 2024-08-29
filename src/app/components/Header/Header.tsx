@@ -1,5 +1,6 @@
+import { buttonStyles } from "@/app/scalar/theme";
+
 import { ConnectSmall } from "../Connect/ConnectSmall";
-import { TestingInfo } from "../TestingInfo/TestingInfo";
 
 import { Logo } from "./Logo";
 
@@ -8,6 +9,8 @@ interface HeaderProps {
   address: string;
   balanceSat: number;
   onDisconnect: () => void;
+  onOpenMintTxModal: () => void;
+  onOpenBurnTokenModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,6 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   address,
   balanceSat,
   onDisconnect,
+  onOpenMintTxModal,
+  onOpenBurnTokenModal,
 }) => {
   return (
     <nav>
@@ -27,18 +32,42 @@ export const Header: React.FC<HeaderProps> = ({
           {/*    <TestingInfo />*/}
           {/*  </div>*/}
           {/*</div>*/}
-          <ConnectSmall
-            onConnect={onConnect}
-            address={address}
-            balanceSat={balanceSat}
-            onDisconnect={onDisconnect}
-          />
+          <div className="flex gap-3 items-center">
+            <button
+              className={`
+        btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg 
+        ${buttonStyles}
+        `}
+              onClick={onOpenMintTxModal}
+              disabled={!address}
+            >
+              <span className="hidden md:flex">Mint Token</span>
+            </button>
+
+            <button
+              className={`
+        btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg 
+        ${buttonStyles}
+        `}
+              disabled={!address}
+              onClick={onOpenBurnTokenModal}
+            >
+              <span className="hidden md:flex">Burn Token</span>
+            </button>
+
+            <ConnectSmall
+              onConnect={onConnect}
+              address={address}
+              balanceSat={balanceSat}
+              onDisconnect={onDisconnect}
+            />
+          </div>
           {/*<ThemeToggle />*/}
         </div>
       </div>
-      <div className="container mx-auto flex w-full items-center p-6 pb-0 xl:hidden">
-        <TestingInfo />
-      </div>
+      {/*<div className="container mx-auto flex w-full items-center p-6 pb-0 xl:hidden">*/}
+      {/*  <TestingInfo />*/}
+      {/*</div>*/}
     </nav>
   );
 };

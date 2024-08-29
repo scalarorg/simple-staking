@@ -6,8 +6,8 @@
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "target": "ESNext",
+    "module": "CommonJS",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -18,7 +18,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "vault/*": ["./remotebtclib/vault/src/*"],
+      "bitcoin-flow/*": ["./remotebtclib/bitcoin-flow/src/*"]
     }
   },
   "include": [

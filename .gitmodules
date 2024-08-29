@@ -1,0 +1,4 @@
+[submodule "remotebtclib"]
+	path = remotebtclib
+	url = https://github.com/scalarorg/remotebtclib.git
+	branch = main

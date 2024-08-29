@@ -9,6 +9,7 @@ import { useLocalStorage } from "usehooks-ts";
 
 import earth from "@/app/assets/earth.webp";
 import stone from "@/app/assets/stone.webp";
+import { DApp as DAppInterface } from "@/app/types/dApps";
 import { network } from "@/config/network.config";
 import { getCurrentGlobalParamsVersion } from "@/utils/globalParams";
 import { calculateDelegationsDiff } from "@/utils/local_storage/calculateDelegationsDiff";
@@ -21,6 +22,8 @@ import {
 } from "@/utils/wallet/index";
 import { Network, WalletProvider } from "@/utils/wallet/wallet_provider";
 
+import { deleteDApp } from "./api/deleteDApp";
+import { getDApps } from "./api/getDApps";
 import { getDelegations, PaginatedDelegations } from "./api/getDelegations";
 import {
   getFinalityProviders,
@@ -29,13 +32,15 @@ import {
 import { getGlobalParams } from "./api/getGlobalParams";
 import { signPsbtTransaction } from "./common/utils/psbt";
 import { Delegations } from "./components/Delegations/Delegations";
-import { FAQ } from "./components/FAQ/FAQ";
 import { Footer } from "./components/Footer/Footer";
 import { Header } from "./components/Header/Header";
+import { AddDAppModal } from "./components/Modals/AddDAppModal";
+import { BurnTokenModal } from "./components/Modals/BurnTokenModal";
 import { ConnectModal } from "./components/Modals/ConnectModal";
 import { ErrorModal } from "./components/Modals/ErrorModal";
+import { MintTxModal } from "./components/Modals/MintTxModal";
 import { TermsModal } from "./components/Modals/Terms/TermsModal";
-import { NetworkBadge } from "./components/NetworkBadge/NetworkBadge";
+import { UpdateDAppModal } from "./components/Modals/UpdateDAppModal";
 import { Staking } from "./components/Staking/Staking";
 import { Stats } from "./components/Stats/Stats";
 import { Summary } from "./components/Summary/Summary";
@@ -51,8 +56,12 @@ const Home: React.FC<HomeProps> = () => {
   const [btcWalletBalanceSat, setBTCWalletBalanceSat] = useState(0);
   const [btcWalletNetwork, setBTCWalletNetwork] = useState<networks.Network>();
   const [publicKeyNoCoord, setPublicKeyNoCoord] = useState("");
+  const [addDAppModalOpen, setAddDAppModalOpen] = useState(false);
+  const [updateDAppModalOpen, setUpdateDAppModalOpen] = useState(false);
+  const [dApp, setDApp] = useState<DAppInterface>();
 
   const [address, setAddress] = useState("");
+  const [pubkey, setPubkey] = useState("");
   const { error, isErrorOpen, showError, hideError, retryErrorAction } =
     useError();
   const { isTermsOpen, closeTerms } = useTerms();
@@ -120,6 +129,21 @@ const Home: React.FC<HomeProps> = () => {
   });
 
   const {
+    data: dApps,
+    isLoading: isLoadingCurrentDApps,
+    error: dAppsError,
+    isError: hasDAppsError,
+    refetch: refetchDApps,
+  } = useQuery({
+    queryKey: ["dApps"],
+    queryFn: () => getDApps(),
+    refetchInterval: 60000, // 1 minute
+    retry: (failureCount, error) => {
+      return !isErrorOpen && failureCount <= 3;
+    },
+  });
+
+  const {
     data: delegations,
     fetchNextPage: fetchNextDelegationsPage,
     hasNextPage: hasNextDelegationsPage,
@@ -181,6 +205,12 @@ const Home: React.FC<HomeProps> = () => {
       refetchFunction: refetchFinalityProvidersData,
     });
     handleError({
+      error: dAppsError,
+      hasError: hasDAppsError,
+      errorState: ErrorState.SERVER_ERROR,
+      refetchFunction: refetchDApps,
+    });
+    handleError({
       error: delegationsError,
       hasError: hasDelegationsError,
       errorState: ErrorState.SERVER_ERROR,
@@ -192,6 +222,7 @@ const Home: React.FC<HomeProps> = () => {
       errorState: ErrorState.SERVER_ERROR,
       refetchFunction: refetchGlobalParamsVersion,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     hasFinalityProvidersError,
     hasGlobalParamsVersionError,
@@ -202,6 +233,7 @@ const Home: React.FC<HomeProps> = () => {
   // Initializing btc curve is a required one-time operation
   useEffect(() => {
     initBTCCurve();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Local storage state for delegations
@@ -218,12 +250,35 @@ const Home: React.FC<HomeProps> = () => {
     setConnectModalOpen(true);
   };
 
+  const [burnTokenModalOpen, setBurnTokenModalOpen] = useState(false);
+
+  const handleBurnTokenModal = () => {
+    setBurnTokenModalOpen(true);
+  };
+
+  const [mintTxModalOpen, setMintTxModalOpen] = useState(false);
+
+  const handleMintTxModal = () => {
+    setMintTxModalOpen(true);
+  };
+
+  const handleAddDAppModal = () => {
+    setAddDAppModalOpen(true);
+  };
+  const handleUpdateDAppModal = () => {
+    if (!dApp) {
+      return;
+    }
+    setUpdateDAppModalOpen(true);
+  };
+
   const handleDisconnectBTC = () => {
     setBTCWallet(undefined);
     setBTCWalletBalanceSat(0);
     setBTCWalletNetwork(undefined);
     setPublicKeyNoCoord("");
     setAddress("");
+    setPubkey("");
   };
 
   const handleConnectBTC = async (walletProvider: WalletProvider) => {
@@ -242,9 +297,9 @@ const Home: React.FC<HomeProps> = () => {
       }
 
       const balanceSat = await walletProvider.getBalance();
-      const publicKeyNoCoord = getPublicKeyNoCoord(
-        await walletProvider.getPublicKeyHex(),
-      );
+      const pubkeyHex = await walletProvider.getPublicKeyHex();
+      setPubkey(pubkeyHex);
+      const publicKeyNoCoord = getPublicKeyNoCoord(pubkeyHex);
       setBTCWallet(walletProvider);
       setBTCWalletBalanceSat(balanceSat);
       setBTCWalletNetwork(toNetwork(await walletProvider.getNetwork()));
@@ -268,7 +323,18 @@ const Home: React.FC<HomeProps> = () => {
       });
     }
   };
-
+  const handleDelete = async (id: string) => {
+    await deleteDApp(id);
+    refetchDApps();
+  };
+  const handleAddModal = (value: boolean) => {
+    setAddDAppModalOpen(value);
+    refetchDApps();
+  };
+  const handleUpdateModal = (value: boolean) => {
+    setUpdateDAppModalOpen(value);
+    refetchDApps();
+  };
   // Subscribe to account changes
   useEffect(() => {
     if (btcWallet) {
@@ -282,6 +348,7 @@ const Home: React.FC<HomeProps> = () => {
         once = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [btcWallet]);
 
   // Clean up the local storage delegations
@@ -302,6 +369,7 @@ const Home: React.FC<HomeProps> = () => {
     };
 
     updateDelegationsLocalStorage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [delegations, setDelegationsLocalStorage, delegationsLocalStorage]);
 
   // Finality providers key-value map { pk: moniker }
@@ -327,20 +395,43 @@ const Home: React.FC<HomeProps> = () => {
       className={`overflow-hidden relative h-full min-h-svh z-0 w-full ${network === Network.MAINNET ? "main-app-mainnet" : "main-app-testnet"}`}
     >
       {/*BACKGROUND start here*/}
-      <div className="absolute w-1/3 -top-[10%] aspect-square -z-10 rounded-full bg-[radial-gradient(37.54%_37.54%_at_50.07%_47.01%,rgba(3,185,216,0.30)_0%,rgba(36,93,137,0.00)_100%)]" />
+
+      {/*Left start*/}
+      <div className={"absolute -z-10 left-[9%] top-[5%]"}>
+        <div className="absolute h-full bottom-1/2 left-1/2 -translate-x-1/2 aspect-square rounded-full bg-[radial-gradient(37.54%_37.54%_at_50.07%_47.01%,rgba(3,185,216,0.30)_0%,rgba(36,93,137,0.00)_100%)]" />
+        <Image alt={"stone"} src={stone} />
+
+        {/*Radiants*/}
+        {/*in the middle*/}
+        <div
+          className={
+            "absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-1/2 h-[90%] opacity-[16%] aspect-square rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,#F9B55F_0%,rgba(249,181,95,0.00)_100%)] mix-blend-screen blur-[150px]"
+          }
+        />
+        {/*on the left*/}
+        <div
+          className={
+            "absolute rounded-full h-[200%] aspect-square bg-[radial-gradient(50%_50%_at_50%_50%,#D9D9D9_0%,rgba(217,217,217,0.00)_100%)] top-1/2 -translate-y-1/2 right-1/2 opacity-[30%] mix-blend-hard-light blur-[100px]"
+          }
+        />
+      </div>
+      {/*Left end*/}
+
+      {/*Right start*/}
       <Image
-        className={"absolute -z-10 left-[9%] top-[5%]"}
-        alt={"stone"}
-        src={stone}
-      />
-      <Image
-        className={"absolute -z-10 -right-[9%] -bottom-[17%] grayscale"}
+        className={
+          "absolute -z-10 -right-[9%] top-[70vh] grayscale-[100%] brightness-75"
+        }
         alt={"earth"}
         src={earth}
       />
+      {/*Right end*/}
+
       {/*BACKGROUND end here*/}
-      <NetworkBadge />
+      {/*<NetworkBadge />*/}
       <Header
+        onOpenBurnTokenModal={handleBurnTokenModal}
+        onOpenMintTxModal={handleMintTxModal}
         onConnect={handleConnectModal}
         onDisconnect={handleDisconnectBTC}
         address={address}
@@ -348,10 +439,16 @@ const Home: React.FC<HomeProps> = () => {
       />
       <div className="container mx-auto flex justify-center p-6">
         <div className="container flex flex-col gap-6">
-          <div className={"flex gap-4 items-end"}>
+          <div
+            className={
+              "flex gap-4 items-end max-lg:flex-col-reverse max-lg:items-stretch"
+            }
+          >
             <div className={"space-y-2 flex-1"}>
-              <h1 className={"text-[34px] font-medium"}>BTC Staking</h1>
-              <p>
+              <h1 className={"text-3xl md:text-[34px] font-medium"}>
+                BTC Staking
+              </h1>
+              {/* <p>
                 Select a finality provider or{" "}
                 <a
                   href="https://github.com/babylonchain/networks/tree/main/bbn-test-4/finality-providers"
@@ -362,7 +459,7 @@ const Home: React.FC<HomeProps> = () => {
                   create your own
                 </a>
                 .
-              </p>
+              </p> */}
             </div>
             <Stats />
           </div>
@@ -376,8 +473,15 @@ const Home: React.FC<HomeProps> = () => {
           <Staking
             btcHeight={paramWithContext?.currentHeight}
             finalityProviders={finalityProviders?.finalityProviders}
+            dApps={dApps?.dApps}
+            isLoadingDApps={isLoadingCurrentDApps}
             isWalletConnected={!!btcWallet}
+            dApp={dApp}
+            setDApp={setDApp}
             onConnect={handleConnectModal}
+            onAdd={handleAddDAppModal}
+            onUpdate={handleUpdateDAppModal}
+            onDelete={handleDelete}
             finalityProvidersFetchNext={fetchNextFinalityProvidersPage}
             finalityProvidersHasNext={hasNextFinalityProvidersPage}
             finalityProvidersIsFetchingMore={
@@ -424,13 +528,35 @@ const Home: React.FC<HomeProps> = () => {
           /> */}
         </div>
       </div>
-      <FAQ />
+
+      {/*<FAQ />*/}
       <Footer />
+      <BurnTokenModal
+        btcWalletNetwork={btcWalletNetwork}
+        open={burnTokenModalOpen}
+        onClose={setBurnTokenModalOpen}
+        btcAddress={address}
+        signPsbt={btcWallet?.signPsbt}
+      />
+      <MintTxModal
+        btcWalletNetwork={btcWalletNetwork}
+        open={mintTxModalOpen}
+        onClose={setMintTxModalOpen}
+        btcAddress={address}
+        btcPublicKey={pubkey}
+        signPsbt={btcWallet?.signPsbt}
+      />
       <ConnectModal
         open={connectModalOpen}
         onClose={setConnectModalOpen}
         onConnect={handleConnectBTC}
         connectDisabled={!!address}
+      />
+      <AddDAppModal open={addDAppModalOpen} onClose={handleAddModal} />
+      <UpdateDAppModal
+        open={updateDAppModalOpen}
+        onClose={handleUpdateModal}
+        dApp={dApp}
       />
       <ErrorModal
         open={isErrorOpen}

@@ -1,61 +1,54 @@
-import {
-  BsDiscord,
-  BsGithub,
-  BsLinkedin,
-  BsMedium,
-  BsTelegram,
-} from "react-icons/bs";
+import { BsDiscord, BsGithub, BsTelegram } from "react-icons/bs";
 import { FaXTwitter } from "react-icons/fa6";
 import { GoHome } from "react-icons/go";
 import { IoMdBook } from "react-icons/io";
-import { MdAlternateEmail } from "react-icons/md";
 
 import { useTerms } from "@/app/context/Terms/TermsContext";
 
 const iconLinks = [
   {
     name: "Website",
-    url: "https://babylonchain.io",
+    url: "https://scalar.org/",
     Icon: GoHome,
   },
   {
     name: "X",
-    url: "https://twitter.com/babylon_chain",
+    url: "https://x.com/scalarprotocol",
     Icon: FaXTwitter,
   },
   {
     name: "GitHub",
-    url: "https://github.com/babylonchain",
+    url: "https://github.com/scalarorg/",
     Icon: BsGithub,
   },
   {
     name: "Telegram",
-    url: "https://t.me/babyloncommunity",
+    url: "https://t.me/scalarchat",
     Icon: BsTelegram,
   },
-  {
-    name: "LinkedIn",
-    url: "https://www.linkedin.com/company/babylon-chain/",
-    Icon: BsLinkedin,
-  },
-  {
-    name: "Medium",
-    url: "https://medium.com/babylonchain-io",
-    Icon: BsMedium,
-  },
+  // {
+  //   name: "LinkedIn",
+  //   url: "https://www.linkedin.com/company/",
+  //   Icon: BsLinkedin,
+  // },
+  // {
+  //   name: "Medium",
+  //   url: "https://medium.com/",
+  //   Icon: BsMedium,
+  // },
   {
     name: "Docs",
-    url: "https://docs.babylonchain.io/",
+    url: "https://scalar.gitbook.io/scalar",
     Icon: IoMdBook,
   },
-  {
-    name: "Email",
-    url: "mailto:contact@babylonchain.io",
-    Icon: MdAlternateEmail,
-  },
+  // {
+  //   name: "Email",
+  //   url: "mailto:contact@.io",
+  //   Icon: MdAlternateEmail,
+  // },
   {
     name: "Discord",
-    url: "https://discord.com/invite/babylonglobal",
+    url: "https://discord.com/invite/wzzYhgCggD",
     Icon: BsDiscord,
   },
 ];
