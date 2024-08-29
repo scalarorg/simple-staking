@@ -1,4 +1,4 @@
 [submodule "remotebtclib"]
 	path = remotebtclib
-	url = git@github.com:scalarorg/remotebtclib.git
-	branch = refactor-lib
+	url = https://github.com/scalarorg/remotebtclib.git
+	branch = main

@@ -2,7 +2,7 @@
   "chains": [
     {
       "name": "ethereum-sepolia",
-      "chainId": "aa36a7"
+      "chainId": "11155111"
     }
   ]
 }

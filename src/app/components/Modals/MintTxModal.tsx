@@ -177,7 +177,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
         quorum,
         tag,
         version,
-        destinationChainId,
+        Number(destinationChainId).toString(16), // Convert to hex
         tokenReceiverAddressWithout0x,
         smartContractAddressWithout0x,
         mintingAmount,
