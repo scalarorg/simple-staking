@@ -419,7 +419,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                 name="mintingAmount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Minting amount (sBTC)</FormLabel>
+                    <FormLabel>Minting amount</FormLabel>
                     <FormControl>
                       <Input
                         inputMode="numeric"
