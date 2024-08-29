@@ -1,12 +1,22 @@
 # Step 1. Rebuild the source code only when needed
 FROM node:22-alpine3.19 AS builder
 
-WORKDIR /app
+RUN apk add python3 make gcc g++
 
+WORKDIR /app
+COPY remotebtclib ./remotebtclib
+
+WORKDIR /app/remotebtclib/bitcoin-flow
+RUN yarn
+WORKDIR /app/remotebtclib/vault
+RUN yarn
+
+WORKDIR /app
 COPY package.json yarn.lock* ./
 # Omit --production flag for TypeScript devDependencies
 RUN yarn --frozen-lockfile
 
+COPY chains ./chains
 COPY src ./src
 COPY public ./public
 COPY next.config.mjs .
