@@ -31,18 +31,18 @@ export const FinalityProviders: React.FC<FinalityProvidersProps> = ({
 
   return (
     <>
-      <p>
-        Select a finality provider or{" "}
-        <a
-          href="https://github.com/babylonchain/networks/tree/main/bbn-test-4/finality-providers"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="sublink text-primary hover:underline"
-        >
-          create your own
-        </a>
-        .
-      </p>
+      {/*<p>*/}
+      {/*  Select a finality provider or{" "}*/}
+      {/*  <a*/}
+      {/*    href="https://github.com/babylonchain/networks/tree/main/bbn-test-4/finality-providers"*/}
+      {/*    target="_blank"*/}
+      {/*    rel="noopener noreferrer"*/}
+      {/*    className="sublink text-primary hover:underline"*/}
+      {/*  >*/}
+      {/*    create your own*/}
+      {/*  </a>*/}
+      {/*  .*/}
+      {/*</p>*/}
       <div className="hidden gap-2 px-4 lg:grid lg:grid-cols-stakingFinalityProvidersDesktop">
         <p>Finality Provider</p>
         <p>BTC PK</p>

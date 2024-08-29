@@ -3,9 +3,12 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { networks } from "bitcoinjs-lib";
 import { initBTCCurve } from "btc-staking-ts";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 
+import earth from "@/app/assets/earth.webp";
+import stone from "@/app/assets/stone.webp";
 import { network } from "@/config/network.config";
 import { getCurrentGlobalParamsVersion } from "@/utils/globalParams";
 import { calculateDelegationsDiff } from "@/utils/local_storage/calculateDelegationsDiff";
@@ -321,8 +324,21 @@ const Home: React.FC<HomeProps> = () => {
 
   return (
     <main
-      className={`relative h-full min-h-svh w-full ${network === Network.MAINNET ? "main-app-mainnet" : "main-app-testnet"}`}
+      className={`overflow-hidden relative h-full min-h-svh z-0 w-full ${network === Network.MAINNET ? "main-app-mainnet" : "main-app-testnet"}`}
     >
+      {/*BACKGROUND start here*/}
+      <div className="absolute w-1/3 -top-[10%] aspect-square -z-10 rounded-full bg-[radial-gradient(37.54%_37.54%_at_50.07%_47.01%,rgba(3,185,216,0.30)_0%,rgba(36,93,137,0.00)_100%)]" />
+      <Image
+        className={"absolute -z-10 left-[9%] top-[5%]"}
+        alt={"stone"}
+        src={stone}
+      />
+      <Image
+        className={"absolute -z-10 -right-[9%] -bottom-[17%] grayscale"}
+        alt={"earth"}
+        src={earth}
+      />
+      {/*BACKGROUND end here*/}
       <NetworkBadge />
       <Header
         onConnect={handleConnectModal}
@@ -332,7 +348,24 @@ const Home: React.FC<HomeProps> = () => {
       />
       <div className="container mx-auto flex justify-center p-6">
         <div className="container flex flex-col gap-6">
-          <Stats />
+          <div className={"flex gap-4 items-end"}>
+            <div className={"space-y-2 flex-1"}>
+              <h1 className={"text-[34px] font-medium"}>BTC Staking</h1>
+              <p>
+                Select a finality provider or{" "}
+                <a
+                  href="https://github.com/babylonchain/networks/tree/main/bbn-test-4/finality-providers"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sublink text-primary hover:underline"
+                >
+                  create your own
+                </a>
+                .
+              </p>
+            </div>
+            <Stats />
+          </div>
           {address && (
             <Summary
               address={address}

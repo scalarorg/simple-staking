@@ -1,6 +1,7 @@
 import Image from "next/image";
 
-import connectIcon from "./connect-icon.svg";
+import { buttonStyles } from "@/app/scalar/theme";
+
 import walletIcon from "./wallet-icon.svg";
 
 interface WalletNotConnectedProps {
@@ -12,17 +13,21 @@ export const WalletNotConnected: React.FC<WalletNotConnectedProps> = ({
 }) => {
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 py-12">
-        <div className="rounded-full bg-base-200 p-4">
-          <Image src={walletIcon} alt="Wallet" width={32} height={32} />
-        </div>
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 py-12">
+        <Image src={walletIcon} alt="Wallet" width={72} height={72} />
         <h3 className="font-bold">Connect wallet</h3>
-        <p className="text-center text-sm font-light dark:text-neutral-content">
+        <p className="text-center text-sm font-light dark:text-neutral-content !text-[#DDDDDD]">
           Please connect wallet to start staking
         </p>
       </div>
-      <button className="btn-primary btn" onClick={onConnect}>
-        <Image src={connectIcon} alt="Connect wallet" />
+      <button
+        className={`
+                btn-primary btn text-lg
+                ${buttonStyles}
+                `}
+        onClick={onConnect}
+      >
+        {/*<Image src={connectIcon} alt="Connect wallet" />*/}
         Connect wallet
       </button>
     </div>

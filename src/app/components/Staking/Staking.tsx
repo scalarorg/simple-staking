@@ -1,14 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { Transaction, networks } from "bitcoinjs-lib";
+import { networks, Transaction } from "bitcoinjs-lib";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import { Tooltip } from "react-tooltip";
 import { useLocalStorage } from "usehooks-ts";
 
 import { OVERFLOW_HEIGHT_WARNING_THRESHOLD } from "@/app/common/constants";
 import { LoadingView } from "@/app/components/Loading/Loading";
-import { useError } from "@/app/context/Error/ErrorContext";
 import { useGlobalParams } from "@/app/context/api/GlobalParamsProvider";
 import { useStakingStats } from "@/app/context/api/StakingStatsProvider";
+import { useError } from "@/app/context/Error/ErrorContext";
+import { fpTableStyles, stakingStyles } from "@/app/scalar/theme";
 import { Delegation } from "@/app/types/delegations";
 import { ErrorHandlerParam, ErrorState } from "@/app/types/errors";
 import { FinalityProvider as FinalityProviderInterface } from "@/app/types/finalityProviders";
@@ -19,8 +20,8 @@ import {
 } from "@/utils/delegations/signStakingTx";
 import { getFeeRateFromMempool } from "@/utils/getFeeRateFromMempool";
 import {
-  ParamsWithContext,
   getCurrentGlobalParamsVersion,
+  ParamsWithContext,
 } from "@/utils/globalParams";
 import { isStakingSignReady } from "@/utils/isStakingSignReady";
 import { toLocalStorageDelegation } from "@/utils/local_storage/toLocalStorageDelegation";
@@ -34,10 +35,10 @@ import { StakingAmount } from "./Form/StakingAmount";
 import { StakingFee } from "./Form/StakingFee";
 import { StakingTime } from "./Form/StakingTime";
 import { Message } from "./Form/States/Message";
-import { WalletNotConnected } from "./Form/States/WalletNotConnected";
 import stakingCapReached from "./Form/States/staking-cap-reached.svg";
 import stakingNotStarted from "./Form/States/staking-not-started.svg";
 import stakingUpgrading from "./Form/States/staking-upgrading.svg";
+import { WalletNotConnected } from "./Form/States/WalletNotConnected";
 
 interface OverflowProperties {
   isHeightCap: boolean;
@@ -637,10 +638,20 @@ export const Staking: React.FC<StakingProps> = ({
   };
 
   return (
-    <div className="card flex flex-col gap-2 bg-base-300 p-4 shadow-sm lg:flex-1">
-      <h3 className="mb-4 font-bold">Staking</h3>
+    <div
+      className={`
+        card flex flex-col gap-2 bg-base-300 p-4 shadow-sm lg:flex-1
+        ${stakingStyles}
+        `}
+    >
+      {/*<h3 className="mb-4 font-bold">Staking</h3>*/}
       <div className="flex flex-col gap-4 lg:flex-row">
-        <div className="flex flex-1 flex-col gap-4 lg:basis-3/5 xl:basis-2/3">
+        <div
+          className={`
+              flex flex-1 flex-col gap-4 lg:basis-3/5 xl:basis-2/3
+              ${fpTableStyles}
+              `}
+        >
           <FinalityProviders
             finalityProviders={finalityProviders}
             selectedFinalityProvider={finalityProvider}
@@ -652,8 +663,13 @@ export const Staking: React.FC<StakingProps> = ({
             }}
           />
         </div>
-        <div className="divider m-0 lg:divider-horizontal lg:m-0" />
-        <div className="flex flex-1 flex-col gap-4 lg:basis-2/5 xl:basis-1/3">
+        {/*<div className="divider m-0 lg:divider-horizontal lg:m-0" />*/}
+        <div
+          className={`
+                flex flex-1 flex-col gap-4 lg:basis-2/5 xl:basis-1/3
+                ${fpTableStyles}
+                `}
+        >
           {renderStakingForm()}
         </div>
       </div>

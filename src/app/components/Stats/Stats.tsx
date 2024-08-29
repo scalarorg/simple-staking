@@ -9,6 +9,13 @@ import {
   useStakingStats,
 } from "@/app/context/api/StakingStatsProvider";
 import { useBtcHeight } from "@/app/context/mempool/BtcHeightProvider";
+import {
+  statsContainerStyles,
+  statsItemStyles,
+  statsItemTitleStyles,
+  statsItemValueStyles,
+  statsSectionStyles,
+} from "@/app/scalar/theme";
 import { GlobalParamsVersion } from "@/app/types/globalParams";
 import { getNetworkConfig } from "@/config/network.config";
 import { satoshiToBtc } from "@/utils/btcConversions";
@@ -167,19 +174,42 @@ export const Stats: React.FC = () => {
   ];
 
   return (
-    <div className="card flex flex-col gap-4 bg-base-300 p-1 shadow-sm lg:flex-row lg:justify-between">
+    <div
+      className={`
+        card flex flex-col gap-4 bg-base-300 p-1 shadow-sm lg:flex-row lg:justify-between
+        ${statsContainerStyles}
+        `}
+    >
       {sections.map((section, index) => (
         <div
           key={index}
-          className="card flex justify-between bg-base-400 p-4 text-sm md:flex-row"
+          className={`
+            card flex justify-between bg-base-400 p-4 text-sm md:flex-row
+            ${statsSectionStyles}
+            `}
         >
           {section.map((subSection, subIndex) => (
             <Fragment key={subSection.title}>
-              <div className="flex items-center gap-2 md:flex-1 md:flex-col lg:flex-initial lg:flex-row flex-wrap justify-center">
+              <div
+                className={`
+                    flex items-center gap-2 md:flex-1 md:flex-col lg:flex-initial lg:flex-row flex-wrap justify-center 
+                    ${statsItemStyles}
+                    `}
+              >
                 <div className="flex items-center gap-2">
-                  <Image src={subSection.icon} alt={subSection.title} />
+                  <Image
+                    width={16}
+                    height={16}
+                    src={subSection.icon}
+                    alt={subSection.title}
+                  />
                   <div className="flex items-center gap-1">
-                    <p className="dark:text-neutral-content">
+                    <p
+                      className={`
+                          dark:text-neutral-content
+                          ${statsItemTitleStyles}
+                          `}
+                    >
                       {subSection.title}
                     </p>
                     {subSection.tooltip && (
@@ -202,14 +232,14 @@ export const Stats: React.FC = () => {
                     {isLoading ? (
                       <span className="loading loading-spinner text-primary" />
                     ) : (
-                      <strong>{subSection.value}</strong>
+                      <p className={statsItemValueStyles}>{subSection.value}</p>
                     )}
                   </p>
                 </div>
               </div>
-              {subIndex !== section.length - 1 && (
-                <div className="divider mx-0 my-2 md:divider-horizontal" />
-              )}
+              {/*{subIndex !== section.length - 1 && (*/}
+              {/*  <div className="divider mx-0 my-2 md:divider-horizontal" />*/}
+              {/*)}*/}
             </Fragment>
           ))}
         </div>
