@@ -1,5 +1,5 @@
 # Step 1. Rebuild the source code only when needed
-FROM node:22-alpine3.19 AS builder
+FROM node:20-alpine3.19 AS builder
 
 RUN apk add python3 make gcc g++
 
@@ -24,6 +24,7 @@ COPY tsconfig.json .
 COPY tailwind.config.ts .
 COPY postcss.config.js .
 COPY docker-entrypoint.sh .
+COPY .env .
 
 # We replace NEXT_PUBLIC_* variables here with placeholders
 # as next.js automatically replaces those during building
