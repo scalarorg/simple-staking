@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { networks } from "bitcoinjs-lib";
+import axios from "axios";
 import { ethers } from "ethers";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -20,12 +20,10 @@ import {
   FormMessage,
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
-import { getBtcNetwork } from "@/utils/bitcoin";
 import { useEthersProvider, useEthersSigner } from "@/utils/ethers";
 import { UnisatOptions } from "@/utils/wallet/wallet_provider";
 
-import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
-import { UnStaker, getPsbtByHex } from "vault/index";
+import { getPsbtByHex } from "vault/index";
 
 import { GeneralModal } from "./GeneralModal";
 
@@ -36,7 +34,6 @@ interface BurnTokenModalProps {
   open: boolean;
   onClose: (value: boolean) => void;
   btcAddress: string | undefined;
-  btcWalletNetwork: networks.Network | undefined;
   signPsbt:
     | ((psbt: string, options?: UnisatOptions) => Promise<string>)
     | undefined;
@@ -52,17 +49,12 @@ const FormSchema = z.object({
   btcReceiverAddress: z.string({
     required_error: "Please enter your btc receiver address.",
   }),
-  covenantPublicKeys: z.array(z.string()),
-  quorum: z.coerce.number({
-    required_error: "Please enter the quorum.",
-  }),
 });
 
 export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   open,
   onClose,
   btcAddress,
-  btcWalletNetwork,
   signPsbt,
 }) => {
   const account = useAccount();
@@ -81,8 +73,6 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
       vaultTxHex: "",
       btcStakerAddress: "",
       btcReceiverAddress: "",
-      quorum: Number(process.env.NEXT_PUBLIC_QUORUM!) || 0,
-      covenantPublicKeys: process.env.NEXT_PUBLIC_COVENANT_PUBKEYS!.split(","),
     },
   });
 
@@ -143,43 +133,33 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
         throw new Error("Contracts not initialized");
       }
 
-      const {
-        btcStakerAddress,
-        btcReceiverAddress,
-        vaultTxHex,
-        quorum,
-        covenantPublicKeys,
-      } = data;
+      const { btcStakerAddress, btcReceiverAddress, vaultTxHex } = data;
+
+      const url = window.location.origin;
 
       setStatus("Estimating the fee");
       setIsBurning(true);
 
-      let feeRate = (await getFeesRecommended(getBtcNetwork(btcWalletNetwork)))
-        .fastestFee; // Get this from Mempool API
-      const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
-
       // Step 1: staker create unbonding transaction
-      const unStaker = new UnStaker(
+      const unsignedPsbtResult = await axios.post(`${url}/api/unbond-tx-psbt`, {
         btcStakerAddress,
-        vaultTxHex,
-        covenantPublicKeys,
-        quorum,
-      );
-
-      const {
-        psbt: unsignedPsbt,
-        // feeEstimate: fee,
-        // burningLeaf,
-      } = await unStaker.getUnsignedBurningPsbt(
         btcReceiverAddress,
-        feeRate,
-        rbf,
-      );
+        vaultTxHex,
+      });
+
+      const unsignedUnbondPsbtHex =
+        unsignedPsbtResult?.data?.data?.unsignedUnbondPsbtHex;
+
+      if (!unsignedUnbondPsbtHex) {
+        throw new Error(
+          "Failed to get the unsigned psbt: " + unsignedPsbtResult?.data?.error,
+        );
+      }
 
       setStatus("Signing the PSBT");
 
       // Step 2: Sign the PSBT
-      const hexSignedPsbt = await signPsbt!(unsignedPsbt.toHex(), {
+      const hexSignedPsbt = await signPsbt!(unsignedUnbondPsbtHex, {
         autoFinalized: false,
         toSignInputs: [
           {

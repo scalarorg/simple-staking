@@ -532,7 +532,6 @@ const Home: React.FC<HomeProps> = () => {
       {/*<FAQ />*/}
       <Footer />
       <BurnTokenModal
-        btcWalletNetwork={btcWalletNetwork}
         open={burnTokenModalOpen}
         onClose={setBurnTokenModalOpen}
         btcAddress={address}

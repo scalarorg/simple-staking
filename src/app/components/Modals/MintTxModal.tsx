@@ -158,8 +158,6 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
         servicePublicKey,
       });
 
-      console.log("unsignedPsbtResult", unsignedPsbtResult);
-
       const unsignedVaultPsbtHex =
         unsignedPsbtResult?.data?.data?.unsignedVaultPsbtHex;
 
