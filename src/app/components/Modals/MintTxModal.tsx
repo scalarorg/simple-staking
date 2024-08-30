@@ -34,13 +34,11 @@ import {
 } from "@/app/components/ui/popover";
 import { toast } from "@/app/components/ui/use-toast";
 import { cn } from "@/utils";
-import { getBtcNetwork } from "@/utils/bitcoin";
 import { Network } from "@/utils/wallet/wallet_provider";
 
 import Mainnet from "@/../chains/mainnet.json";
 import Testnet from "@/../chains/testnet.json";
-import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
-import { Staker, UTXO, getPsbtByHex, getUTXOs } from "vault/index";
+import { getPsbtByHex } from "vault/index";
 
 import { GeneralModal } from "./GeneralModal";
 
@@ -87,16 +85,6 @@ const FormSchema = z.object({
     .positive({
       message: "Please enter a positive number.",
     }),
-  quorum: z.coerce.number({
-    required_error: "Please enter the quorum.",
-  }),
-  tag: z.string({
-    required_error: "Please enter the tag.",
-  }),
-  version: z.coerce.number({
-    required_error: "Please enter the version.",
-  }),
-  covenantPublicKeys: z.array(z.string()),
   servicePublicKey: z.string({
     required_error: "Please enter your service public key.",
   }),
@@ -129,10 +117,6 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       smartContractAddress: "",
       stakingAmount: Number(process.env.NEXT_PUBLIC_STAKING_AMOUNT || 0),
       mintingAmount: Number(process.env.NEXT_PUBLIC_MINTING_AMOUNT || 0),
-      quorum: Number(process.env.NEXT_PUBLIC_QUORUM || 0),
-      tag: process.env.NEXT_PUBLIC_TAG || "",
-      version: Number(process.env.NEXT_PUBLIC_VERSION || 0),
-      covenantPublicKeys: process.env.NEXT_PUBLIC_COVENANT_PUBKEYS?.split(","),
       servicePublicKey: process.env.NEXT_PUBLIC_SERVICE_PUBKEY || "",
     },
   });
@@ -148,56 +132,45 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
     const {
       sourceChainAddress,
       sourceChainPublicKey,
-      servicePublicKey,
       smartContractAddress,
-      mintingAmount,
-      version,
-      tag,
-      covenantPublicKeys,
-      quorum,
       tokenReceiverAddress,
       destinationChainId,
       stakingAmount,
+      mintingAmount,
+      servicePublicKey,
     } = data;
-
-    // Remove 0x prefix
-    const smartContractAddressWithout0x = smartContractAddress.slice(2);
-    const tokenReceiverAddressWithout0x = tokenReceiverAddress.slice(2);
 
     try {
       if (!btcWalletNetwork) {
         throw new Error("Unsupported network");
       }
 
-      const staker = new Staker(
+      const url = window.location.origin;
+
+      const unsignedPsbtResult = await axios.post(`${url}/api/mint-tx-psbt`, {
         sourceChainAddress,
         sourceChainPublicKey,
-        servicePublicKey,
-        covenantPublicKeys,
-        quorum,
-        tag,
-        version,
-        Number(destinationChainId).toString(16), // Convert to hex
-        tokenReceiverAddressWithout0x,
-        smartContractAddressWithout0x,
+        destinationChainId,
+        smartContractAddress,
+        tokenReceiverAddress,
+        stakingAmount,
         mintingAmount,
-      );
+        servicePublicKey,
+      });
 
-      const regularUTXOs: UTXO[] = await getUTXOs(sourceChainAddress);
+      console.log("unsignedPsbtResult", unsignedPsbtResult);
 
-      let feeRate = (await getFeesRecommended(getBtcNetwork(btcWalletNetwork)))
-        .fastestFee; // Get this from Mempool API
-      const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
-      const { psbt: unsignedVaultPsbt, feeEstimate: fee } =
-        await staker.getUnsignedVaultPsbt(
-          regularUTXOs,
-          stakingAmount,
-          feeRate,
-          rbf,
+      const unsignedVaultPsbtHex =
+        unsignedPsbtResult?.data?.data?.unsignedVaultPsbtHex;
+
+      if (!unsignedVaultPsbtHex) {
+        throw new Error(
+          "Failed to get the unsigned psbt: " + unsignedPsbtResult?.data?.error,
         );
+      }
 
       // Simulate signing
-      const hexSignedPsbt = await signPsbt?.(unsignedVaultPsbt.toHex());
+      const hexSignedPsbt = await signPsbt?.(unsignedVaultPsbtHex);
 
       if (!hexSignedPsbt) {
         throw new Error("Failed to sign the psbt");
@@ -212,13 +185,10 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       // this demo: https://demo.unisat.io/
       // It support sign psbt, push psbt or push tx to bitcoin network
 
-      const url = window.location.origin;
-
       // Test mempool acceptance
       // const result = await axios.post(`${url}/api/test-transaction`, {
       //   hexTxFromPsbt,
       // });
-
       // toast({
       //   title: "Test mempool acceptance",
       //   description: (

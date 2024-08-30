@@ -1,4 +1,4 @@
-import { networks } from "bitcoinjs-lib";
+import { Network, networks } from "bitcoinjs-lib";
 
 export function getBtcNetwork(network?: networks.Network): string {
   switch (network) {
@@ -11,4 +11,27 @@ export function getBtcNetwork(network?: networks.Network): string {
     default:
       throw new Error("Unsupported network");
   }
+}
+
+export function getBTCNetworkFromAddress(address: string): string {
+  const network = getAddressNetworkType(address);
+
+  return getBtcNetwork(network);
+}
+
+export function getAddressNetworkType(address: string): Network {
+  // mainnet
+  if (address.startsWith("bc1q")) {
+    return networks.bitcoin;
+  }
+  // testnet
+  else if (address.startsWith("tb1q")) {
+    return networks.testnet;
+  }
+
+  // regtest
+  else if (address.startsWith("bcrt1q")) {
+    return networks.regtest;
+  }
+  throw new Error(`Unknown address: ${address}`);
 }
