@@ -24,7 +24,6 @@ COPY tsconfig.json .
 COPY tailwind.config.ts .
 COPY postcss.config.js .
 COPY docker-entrypoint.sh .
-COPY .env .
 
 # We replace NEXT_PUBLIC_* variables here with placeholders
 # as next.js automatically replaces those during building

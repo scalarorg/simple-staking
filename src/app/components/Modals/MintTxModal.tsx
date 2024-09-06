@@ -33,6 +33,7 @@ import {
   PopoverTrigger,
 } from "@/app/components/ui/popover";
 import { toast } from "@/app/components/ui/use-toast";
+import { ProjectENV } from "@/env";
 import { cn } from "@/utils";
 import { Network } from "@/utils/wallet/wallet_provider";
 
@@ -98,7 +99,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   btcWalletNetwork,
   signPsbt,
 }) => {
-  let network = process.env.NEXT_PUBLIC_NETWORK;
+  let network = ProjectENV.NEXT_PUBLIC_NETWORK;
 
   let chains;
   if (network === "mainnet") {
@@ -115,9 +116,9 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       destinationChainId: "",
       tokenReceiverAddress: "",
       smartContractAddress: "",
-      stakingAmount: Number(process.env.NEXT_PUBLIC_STAKING_AMOUNT || 0),
-      mintingAmount: Number(process.env.NEXT_PUBLIC_MINTING_AMOUNT || 0),
-      servicePublicKey: process.env.NEXT_PUBLIC_SERVICE_PUBKEY || "",
+      stakingAmount: Number(ProjectENV.NEXT_PUBLIC_STAKING_AMOUNT || 0),
+      mintingAmount: Number(ProjectENV.NEXT_PUBLIC_MINTING_AMOUNT || 0),
+      servicePublicKey: ProjectENV.NEXT_PUBLIC_SERVICE_PUBKEY || "",
     },
   });
 
@@ -199,7 +200,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       // });
 
       // Send to bitcoin network
-      // await utils.node.sendToBitcoinNetwork(process.env.url!, hexTxfromPsbt);
+      // await utils.node.sendToBitcoinNetwork(ProjectENV.url!, hexTxfromPsbt);
       const result = await axios.post(`${url}/api/broadcast-btc-transaction`, {
         hexTxFromPsbt,
       });

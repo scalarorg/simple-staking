@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
+import { ProjectENV } from "@/env";
 import { useEthersProvider, useEthersSigner } from "@/utils/ethers";
 import { UnisatOptions } from "@/utils/wallet/wallet_provider";
 
@@ -78,8 +79,8 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
 
   useEffect(() => {
     if (provider && signer) {
-      const burnContractAddress = process.env.NEXT_PUBLIC_BURN_CONTRACT_ADDRESS;
-      const sBTCContractAddress = process.env.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
+      const burnContractAddress = ProjectENV.NEXT_PUBLIC_BURN_CONTRACT_ADDRESS;
+      const sBTCContractAddress = ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
 
       if (!burnContractAddress || !sBTCContractAddress) {
         throw new Error("Missing contract address");
@@ -109,21 +110,21 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     try {
-      const burnContractAddress = process.env.NEXT_PUBLIC_BURN_CONTRACT_ADDRESS;
-      const sBTCContractAddress = process.env.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
+      const burnContractAddress = ProjectENV.NEXT_PUBLIC_BURN_CONTRACT_ADDRESS;
+      const sBTCContractAddress = ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
 
       if (!burnContractAddress || !sBTCContractAddress) {
         throw new Error("Missing contract address");
       }
 
-      const destinationChain = process.env.NEXT_PUBLIC_BTC_CHAIN_NAME;
-      const destinationAddress = process.env.NEXT_PUBLIC_BTC_ADDRESS;
+      const destinationChain = ProjectENV.NEXT_PUBLIC_BTC_CHAIN_NAME;
+      const destinationAddress = ProjectENV.NEXT_PUBLIC_BTC_ADDRESS;
 
       if (!destinationChain || !destinationAddress) {
         throw new Error("Missing destination chain or address");
       }
 
-      const burnAmount = process.env.NEXT_PUBLIC_BURNING_AMOUNT;
+      const burnAmount = ProjectENV.NEXT_PUBLIC_BURNING_AMOUNT;
 
       if (!burnAmount) {
         throw new Error("Missing burn amount");

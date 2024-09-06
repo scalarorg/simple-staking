@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "clean": "rm -r node_modules",
@@ -26,6 +26,7 @@
     "@keystonehq/animated-qr": "^0.8.6",
     "@keystonehq/keystone-sdk": "^0.4.1",
     "@keystonehq/sdk": "0.21.3",
+    "@mempool/mempool.js": "^2.3.0",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-popover": "^1.1.1",
@@ -42,6 +43,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
+    "dotenv": "^16.4.5",
     "ethers": "^6.13.2",
     "framer-motion": "^11.1.9",
     "lucide-react": "^0.428.0",
@@ -57,6 +59,7 @@
     "react-tooltip": "^5.26.4",
     "sharp": "^0.33.4",
     "tailwind-merge": "^2.5.2",
+    "tiny-secp256k1": "^2.2.3",
     "url-safe-base64": "^1.3.0",
     "usehooks-ts": "^3.0.2",
     "viem": "^2.19.8",
@@ -98,5 +101,6 @@
     "ts-jest": "^29.1.4",
     "ts-node": "^10.9.2",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }

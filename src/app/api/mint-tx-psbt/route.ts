@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { ProjectENV } from "@/env";
 import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 
 import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
@@ -7,11 +8,11 @@ import { getUTXOs, Staker, UTXO } from "vault/index";
 
 export async function POST(request: Request) {
   try {
-    const quorum = Number(process.env.NEXT_PUBLIC_QUORUM!) || 0;
-    const tag = process.env.NEXT_PUBLIC_TAG!;
-    const version = Number(process.env.NEXT_PUBLIC_VERSION!) || 0;
+    const quorum = Number(ProjectENV.NEXT_PUBLIC_QUORUM!) || 0;
+    const tag = ProjectENV.NEXT_PUBLIC_TAG!;
+    const version = Number(ProjectENV.NEXT_PUBLIC_VERSION!) || 0;
     const covenantPublicKeys =
-      process.env.NEXT_PUBLIC_COVENANT_PUBKEYS!.split(",");
+      ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS!.split(",");
 
     const {
       sourceChainAddress,

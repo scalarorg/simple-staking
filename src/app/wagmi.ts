@@ -8,7 +8,7 @@ export function getConfig() {
     connectors: [
       injected(),
       //   walletConnect({
-      //     projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID!,
+      //     projectId: ProjectENV.NEXT_PUBLIC_WC_PROJECT_ID!,
       //   }),
       metaMask(),
     ],

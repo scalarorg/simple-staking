@@ -260,3 +260,5 @@ next-env.d.ts
 
 .env
 .idea/
+
+bun.lockb
