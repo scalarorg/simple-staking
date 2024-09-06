@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { ProjectENV } from "@/env";
-
-import { sendToBitcoinNetwork } from "bitcoin-flow/utils/node";
+import { client } from "./client";
 
 export async function POST(request: Request) {
   try {
@@ -12,13 +10,7 @@ export async function POST(request: Request) {
       throw new Error("Please provide the hex tx from psbt");
     }
 
-    const fullNodeUrl = ProjectENV.NEXT_PUBLIC_BTC_NODE_URL;
-
-    if (!fullNodeUrl) {
-      throw new Error("Please provide the full node url");
-    }
-
-    const response = await sendToBitcoinNetwork(fullNodeUrl, hexTxFromPsbt);
+    const response = await client.command("sendrawtransaction", hexTxFromPsbt);
 
     return NextResponse.json({ status: 200, data: response?.result });
   } catch (error) {

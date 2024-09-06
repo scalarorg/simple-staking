@@ -8,11 +8,11 @@ import { UnStaker } from "vault/index";
 
 export async function POST(request: Request) {
   try {
-    if (!ProjectENV.NEXT_PUBLIC_QUORUM) {
+    if (!ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM) {
       throw new Error("Quorum is not set");
     }
 
-    const quorum = Number(ProjectENV.NEXT_PUBLIC_QUORUM) || 0;
+    const quorum = Number(ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM) || 0;
 
     if (!ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS) {
       throw new Error("Covenant public keys are not set");
