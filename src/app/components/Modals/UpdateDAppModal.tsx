@@ -24,12 +24,14 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
   const [chainName, setChainName] = useState(dApp?.chainName);
   const [btcAddress, setBtcAddress] = useState(dApp?.btcAddress);
   const [btcPubKey, setBtcPubKey] = useState(dApp?.btcPk);
+  const [scAddress, setScAddress] = useState(dApp?.scAddress);
   const [id, setId] = useState(dApp?.id);
   useEffect(() => {
     setChainName(dApp?.chainName);
     setBtcAddress(dApp?.btcAddress);
     setBtcPubKey(dApp?.btcPk);
     setId(dApp?.id);
+    setScAddress(dApp?.scAddress);
   }, [dApp]);
 
   const handleChainNameChange = (input: string) => {
@@ -41,12 +43,17 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
   const handleBtcPubKeyChange = (input: string) => {
     setBtcPubKey(input);
   };
+
+  const handleSmartContractAddressChange = (input: string) => {
+    setScAddress(input);
+  };
+
   const handleUpdate = async () => {
-    if (!id || !chainName || !btcAddress || !btcPubKey) {
+    if (!id || !chainName || !btcAddress || !btcPubKey || !scAddress) {
       console.error("Missing required fields");
       return;
     }
-    await updateDApp(id, chainName, btcAddress, btcPubKey)
+    await updateDApp(id, chainName, btcAddress, btcPubKey, scAddress)
       .then(() => {
         console.log("Successfully update DApp");
         onClose(false);
@@ -86,6 +93,14 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
             onChange={handleBtcPubKeyChange}
             reset={false}
             initValue={btcPubKey || ""}
+          />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <BtcAddress
+            onChange={handleSmartContractAddressChange}
+            reset={false}
+            initValue={scAddress || ""}
+            label="Smatrt Contract Address"
           />
         </div>
       </div>

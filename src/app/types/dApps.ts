@@ -3,6 +3,7 @@ export interface DApp {
   chainName: string;
   btcAddress: string;
   btcPk: string;
+  scAddress: string;
   state: boolean;
 }
 
@@ -25,6 +26,7 @@ export interface UpdatePayload {
   chain_name: string;
   btc_address_hex: string;
   public_key_hex: string;
+  smart_contract_address: string;
 }
 
 export interface DAppAPI {

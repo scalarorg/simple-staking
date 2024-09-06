@@ -27,6 +27,8 @@ export const getDApps = async (): Promise<DApps> => {
     }),
   );
 
+  console.log({ dApps });
+
   return { dApps };
 };
 

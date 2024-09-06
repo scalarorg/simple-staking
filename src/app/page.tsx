@@ -543,6 +543,7 @@ const Home: React.FC<HomeProps> = () => {
         onClose={setMintTxModalOpen}
         btcAddress={address}
         btcPublicKey={pubkey}
+        dApp={dApp}
         signPsbt={btcWallet?.signPsbt}
       />
       <ConnectModal

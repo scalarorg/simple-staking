@@ -33,6 +33,7 @@ import {
   PopoverTrigger,
 } from "@/app/components/ui/popover";
 import { toast } from "@/app/components/ui/use-toast";
+import { DApp as DAppInterface } from "@/app/types/dApps";
 import { ProjectENV } from "@/env";
 import { cn } from "@/utils";
 import { Network } from "@/utils/wallet/wallet_provider";
@@ -50,6 +51,7 @@ interface SendTxModalProps {
   btcPublicKey: string | undefined;
   btcWalletNetwork: networks.Network | undefined;
   signPsbt: ((psbt: string) => Promise<string>) | undefined;
+  dApp?: DAppInterface;
 }
 
 const FormSchema = z.object({
@@ -97,10 +99,10 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   btcAddress,
   btcPublicKey,
   btcWalletNetwork,
+  dApp,
   signPsbt,
 }) => {
   let network = ProjectENV.NEXT_PUBLIC_NETWORK;
-
   let chains;
   if (network === "mainnet") {
     chains = Mainnet.chains;
@@ -123,11 +125,13 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   });
 
   useEffect(() => {
-    if (btcAddress && btcPublicKey) {
+    if (btcAddress && btcPublicKey && dApp) {
       form.setValue("sourceChainAddress", btcAddress);
       form.setValue("sourceChainPublicKey", btcPublicKey);
+      form.setValue("servicePublicKey", dApp.btcAddress);
+      form.setValue("smartContractAddress", dApp.scAddress);
     }
-  }, [btcAddress, btcPublicKey, form]);
+  }, [btcAddress, btcPublicKey, dApp, form]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     const {
@@ -415,7 +419,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                   <FormItem>
                     <FormLabel>BTC Service Pubkey</FormLabel>
                     <FormControl>
-                      <Input placeholder="" {...field} />
+                      <Input disabled placeholder="" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -429,7 +433,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                   <FormItem>
                     <FormLabel>Smart contract address</FormLabel>
                     <FormControl>
-                      <Input placeholder="" {...field} />
+                      <Input disabled placeholder="" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
