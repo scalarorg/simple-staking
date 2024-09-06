@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { toggleDApp } from "@/app/api/toggleDApp";
+import { toggleDApp } from "@/app/api/dApp";
 
 interface ToggleProps {
   state: boolean;

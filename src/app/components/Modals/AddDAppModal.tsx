@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
-import { postDApp } from "@/app/api/postDApps";
+import { postDApp } from "@/app/api/dApp";
 
 import { BtcAddress } from "../Staking/Form/BtcAddress";
 import { BtcPubKey } from "../Staking/Form/BtcPubkey";

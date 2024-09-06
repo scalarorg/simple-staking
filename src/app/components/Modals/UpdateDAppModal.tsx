@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
-import { updateDApp } from "@/app/api/updateDApp";
+import { updateDApp } from "@/app/api/dApp";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 
 import { BtcAddress } from "../Staking/Form/BtcAddress";

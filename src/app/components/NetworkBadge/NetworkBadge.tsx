@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { network } from "@/config/network.config";
+import { GLOBAL_NETWORK_INSTANCE } from "@/config/network.config";
 import { Network } from "@/utils/wallet/wallet_provider";
 
 import testnetIcon from "./testnet-icon.png";
@@ -11,7 +11,7 @@ interface NetworkBadgeProps {}
 export const NetworkBadge: React.FC<NetworkBadgeProps> = () => {
   return (
     <div className="absolute left-2 top-[6rem]">
-      {[Network.SIGNET, Network.TESTNET].includes(network) && (
+      {[Network.SIGNET, Network.TESTNET].includes(GLOBAL_NETWORK_INSTANCE) && (
         <>
           <Image src={testnetIcon} alt="Testnet" className="w-[10rem]" />
           {/* 

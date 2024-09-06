@@ -7,10 +7,11 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 
+import { deleteDApp, getDApps } from "@/app/api/dApp";
 import earth from "@/app/assets/earth.webp";
 import stone from "@/app/assets/stone.webp";
 import { DApp as DAppInterface } from "@/app/types/dApps";
-import { network } from "@/config/network.config";
+import { GLOBAL_NETWORK_INSTANCE } from "@/config/network.config";
 import { getCurrentGlobalParamsVersion } from "@/utils/globalParams";
 import { calculateDelegationsDiff } from "@/utils/local_storage/calculateDelegationsDiff";
 import { getDelegationsLocalStorageKey } from "@/utils/local_storage/getDelegationsLocalStorageKey";
@@ -22,12 +23,10 @@ import {
 } from "@/utils/wallet/index";
 import { Network, WalletProvider } from "@/utils/wallet/wallet_provider";
 
-import { deleteDApp } from "./api/deleteDApp";
-import { getDApps } from "./api/getDApps";
-import { getDelegations, PaginatedDelegations } from "./api/getDelegations";
+import { PaginatedDelegations, getDelegations } from "./api/getDelegations";
 import {
-  getFinalityProviders,
   PaginatedFinalityProviders,
+  getFinalityProviders,
 } from "./api/getFinalityProviders";
 import { getGlobalParams } from "./api/getGlobalParams";
 import { signPsbtTransaction } from "./common/utils/psbt";
@@ -392,7 +391,7 @@ const Home: React.FC<HomeProps> = () => {
 
   return (
     <main
-      className={`overflow-hidden relative h-full min-h-svh z-0 w-full ${network === Network.MAINNET ? "main-app-mainnet" : "main-app-testnet"}`}
+      className={`overflow-hidden relative h-full min-h-svh z-0 w-full ${GLOBAL_NETWORK_INSTANCE === Network.MAINNET ? "main-app-mainnet" : "main-app-testnet"}`}
     >
       {/*BACKGROUND start here*/}
 
