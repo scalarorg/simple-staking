@@ -1,14 +1,17 @@
+import { useFees } from "@mempool/mempool.js/lib/app/bitcoin/fees";
 import { NextResponse } from "next/server";
 
 import { ProjectENV } from "@/env";
-import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 
-import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
 import { getUTXOs, Staker, UTXO } from "vault/index";
 
+import { mempoolAxios } from "./client";
+
 export async function POST(request: Request) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const feesService = useFees(mempoolAxios);
   try {
-    const quorum = Number(ProjectENV.NEXT_PUBLIC_QUORUM!) || 0;
+    const quorum = Number(ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM!) || 0;
     const tag = ProjectENV.NEXT_PUBLIC_TAG!;
     const version = Number(ProjectENV.NEXT_PUBLIC_VERSION!) || 0;
     const covenantPublicKeys =
@@ -45,9 +48,7 @@ export async function POST(request: Request) {
 
     const regularUTXOs: UTXO[] = await getUTXOs(sourceChainAddress);
 
-    let feeRate = (
-      await getFeesRecommended(getBTCNetworkFromAddress(sourceChainAddress))
-    ).fastestFee; // Get this from Mempool API
+    let { fastestFee: feeRate } = await feesService.getFeesRecommended(); // Get this from Mempool API
     const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
     const { psbt: unsignedVaultPsbt, feeEstimate: fee } =
       await staker.getUnsignedVaultPsbt(
