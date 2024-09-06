@@ -15,6 +15,7 @@ interface DAppAPI {
   ChainName: string;
   BTCAddressHex: string;
   PublicKeyHex: string;
+  SmartContractAddress: string;
   State: boolean;
 }
 
@@ -31,9 +32,9 @@ export const getDApps = async (): Promise<DApps> => {
       chainName: da.ChainName,
       btcAddress: da.BTCAddressHex,
       btcPk: da.PublicKeyHex,
+      scAddress: da.SmartContractAddress, //FIXME: scAddress is not defined in DAppAPI
       state: da.State,
     }),
   );
-
   return { dApps };
 };

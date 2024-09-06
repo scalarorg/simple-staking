@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { ProjectENV } from "@/env";
+
 import { sendToBitcoinNetwork } from "bitcoin-flow/utils/node";
 
 export async function POST(request: Request) {
@@ -10,7 +12,7 @@ export async function POST(request: Request) {
       throw new Error("Please provide the hex tx from psbt");
     }
 
-    const fullNodeUrl = process.env.BTC_NODE_URL;
+    const fullNodeUrl = ProjectENV.NEXT_PUBLIC_BTC_NODE_URL;
 
     if (!fullNodeUrl) {
       throw new Error("Please provide the full node url");

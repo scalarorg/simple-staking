@@ -21,6 +21,7 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
   const [chainName, setChainName] = useState("");
   const [btcAddress, setBtcAddress] = useState("");
   const [btcPubKey, setBtcPubKey] = useState("");
+  const [smartContractAddress, setSmartContractAddress] = useState("");
 
   const handleChainNameChange = (input: string) => {
     setChainName(input);
@@ -31,12 +32,17 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
   const handleBtcPubKeyChange = (input: string) => {
     setBtcPubKey(input);
   };
+
+  const handleSmartContractAddressChange = (input: string) => {
+    setSmartContractAddress(input);
+  };
+
   const handleAdd = async () => {
-    if (!chainName || !btcAddress || !btcPubKey) {
+    if (!chainName || !btcAddress || !btcPubKey || !smartContractAddress) {
       console.error("Missing required fields");
       return;
     }
-    await postDApp(chainName, btcAddress, btcPubKey)
+    await postDApp(chainName, btcAddress, btcPubKey, smartContractAddress)
       .then(() => {
         console.log("Successfully added DApp");
         onClose(false);
@@ -76,6 +82,14 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
             onChange={handleBtcPubKeyChange}
             reset={false}
             initValue=""
+          />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <BtcAddress
+            onChange={handleSmartContractAddressChange}
+            reset={false}
+            initValue=""
+            label="Smart contract address"
           />
         </div>
       </div>

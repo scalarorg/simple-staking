@@ -33,14 +33,14 @@ import {
   PopoverTrigger,
 } from "@/app/components/ui/popover";
 import { toast } from "@/app/components/ui/use-toast";
+import { DApp as DAppInterface } from "@/app/types/dApps";
+import { ProjectENV } from "@/env";
 import { cn } from "@/utils";
-import { getBtcNetwork } from "@/utils/bitcoin";
 import { Network } from "@/utils/wallet/wallet_provider";
 
 import Mainnet from "@/../chains/mainnet.json";
 import Testnet from "@/../chains/testnet.json";
-import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
-import { Staker, UTXO, getPsbtByHex, getUTXOs } from "vault/index";
+import { getPsbtByHex } from "vault/index";
 
 import { GeneralModal } from "./GeneralModal";
 
@@ -51,6 +51,7 @@ interface SendTxModalProps {
   btcPublicKey: string | undefined;
   btcWalletNetwork: networks.Network | undefined;
   signPsbt: ((psbt: string) => Promise<string>) | undefined;
+  dApp?: DAppInterface;
 }
 
 const FormSchema = z.object({
@@ -87,16 +88,6 @@ const FormSchema = z.object({
     .positive({
       message: "Please enter a positive number.",
     }),
-  quorum: z.coerce.number({
-    required_error: "Please enter the quorum.",
-  }),
-  tag: z.string({
-    required_error: "Please enter the tag.",
-  }),
-  version: z.coerce.number({
-    required_error: "Please enter the version.",
-  }),
-  covenantPublicKeys: z.array(z.string()),
   servicePublicKey: z.string({
     required_error: "Please enter your service public key.",
   }),
@@ -108,10 +99,10 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   btcAddress,
   btcPublicKey,
   btcWalletNetwork,
+  dApp,
   signPsbt,
 }) => {
-  let network = process.env.NEXT_PUBLIC_NETWORK;
-
+  let network = ProjectENV.NEXT_PUBLIC_NETWORK;
   let chains;
   if (network === "mainnet") {
     chains = Mainnet.chains;
@@ -127,77 +118,62 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       destinationChainId: "",
       tokenReceiverAddress: "",
       smartContractAddress: "",
-      stakingAmount: Number(process.env.NEXT_PUBLIC_STAKING_AMOUNT || 0),
-      mintingAmount: Number(process.env.NEXT_PUBLIC_MINTING_AMOUNT || 0),
-      quorum: Number(process.env.NEXT_PUBLIC_QUORUM || 0),
-      tag: process.env.NEXT_PUBLIC_TAG || "",
-      version: Number(process.env.NEXT_PUBLIC_VERSION || 0),
-      covenantPublicKeys: process.env.NEXT_PUBLIC_COVENANT_PUBKEYS?.split(","),
-      servicePublicKey: process.env.NEXT_PUBLIC_SERVICE_PUBKEY || "",
+      stakingAmount: Number(ProjectENV.NEXT_PUBLIC_STAKING_AMOUNT || 0),
+      mintingAmount: Number(ProjectENV.NEXT_PUBLIC_MINTING_AMOUNT || 0),
+      servicePublicKey: ProjectENV.NEXT_PUBLIC_SERVICE_PUBKEY || "",
     },
   });
 
   useEffect(() => {
-    if (btcAddress && btcPublicKey) {
+    if (btcAddress && btcPublicKey && dApp) {
       form.setValue("sourceChainAddress", btcAddress);
       form.setValue("sourceChainPublicKey", btcPublicKey);
+      form.setValue("servicePublicKey", dApp.btcAddress);
+      form.setValue("smartContractAddress", dApp.scAddress);
     }
-  }, [btcAddress, btcPublicKey, form]);
+  }, [btcAddress, btcPublicKey, dApp, form]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     const {
       sourceChainAddress,
       sourceChainPublicKey,
-      servicePublicKey,
       smartContractAddress,
-      mintingAmount,
-      version,
-      tag,
-      covenantPublicKeys,
-      quorum,
       tokenReceiverAddress,
       destinationChainId,
       stakingAmount,
+      mintingAmount,
+      servicePublicKey,
     } = data;
-
-    // Remove 0x prefix
-    const smartContractAddressWithout0x = smartContractAddress.slice(2);
-    const tokenReceiverAddressWithout0x = tokenReceiverAddress.slice(2);
 
     try {
       if (!btcWalletNetwork) {
         throw new Error("Unsupported network");
       }
 
-      const staker = new Staker(
+      const url = window.location.origin;
+
+      const unsignedPsbtResult = await axios.post(`${url}/api/mint-tx-psbt`, {
         sourceChainAddress,
         sourceChainPublicKey,
-        servicePublicKey,
-        covenantPublicKeys,
-        quorum,
-        tag,
-        version,
-        Number(destinationChainId).toString(16), // Convert to hex
-        tokenReceiverAddressWithout0x,
-        smartContractAddressWithout0x,
+        destinationChainId,
+        smartContractAddress,
+        tokenReceiverAddress,
+        stakingAmount,
         mintingAmount,
-      );
+        servicePublicKey,
+      });
 
-      const regularUTXOs: UTXO[] = await getUTXOs(sourceChainAddress);
+      const unsignedVaultPsbtHex =
+        unsignedPsbtResult?.data?.data?.unsignedVaultPsbtHex;
 
-      let feeRate = (await getFeesRecommended(getBtcNetwork(btcWalletNetwork)))
-        .fastestFee; // Get this from Mempool API
-      const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
-      const { psbt: unsignedVaultPsbt, feeEstimate: fee } =
-        await staker.getUnsignedVaultPsbt(
-          regularUTXOs,
-          stakingAmount,
-          feeRate,
-          rbf,
+      if (!unsignedVaultPsbtHex) {
+        throw new Error(
+          "Failed to get the unsigned psbt: " + unsignedPsbtResult?.data?.error,
         );
+      }
 
       // Simulate signing
-      const hexSignedPsbt = await signPsbt?.(unsignedVaultPsbt.toHex());
+      const hexSignedPsbt = await signPsbt?.(unsignedVaultPsbtHex);
 
       if (!hexSignedPsbt) {
         throw new Error("Failed to sign the psbt");
@@ -212,13 +188,10 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       // this demo: https://demo.unisat.io/
       // It support sign psbt, push psbt or push tx to bitcoin network
 
-      const url = window.location.origin;
-
       // Test mempool acceptance
       // const result = await axios.post(`${url}/api/test-transaction`, {
       //   hexTxFromPsbt,
       // });
-
       // toast({
       //   title: "Test mempool acceptance",
       //   description: (
@@ -231,7 +204,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       // });
 
       // Send to bitcoin network
-      // await utils.node.sendToBitcoinNetwork(process.env.url!, hexTxfromPsbt);
+      // await utils.node.sendToBitcoinNetwork(ProjectENV.url!, hexTxfromPsbt);
       const result = await axios.post(`${url}/api/broadcast-btc-transaction`, {
         hexTxFromPsbt,
       });
@@ -446,7 +419,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                   <FormItem>
                     <FormLabel>BTC Service Pubkey</FormLabel>
                     <FormControl>
-                      <Input placeholder="" {...field} />
+                      <Input disabled placeholder="" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -460,7 +433,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                   <FormItem>
                     <FormLabel>Smart contract address</FormLabel>
                     <FormControl>
-                      <Input placeholder="" {...field} />
+                      <Input disabled placeholder="" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

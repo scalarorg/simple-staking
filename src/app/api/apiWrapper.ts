@@ -1,5 +1,7 @@
 import axios from "axios";
 
+import { ProjectENV } from "@/env";
+
 export const apiWrapper = async (
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   url: string,
@@ -31,15 +33,15 @@ export const apiWrapper = async (
   try {
     // destructure params in case of post request
     if (method === "POST" || method === "PUT" || method === "PATCH") {
-      response = await handler(`${process.env.NEXT_PUBLIC_API_URL}${url}`, {
+      response = await handler(`${ProjectENV.NEXT_PUBLIC_API_URL}${url}`, {
         ...params,
       });
     } else if (method === "DELETE") {
-      response = await handler(`${process.env.NEXT_PUBLIC_API_URL}${url}`, {
+      response = await handler(`${ProjectENV.NEXT_PUBLIC_API_URL}${url}`, {
         data: params,
       });
     } else {
-      response = await handler(`${process.env.NEXT_PUBLIC_API_URL}${url}`, {
+      response = await handler(`${ProjectENV.NEXT_PUBLIC_API_URL}${url}`, {
         params,
       });
     }

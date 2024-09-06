@@ -4,12 +4,14 @@ interface BtcAddressProps {
   onChange: (input: string) => void;
   reset: boolean;
   initValue: string;
+  label?: string;
 }
 
 export const BtcAddress: React.FC<BtcAddressProps> = ({
   onChange,
   reset,
   initValue,
+  label = "Bitcoin Address",
 }) => {
   const [value, setValue] = useState(initValue);
   const [error, setError] = useState("");
@@ -51,7 +53,7 @@ export const BtcAddress: React.FC<BtcAddressProps> = ({
   return (
     <label className="form-control w-full flex-1">
       <div className="label">
-        <span className="label-text-alt text-base">Bitcoin Address</span>
+        <span className="label-text-alt text-base">{label}</span>
       </div>
       <input
         type="string"

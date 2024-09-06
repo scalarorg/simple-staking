@@ -19,9 +19,11 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
+      "@/env": ["./src/env"],
       "vault/*": ["./remotebtclib/vault/src/*"],
       "bitcoin-flow/*": ["./remotebtclib/bitcoin-flow/src/*"]
-    }
+    },
+    "moduleResolution": "node"
   },
   "include": [
     "next-env.d.ts",

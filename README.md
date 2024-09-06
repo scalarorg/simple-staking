@@ -22,6 +22,12 @@ where,
   system queries
 - `NEXT_PUBLIC_NETWORK` specifies the BTC network environment
 
+## Clone remotebtclib
+
+```
+git clone https://github.com/scalarorg/remotebtclib.git
+```
+
 Then, to start a development server:
 
 ```bash
