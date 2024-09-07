@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { client } from "./client";
+import { getClient } from "./client";
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     if (!hexTxFromPsbt) {
       throw new Error("Please provide the hex tx from psbt");
     }
-
+    let client = getClient();
     const response = await client.command("sendrawtransaction", hexTxFromPsbt);
 
     return NextResponse.json({ status: 200, data: response?.result });
