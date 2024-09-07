@@ -15,18 +15,15 @@ export interface CreatePayload {
   chain_name: string;
   btc_address_hex: string;
   public_key_hex: string;
+  smart_contract_address: string;
 }
 
 export interface IdPayload {
   id: string;
 }
 
-export interface UpdatePayload {
+export interface UpdatePayload extends CreatePayload {
   id: string;
-  chain_name: string;
-  btc_address_hex: string;
-  public_key_hex: string;
-  smart_contract_address: string;
 }
 
 export interface DAppAPI {
@@ -34,6 +31,7 @@ export interface DAppAPI {
   ChainName: string;
   BTCAddressHex: string;
   PublicKeyHex: string;
+  SmartContractAddress: string;
   State: boolean;
 }
 

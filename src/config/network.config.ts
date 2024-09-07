@@ -1,7 +1,7 @@
 import { ProjectENV } from "@/env";
 import { Network } from "@/utils/wallet/wallet_provider";
 
-export const network =
+export const GLOBAL_NETWORK_INSTANCE =
   (ProjectENV.NEXT_PUBLIC_NETWORK as Network) || Network.SIGNET;
 
 interface NetworkConfig {
@@ -43,7 +43,7 @@ const config: Record<string, NetworkConfig> = {
 };
 
 export function getNetworkConfig(): NetworkConfig {
-  switch (network) {
+  switch (GLOBAL_NETWORK_INSTANCE) {
     case Network.MAINNET:
       return config.mainnet;
     case Network.SIGNET:

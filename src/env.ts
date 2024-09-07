@@ -4,7 +4,7 @@ const ProjectENVSchema = z.object({
   NODE_ENV: z.string().default("development"),
   NEXT_PUBLIC_MEMPOOL_API: z.string().default(""),
   NEXT_PUBLIC_API_URL: z.string().default(""),
-  NEXT_PUBLIC_NETWORK: z.string().default(""),
+  NEXT_PUBLIC_NETWORK: z.string().default("regtest"),
   NEXT_PUBLIC_STAKING_AMOUNT: z.string().default("0"),
   NEXT_PUBLIC_MINTING_AMOUNT: z.string().default("0"),
   // NEXT_PUBLIC_STAKING_DURATION: z.number().default(0),

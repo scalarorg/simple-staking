@@ -1,6 +1,6 @@
 import {
   getNetworkConfig,
-  network,
+  GLOBAL_NETWORK_INSTANCE,
   validateAddress,
 } from "@/config/network.config";
 
@@ -14,8 +14,8 @@ import {
 import {
   Fees,
   Network,
-  UTXO,
   UnisatOptions,
+  UTXO,
   WalletInfo,
   WalletProvider,
 } from "../wallet_provider";
@@ -100,7 +100,7 @@ export class UnisatWallet extends WalletProvider {
 
     const address = result[0];
 
-    validateAddress(network, address);
+    validateAddress(GLOBAL_NETWORK_INSTANCE, address);
 
     const compressedPublicKey =
       await this.bitcoinNetworkProvider.getPublicKey();

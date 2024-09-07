@@ -23,12 +23,10 @@ export const getDApps = async (): Promise<DApps> => {
       chainName: da.ChainName,
       btcAddress: da.BTCAddressHex,
       btcPk: da.PublicKeyHex,
+      scAddress: da.SmartContractAddress,
       state: da.State,
     }),
   );
-
-  console.log({ dApps });
-
   return { dApps };
 };
 
@@ -36,11 +34,13 @@ export const postDApp = async (
   chainName: string,
   btcAddressHex: string,
   publicKeyHex: string,
+  smartContractAddress: string,
 ) => {
   const payload: CreatePayload = {
     chain_name: chainName,
     btc_address_hex: btcAddressHex,
     public_key_hex: publicKeyHex,
+    smart_contract_address: smartContractAddress,
   };
 
   const response = await apiWrapper(
@@ -59,12 +59,14 @@ export const updateDApp = async (
   chainName: string,
   btcAddressHex: string,
   publicKeyHex: string,
+  smartContractAddress: string,
 ) => {
   const payload: UpdatePayload = {
     id: id,
     chain_name: chainName,
     btc_address_hex: btcAddressHex,
     public_key_hex: publicKeyHex,
+    smart_contract_address: smartContractAddress,
   };
 
   const response = await apiWrapper(
@@ -78,9 +80,25 @@ export const updateDApp = async (
   return response.status === 200;
 };
 
+export const deleteDApp = async (id: string) => {
+  const payload: IdPayload = {
+    id: id,
+  };
+
+  const response = await apiWrapper(
+    "DELETE",
+    "/v1/dApp",
+    "Error deleting dApp",
+    payload,
+  );
+
+  // If the response status is 200, the request was accepted
+  return response.status === 200;
+};
+
 export const toggleDApp = async (id: string) => {
   const payload: IdPayload = {
-    id,
+    id: id,
   };
 
   const response = await apiWrapper(
@@ -91,22 +109,5 @@ export const toggleDApp = async (id: string) => {
   );
 
   // If the response status is 202, the request was accepted
-  return response.status === 200;
-};
-
-export const deleteDApp = async (id: string) => {
-  const payload: IdPayload = {
-    id,
-  };
-  console.log(payload);
-
-  const response = await apiWrapper(
-    "DELETE",
-    "/v1/dApp",
-    "Error deleting dApp",
-    payload,
-  );
-
-  // If the response status is 200, the request was accepted
   return response.status === 200;
 };

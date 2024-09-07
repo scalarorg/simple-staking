@@ -56,7 +56,7 @@ RUN NEXT_PUBLIC_MEMPOOL_API=APP_NEXT_PUBLIC_MEMPOOL_API \
 
 # Step 2. Production image, copy all the files and run next
 FROM node:22-alpine3.19 AS runner
-
+RUN apk add --no-cache jq
 WORKDIR /app
 
 # Don't run production as root
