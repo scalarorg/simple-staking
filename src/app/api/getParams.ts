@@ -1,4 +1,8 @@
-import { CovenantParams } from "../types";
+import {
+  CovenantParams,
+  CovenantParamsAPI,
+  CovenantParamsAPIResponse,
+} from "../types";
 
 import { apiWrapper } from "./apiWrapper";
 
@@ -8,6 +12,13 @@ export const getCovenantParams = async (): Promise<CovenantParams> => {
     "/v1/params/covenant",
     "Error getting covenant params",
   );
-  const covenantParams: CovenantParams = response.data;
+  const covenantParamsAPIResponse: CovenantParamsAPIResponse = response.data;
+  const covenantParamsAPI: CovenantParamsAPI = covenantParamsAPIResponse.data;
+  const covenantParams = {
+    covenantPubkeys: covenantParamsAPI.CovenantPubkeys,
+    quorum: covenantParamsAPI.Quorum,
+    tag: covenantParamsAPI.Tag,
+    version: covenantParamsAPI.Version,
+  };
   return covenantParams;
 };

@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     let client = getClient();
     const response = await client.command("sendrawtransaction", hexTxFromPsbt);
 
-    return NextResponse.json({ status: 200, data: response?.result });
+    return NextResponse.json({ status: 200, data: response });
   } catch (error) {
     return NextResponse.json({
       status: 500,

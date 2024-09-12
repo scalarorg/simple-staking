@@ -21,6 +21,7 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_BTC_NODE_WALLET: z.string().default(""),
   NEXT_PUBLIC_BTC_NODE_USER: z.string().default(""),
   NEXT_PUBLIC_BTC_NODE_PASSWORD: z.string().default(""),
+  NEXT_PUBLIC_BTC_NODE_FEE_RATE: z.string().default("100"),
   NEXT_PUBLIC_BTC_ADDRESS: z.string().default(""),
   NEXT_PUBLIC_BURN_CONTRACT_ADDRESS: z.string().default(""),
   NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS: z.string().default(""),
@@ -52,6 +53,7 @@ export const ProjectENV = ProjectENVSchema.parse({
   NEXT_PUBLIC_BTC_NODE_WALLET: process.env.NEXT_PUBLIC_BTC_NODE_WALLET,
   NEXT_PUBLIC_BTC_NODE_USER: process.env.NEXT_PUBLIC_BTC_NODE_USER,
   NEXT_PUBLIC_BTC_NODE_PASSWORD: process.env.NEXT_PUBLIC_BTC_NODE_PASSWORD,
+  NEXT_PUBLIC_BTC_NODE_FEE_RATE: process.env.NEXT_PUBLIC_BTC_NODE_FEE_RATE,
   NEXT_PUBLIC_BTC_ADDRESS: process.env.NEXT_PUBLIC_BTC_ADDRESS,
   NEXT_PUBLIC_BURN_CONTRACT_ADDRESS:
     process.env.NEXT_PUBLIC_BURN_CONTRACT_ADDRESS,

@@ -128,7 +128,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
     if (btcAddress && btcPublicKey && dApp) {
       form.setValue("sourceChainAddress", btcAddress);
       form.setValue("sourceChainPublicKey", btcPublicKey);
-      form.setValue("servicePublicKey", dApp.btcAddress);
+      form.setValue("servicePublicKey", dApp.btcPk);
       form.setValue("smartContractAddress", dApp.scAddress);
     }
   }, [btcAddress, btcPublicKey, dApp, form]);
@@ -292,7 +292,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                         step="any"
                         type="number"
                         placeholder=""
-                        disabled
+                        // disabled
                         {...field}
                       />
                     </FormControl>
@@ -399,7 +399,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                         step="any"
                         type="number"
                         placeholder=""
-                        disabled
+                        // disabled
                         {...field}
                       />
                     </FormControl>

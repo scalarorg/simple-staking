@@ -4,3 +4,14 @@ export interface CovenantParams {
   tag: string;
   version: number;
 }
+
+export interface CovenantParamsAPIResponse {
+  data: CovenantParamsAPI;
+}
+
+export interface CovenantParamsAPI {
+  CovenantPubkeys: string[];
+  Quorum: number;
+  Tag: string;
+  Version: number;
+}
