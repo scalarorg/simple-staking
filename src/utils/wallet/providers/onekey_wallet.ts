@@ -8,6 +8,7 @@ import {
 } from "../../mempool_api";
 import {
   Fees,
+  INTERNAL_NETWORK_NAMES,
   Network,
   UTXO,
   WalletInfo,
@@ -15,13 +16,6 @@ import {
 } from "../wallet_provider";
 
 export const oneKeyProvider = "$onekey";
-
-// Internal network names
-const INTERNAL_NETWORK_NAMES = {
-  [Network.MAINNET]: "livenet",
-  [Network.TESTNET]: "testnet",
-  [Network.SIGNET]: "signet",
-};
 
 export class OneKeyWallet extends WalletProvider {
   private oneKeyWalletInfo: WalletInfo | undefined;

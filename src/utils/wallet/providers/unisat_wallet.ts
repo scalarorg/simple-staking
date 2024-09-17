@@ -13,19 +13,13 @@ import {
 } from "../../mempool_api";
 import {
   Fees,
+  INTERNAL_NETWORK_NAMES,
   Network,
   UnisatOptions,
   UTXO,
   WalletInfo,
   WalletProvider,
 } from "../wallet_provider";
-
-// Internal network names
-const INTERNAL_NETWORK_NAMES = {
-  [Network.MAINNET]: "livenet",
-  [Network.TESTNET]: "testnet",
-  [Network.SIGNET]: "signet",
-};
 
 // window object for Unisat Wallet extension
 export const unisatProvider = "unisat";

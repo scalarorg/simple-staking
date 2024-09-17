@@ -43,6 +43,12 @@ export enum Network {
   SIGNET = "signet",
 }
 
+export const INTERNAL_NETWORK_NAMES = {
+  [Network.MAINNET]: "livenet",
+  [Network.TESTNET]: "testnet",
+  [Network.SIGNET]: "signet",
+  [Network.REGTEST]: "regtest",
+};
 // WalletInfo is a structure defining attributes for a wallet
 export type WalletInfo = {
   publicKeyHex: string;
