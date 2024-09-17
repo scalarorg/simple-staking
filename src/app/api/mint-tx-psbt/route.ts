@@ -1,17 +1,16 @@
-import { useFees } from "@mempool/mempool.js/lib/app/bitcoin/fees";
 import { NextResponse } from "next/server";
 
-import { ProjectENV } from "@/env";
+import { fromBtcUnspentToMempoolUTXO } from "@/app/api/bitcoind";
+import { getClient } from "@/app/api/broadcast-btc-transaction/client";
+import { getCovenantParams } from "@/app/api/getParams";
+import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 
+import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
 import { getUTXOs, Staker, UTXO } from "vault/index";
-import { getCovenantParams } from "../getParams";
-
-import { mempoolAxios } from "./client";
-
 
 export async function POST(request: Request) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const feesService = useFees(mempoolAxios);
+
   try {
     const covenantParams = await getCovenantParams();
     const covenantPublicKeys = covenantParams.covenantPubkeys;
@@ -49,11 +48,18 @@ export async function POST(request: Request) {
       mintingAmount,
     );
 
-    const regularUTXOs: UTXO[] = await getUTXOs(sourceChainAddress);
+    const regularUTXOs: UTXO[] =
+      getBTCNetworkFromAddress(sourceChainAddress) === "regtest"
+        ? (
+            await getClient().command("listunspent", 0, 9999999, [
+              sourceChainAddress,
+            ])
+          ).map(fromBtcUnspentToMempoolUTXO)
+        : await getUTXOs(sourceChainAddress);
 
-    // TODO: FIX BUG AT GETTING FEE RATE
-    // let { fastestFee: feeRate } = await feesService.getFeesRecommended(); // Get this from Mempool API
-    const feeRate = parseInt(ProjectENV.NEXT_PUBLIC_BTC_NODE_FEE_RATE) || 100;
+    let feeRate = (
+      await getFeesRecommended(getBTCNetworkFromAddress(sourceChainAddress))
+    ).fastestFee; // Get this from Mempool API
 
     const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
     const { psbt: unsignedVaultPsbt, feeEstimate: fee } =

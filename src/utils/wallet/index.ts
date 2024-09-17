@@ -3,6 +3,7 @@ import { networks } from "bitcoinjs-lib";
 import { Network } from "./wallet_provider";
 
 const nativeSegwitAddressLength = 42;
+const regtestSegwitAddressLength = 44;
 const taprootAddressLength = 62;
 
 export const toNetwork = (network: Network): networks.Network => {
@@ -12,6 +13,8 @@ export const toNetwork = (network: Network): networks.Network => {
     case Network.TESTNET:
     case Network.SIGNET:
       return networks.testnet;
+    case Network.REGTEST:
+      return networks.regtest;
     default:
       throw new Error("Unsupported network");
   }
@@ -20,6 +23,7 @@ export const toNetwork = (network: Network): networks.Network => {
 export const isSupportedAddressType = (address: string): boolean => {
   return (
     address.length === nativeSegwitAddressLength ||
+    address.length === regtestSegwitAddressLength ||
     address.length === taprootAddressLength
   );
 };

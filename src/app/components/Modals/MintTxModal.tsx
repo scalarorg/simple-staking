@@ -36,7 +36,7 @@ import { toast } from "@/app/components/ui/use-toast";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { ProjectENV } from "@/env";
 import { cn } from "@/utils";
-import { Network } from "@/utils/wallet/wallet_provider";
+import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
 
 import Mainnet from "@/../chains/mainnet.json";
 import Testnet from "@/../chains/testnet.json";
@@ -44,14 +44,24 @@ import { getPsbtByHex } from "vault/index";
 
 import { GeneralModal } from "./GeneralModal";
 
+type signedPsbtFunctionType =
+  | ((psbt: string) => Promise<string>)
+  | ((
+      psbt: string,
+      options?: UnisatOptions,
+      privateKey?: string,
+    ) => Promise<string>)
+  | undefined;
+
 interface SendTxModalProps {
   open: boolean;
   onClose: (value: boolean) => void;
   btcAddress: string | undefined;
   btcPublicKey: string | undefined;
   btcWalletNetwork: networks.Network | undefined;
-  signPsbt: ((psbt: string) => Promise<string>) | undefined;
+  signPsbt: signedPsbtFunctionType;
   dApp?: DAppInterface;
+  waitForPrivateKey?: () => Promise<string>;
 }
 
 const FormSchema = z.object({
@@ -101,8 +111,14 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   btcWalletNetwork,
   dApp,
   signPsbt,
+  waitForPrivateKey,
 }) => {
   let network = ProjectENV.NEXT_PUBLIC_NETWORK;
+  let mempool_web_url = ProjectENV.NEXT_PUBLIC_MEMPOOL_WEB;
+  let tx_preview_prefix =
+    network === Network.MAINNET || network === Network.REGTEST
+      ? ""
+      : "testnet/";
   let chains;
   if (network === "mainnet") {
     chains = Mainnet.chains;
@@ -132,6 +148,18 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       form.setValue("smartContractAddress", dApp.scAddress);
     }
   }, [btcAddress, btcPublicKey, dApp, form]);
+
+  async function signPsbtUsingWallet(
+    psbtHex: string,
+    signFunction: signedPsbtFunctionType,
+  ): Promise<string | undefined> {
+    if (network === Network.REGTEST) {
+      const privateKey = await waitForPrivateKey?.();
+      return await signFunction?.(psbtHex, undefined, privateKey);
+    } else {
+      return await signFunction?.(psbtHex);
+    }
+  }
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     const {
@@ -173,7 +201,10 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       }
 
       // Simulate signing
-      const hexSignedPsbt = await signPsbt?.(unsignedVaultPsbtHex);
+      const hexSignedPsbt = await signPsbtUsingWallet(
+        unsignedVaultPsbtHex,
+        signPsbt,
+      );
 
       if (!hexSignedPsbt) {
         throw new Error("Failed to sign the psbt");
@@ -219,7 +250,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
               Txid:{" "}
               <Link
                 className="text-blue-500 underline"
-                href={`https://mempool.space/${network === Network.MAINNET ? "" : "testnet/"}tx/${result.data.data}`}
+                href={`${mempool_web_url}/${tx_preview_prefix}tx/${result.data.data}`}
                 target="_blank"
                 rel="noreferrer noopener nofollow"
               >
