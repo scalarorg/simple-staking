@@ -11,6 +11,7 @@ interface HashProps {
   address?: boolean;
   small?: boolean;
   fullWidth?: boolean;
+  doNotTrim?: boolean;
 }
 
 export const Hash: React.FC<HashProps> = ({
@@ -19,6 +20,7 @@ export const Hash: React.FC<HashProps> = ({
   address,
   small,
   fullWidth,
+  doNotTrim,
 }) => {
   const [_value, copy] = useCopyToClipboard();
   const [copiedText, setCopiedText] = useState("");
@@ -56,7 +58,7 @@ export const Hash: React.FC<HashProps> = ({
                 <span className="font-mono">x</span>
               </>
             )}
-            <span>{trim(value)}</span>
+            <span>{doNotTrim ? value : trim(value)}</span>
           </>
         )}
       </p>

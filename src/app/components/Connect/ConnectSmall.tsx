@@ -5,7 +5,10 @@ import { PiArrowUpRightBold, PiWalletBold } from "react-icons/pi";
 import { useOnClickOutside } from "usehooks-ts";
 
 import { buttonStyles } from "@/app/scalar/theme";
-import { getNetworkConfig } from "@/config/network.config";
+import {
+  GLOBAL_NETWORK_INSTANCE,
+  getNetworkConfig,
+} from "@/config/network.config";
 import { satoshiToBtc } from "@/utils/btcConversions";
 import { maxDecimals } from "@/utils/maxDecimals";
 import { trim } from "@/utils/trim";
@@ -17,6 +20,7 @@ interface ConnectSmallProps {
   address: string;
   balanceSat: number;
   onDisconnect: () => void;
+  onExportPrivateKey: () => void;
 }
 
 export const ConnectSmall: React.FC<ConnectSmallProps> = ({
@@ -24,6 +28,7 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
   address,
   balanceSat,
   onDisconnect,
+  onExportPrivateKey,
 }) => {
   const [showMenu, setShowMenu] = useState(false);
   const handleClickOutside = () => {
@@ -84,6 +89,16 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
           >
             Disconnect
           </button>
+          {GLOBAL_NETWORK_INSTANCE === "regtest" ? (
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => {
+                onExportPrivateKey();
+              }}
+            >
+              Export Private Key
+            </button>
+          ) : null}
         </div>
       )}
     </div>

@@ -1,6 +1,5 @@
+import { ConnectSmall } from "@/app/components/Connect/ConnectSmall";
 import { buttonStyles } from "@/app/scalar/theme";
-
-import { ConnectSmall } from "../Connect/ConnectSmall";
 
 import { Logo } from "./Logo";
 
@@ -11,6 +10,7 @@ interface HeaderProps {
   onDisconnect: () => void;
   onOpenMintTxModal: () => void;
   onOpenBurnTokenModal: () => void;
+  onOpenExportPrivateKeyModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   onDisconnect,
   onOpenMintTxModal,
   onOpenBurnTokenModal,
+  onOpenExportPrivateKeyModal,
 }) => {
   return (
     <nav>
@@ -60,6 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
               address={address}
               balanceSat={balanceSat}
               onDisconnect={onDisconnect}
+              onExportPrivateKey={onOpenExportPrivateKeyModal}
             />
           </div>
           {/*<ThemeToggle />*/}
