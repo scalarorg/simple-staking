@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { fromBtcUnspentToMempoolUTXO } from "@/app/api/bitcoind";
 import { getClient } from "@/app/api/broadcast-btc-transaction/client";
-import { ProjectENV } from "@/env";
+import { getCovenantParams } from "@/app/api/getParams";
 import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 
 import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
@@ -12,11 +12,11 @@ export async function POST(request: Request) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
 
   try {
-    const quorum = Number(ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM!) || 0;
-    const tag = ProjectENV.NEXT_PUBLIC_TAG!;
-    const version = Number(ProjectENV.NEXT_PUBLIC_VERSION!) || 0;
-    const covenantPublicKeys =
-      ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS!.split(",");
+    const covenantParams = await getCovenantParams();
+    const covenantPublicKeys = covenantParams.covenantPubkeys;
+    const quorum = covenantParams.quorum;
+    const tag = covenantParams.tag;
+    const version = covenantParams.version;
 
     const {
       sourceChainAddress,
