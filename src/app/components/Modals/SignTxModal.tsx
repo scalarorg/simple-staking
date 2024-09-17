@@ -82,7 +82,7 @@ export const SignTxModal: React.FC<SignTxModalProps> = ({
                   Signing Private Key
                 </FormLabel>
                 <FormControl>
-                  <Input placeholder="" {...field} />
+                  <Input placeholder="" {...field} autoComplete="off" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
