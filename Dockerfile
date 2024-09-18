@@ -32,6 +32,7 @@ COPY docker-entrypoint.sh .
 # Variables for create btc transaction should be config somewhere in the backend
 # So transaction logic can be write in the backend
 RUN NEXT_PUBLIC_MEMPOOL_API=APP_NEXT_PUBLIC_MEMPOOL_API \
+    NEXT_PUBLIC_MEMPOOL_API2=APP_NEXT_PUBLIC_MEMPOOL_API2 \
     NEXT_PUBLIC_MEMPOOL_WEB=APP_NEXT_PUBLIC_MEMPOOL_WEB \
     NEXT_PUBLIC_API_URL=APP_NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_NETWORK=APP_NEXT_PUBLIC_NETWORK \
