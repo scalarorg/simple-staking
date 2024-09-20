@@ -1,3 +1,4 @@
+import { MempoolUTXO } from "@/app/types";
 import { getNetworkConfig } from "@/config/network.config";
 
 import { Fees, UTXO } from "./wallet/wallet_provider";
@@ -134,13 +135,18 @@ export async function getTipHeight(): Promise<number> {
 export async function getFundingUTXOs(
   address: string,
   amount?: number,
+  nominatedUTXOs?: MempoolUTXO[],
 ): Promise<UTXO[]> {
   // Get all UTXOs for the given address
 
-  let utxos = null;
+  let utxos: MempoolUTXO[] = [];
   try {
-    const response = await fetch(utxosInfoUrl(address));
-    utxos = await response.json();
+    if (nominatedUTXOs) {
+      utxos = nominatedUTXOs;
+    } else {
+      const response = await fetch(utxosInfoUrl(address));
+      utxos = await response.json();
+    }
   } catch (error: Error | any) {
     throw new Error(error?.message || error);
   }

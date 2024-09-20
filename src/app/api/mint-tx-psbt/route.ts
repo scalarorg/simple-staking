@@ -1,15 +1,16 @@
-import { useFees } from "@mempool/mempool.js/lib/app/bitcoin/fees";
 import { NextResponse } from "next/server";
 
+import { fromBtcUnspentToMempoolUTXO } from "@/app/api/bitcoind";
+import { getClient } from "@/app/api/broadcast-btc-transaction/client";
 import { ProjectENV } from "@/env";
+import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 
+import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
 import { getUTXOs, Staker, UTXO } from "vault/index";
-
-import { mempoolAxios } from "./client";
 
 export async function POST(request: Request) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const feesService = useFees(mempoolAxios);
+
   try {
     const quorum = Number(ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM!) || 0;
     const tag = ProjectENV.NEXT_PUBLIC_TAG!;
@@ -31,11 +32,12 @@ export async function POST(request: Request) {
     // Remove 0x prefix
     const smartContractAddressWithout0x = smartContractAddress.slice(2);
     const tokenReceiverAddressWithout0x = tokenReceiverAddress.slice(2);
+    const servicePublicKeyWithout0x = servicePublicKey.slice(2);
 
     const staker = new Staker(
       sourceChainAddress,
       sourceChainPublicKey,
-      servicePublicKey,
+      servicePublicKeyWithout0x,
       covenantPublicKeys,
       quorum,
       tag,
@@ -46,9 +48,19 @@ export async function POST(request: Request) {
       mintingAmount,
     );
 
-    const regularUTXOs: UTXO[] = await getUTXOs(sourceChainAddress);
+    const regularUTXOs: UTXO[] =
+      getBTCNetworkFromAddress(sourceChainAddress) === "regtest"
+        ? (
+            await getClient().command("listunspent", 0, 9999999, [
+              sourceChainAddress,
+            ])
+          ).map(fromBtcUnspentToMempoolUTXO)
+        : await getUTXOs(sourceChainAddress);
 
-    let { fastestFee: feeRate } = await feesService.getFeesRecommended(); // Get this from Mempool API
+    let feeRate = (
+      await getFeesRecommended(getBTCNetworkFromAddress(sourceChainAddress))
+    ).fastestFee; // Get this from Mempool API
+
     const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
     const { psbt: unsignedVaultPsbt, feeEstimate: fee } =
       await staker.getUnsignedVaultPsbt(

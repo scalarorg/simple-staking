@@ -8,6 +8,7 @@ import { BitgetWallet, bitgetWalletProvider } from "./providers/bitget_wallet";
 import { KeystoneWallet } from "./providers/keystone";
 import { OKXWallet, okxProvider } from "./providers/okx_wallet";
 import { OneKeyWallet, oneKeyProvider } from "./providers/onekey_wallet";
+import { RegtestWallet } from "./providers/regtest_wallet";
 import { TomoWallet, tomoProvider } from "./providers/tomo_wallet";
 import { UnisatWallet, unisatProvider } from "./providers/unisat_wallet";
 import { Network } from "./wallet_provider";
@@ -81,5 +82,12 @@ export const walletList: IntegratedWallet[] = [
     linkToDocs: "https://www.keyst.one/btc-only",
     isQRWallet: true,
     supportedNetworks: [Network.MAINNET, Network.SIGNET],
+  },
+  {
+    name: "Regtest Wallet",
+    icon: unisatIcon,
+    wallet: RegtestWallet,
+    linkToDocs: "",
+    supportedNetworks: [Network.REGTEST],
   },
 ];

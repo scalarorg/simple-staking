@@ -36,10 +36,19 @@ const testnetConfig: NetworkConfig = {
   network: Network.TESTNET,
 };
 
+const regtestConfig: NetworkConfig = {
+  coinName: "Regtest BTC",
+  coinSymbol: "rBTC",
+  networkName: "BTC regtest",
+  mempoolApiUrl: `${ProjectENV.NEXT_PUBLIC_MEMPOOL_API}`,
+  network: Network.REGTEST,
+};
+
 const config: Record<string, NetworkConfig> = {
   mainnet: mainnetConfig,
   signet: signetConfig,
   testnet: testnetConfig,
+  regtest: regtestConfig,
 };
 
 export function getNetworkConfig(): NetworkConfig {
@@ -50,6 +59,8 @@ export function getNetworkConfig(): NetworkConfig {
       return config.signet;
     case Network.TESTNET:
       return config.testnet;
+    case Network.REGTEST:
+      return config.regtest;
     default:
       return config.signet;
   }

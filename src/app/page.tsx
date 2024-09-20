@@ -21,6 +21,7 @@ import {
   isSupportedAddressType,
   toNetwork,
 } from "@/utils/wallet/index";
+import { RegtestWallet } from "@/utils/wallet/providers/regtest_wallet";
 import { Network, WalletProvider } from "@/utils/wallet/wallet_provider";
 
 import { PaginatedDelegations, getDelegations } from "./api/getDelegations";
@@ -38,6 +39,8 @@ import { BurnTokenModal } from "./components/Modals/BurnTokenModal";
 import { ConnectModal } from "./components/Modals/ConnectModal";
 import { ErrorModal } from "./components/Modals/ErrorModal";
 import { MintTxModal } from "./components/Modals/MintTxModal";
+import { ShowWalletModal } from "./components/Modals/ShowWalletModal";
+import { SignTxModal } from "./components/Modals/SignTxModal";
 import { TermsModal } from "./components/Modals/Terms/TermsModal";
 import { UpdateDAppModal } from "./components/Modals/UpdateDAppModal";
 import { Staking } from "./components/Staking/Staking";
@@ -61,6 +64,8 @@ const Home: React.FC<HomeProps> = () => {
 
   const [address, setAddress] = useState("");
   const [pubkey, setPubkey] = useState("");
+  const [privkey, setPrivkey] = useState("");
+  const [inputPrivkey, setInputPrivkey] = useState("");
   const { error, isErrorOpen, showError, hideError, retryErrorAction } =
     useError();
   const { isTermsOpen, closeTerms } = useTerms();
@@ -244,9 +249,14 @@ const Home: React.FC<HomeProps> = () => {
   >(delegationsLocalStorageKey, []);
 
   const [connectModalOpen, setConnectModalOpen] = useState(false);
+  const [ShowWalletModalOpen, setShowWalletModalOpen] = useState(false);
 
   const handleConnectModal = () => {
     setConnectModalOpen(true);
+  };
+
+  const handleShowWalletModal = () => {
+    setShowWalletModalOpen(true);
   };
 
   const [burnTokenModalOpen, setBurnTokenModalOpen] = useState(false);
@@ -256,9 +266,22 @@ const Home: React.FC<HomeProps> = () => {
   };
 
   const [mintTxModalOpen, setMintTxModalOpen] = useState(false);
+  const [signTxModalOpen, setSignTxModalOpen] = useState(false);
+  const [isInputPrivkey, setIsInputPrivkey] = useState<any>(null);
 
   const handleMintTxModal = () => {
     setMintTxModalOpen(true);
+  };
+
+  const waitForPrivateKey = () => {
+    setSignTxModalOpen(true);
+    return new Promise<string>((resolve) => {
+      const getPrivateKeyWIF = (privkey: string) => {
+        setSignTxModalOpen(false);
+        resolve(privkey);
+      };
+      setIsInputPrivkey(() => getPrivateKeyWIF);
+    });
   };
 
   const handleAddDAppModal = () => {
@@ -278,6 +301,7 @@ const Home: React.FC<HomeProps> = () => {
     setPublicKeyNoCoord("");
     setAddress("");
     setPubkey("");
+    setPrivkey("");
   };
 
   const handleConnectBTC = async (walletProvider: WalletProvider) => {
@@ -304,6 +328,10 @@ const Home: React.FC<HomeProps> = () => {
       setBTCWalletNetwork(toNetwork(await walletProvider.getNetwork()));
       setAddress(address);
       setPublicKeyNoCoord(publicKeyNoCoord.toString("hex"));
+      if (walletProvider instanceof RegtestWallet) {
+        setPrivkey(await walletProvider.getPrivateKeyWIF());
+        setShowWalletModalOpen(true);
+      }
     } catch (error: Error | any) {
       if (
         error instanceof WalletError &&
@@ -435,6 +463,7 @@ const Home: React.FC<HomeProps> = () => {
         onDisconnect={handleDisconnectBTC}
         address={address}
         balanceSat={btcWalletBalanceSat}
+        onOpenExportPrivateKeyModal={handleShowWalletModal}
       />
       <div className="container mx-auto flex justify-center p-6">
         <div className="container flex flex-col gap-6">
@@ -544,12 +573,26 @@ const Home: React.FC<HomeProps> = () => {
         btcPublicKey={pubkey}
         dApp={dApp}
         signPsbt={btcWallet?.signPsbt}
+        waitForPrivateKey={waitForPrivateKey}
+      />
+      <SignTxModal
+        open={signTxModalOpen}
+        onClose={setSignTxModalOpen}
+        onSign={isInputPrivkey}
+        address={address}
       />
       <ConnectModal
         open={connectModalOpen}
         onClose={setConnectModalOpen}
         onConnect={handleConnectBTC}
         connectDisabled={!!address}
+      />
+      <ShowWalletModal
+        open={ShowWalletModalOpen}
+        onClose={setShowWalletModalOpen}
+        address={address}
+        pubkey={pubkey}
+        privkey={privkey}
       />
       <AddDAppModal open={addDAppModalOpen} onClose={handleAddModal} />
       <UpdateDAppModal

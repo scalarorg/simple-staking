@@ -9,6 +9,7 @@ import {
 
 import {
   Fees,
+  INTERNAL_NETWORK_NAMES,
   Network,
   UTXO,
   WalletInfo,
@@ -16,13 +17,6 @@ import {
 } from "../wallet_provider";
 
 export const tomoProvider = "tomo_btc";
-
-// Internal network names
-const INTERNAL_NETWORK_NAMES = {
-  [Network.MAINNET]: "mainnet",
-  [Network.TESTNET]: "testnet",
-  [Network.SIGNET]: "signet",
-};
 
 export class TomoWallet extends WalletProvider {
   private tomoWalletInfo: WalletInfo | undefined;

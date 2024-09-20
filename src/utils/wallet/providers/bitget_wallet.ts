@@ -9,17 +9,16 @@ import {
   getTipHeight,
   pushTx,
 } from "../../mempool_api";
-import { Fees, Network, UTXO, WalletProvider } from "../wallet_provider";
+import {
+  Fees,
+  INTERNAL_NETWORK_NAMES,
+  Network,
+  UTXO,
+  WalletProvider,
+} from "../wallet_provider";
 
 // window object for Bitget Wallet extension
 export const bitgetWalletProvider = "bitkeep";
-
-// Internal network names
-const INTERNAL_NETWORK_NAMES = {
-  [Network.MAINNET]: "livenet",
-  [Network.TESTNET]: "testnet",
-  [Network.SIGNET]: "signet",
-};
 
 export class BitgetWallet extends WalletProvider {
   private bitcoinNetworkProvider: any;
