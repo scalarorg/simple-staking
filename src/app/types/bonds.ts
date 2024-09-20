@@ -1,12 +1,16 @@
 export interface Bond {
-  stakingTxHashHex: string;
-  stakerPkHex: string;
-  finalityProviderPkHex: string;
-  state: string;
-  stakingValueSat: number;
-  stakingTx: StakingTx;
-  unbondingTx: UnbondingTx | undefined;
-  isOverflow: boolean;
+  id: string;
+  status: string;
+  simplifiedStatus: string;
+  sourceChain: string;
+  sourceTxHash: string;
+  sourceTxHex: string;
+  destinationChain: string;
+  destinationSmartContractAddress: string;
+  stakerPubkey: string;
+  amount: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface StakingTx {

@@ -47,7 +47,7 @@ import { Stats } from "./components/Stats/Stats";
 import { Summary } from "./components/Summary/Summary";
 import { useError } from "./context/Error/ErrorContext";
 import { useTerms } from "./context/Terms/TermsContext";
-import { Bond, BondState } from "./types/bonds";
+import { Bond } from "./types/bonds";
 import { ErrorHandlerParam, ErrorState } from "./types/errors";
 
 interface HomeProps {}
@@ -403,16 +403,6 @@ const Home: React.FC<HomeProps> = () => {
   );
 
   let totalStakedSat = 0;
-
-  if (bonds) {
-    totalStakedSat = bonds.bonds
-      // using only active bonds
-      .filter((bond) => bond?.state === BondState.ACTIVE)
-      .reduce(
-        (accumulator: number, item) => accumulator + item?.stakingValueSat,
-        0,
-      );
-  }
 
   return (
     <main
