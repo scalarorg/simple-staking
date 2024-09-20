@@ -11,22 +11,19 @@ import { useGlobalParams } from "@/app/context/api/GlobalParamsProvider";
 import { useStakingStats } from "@/app/context/api/StakingStatsProvider";
 import { useError } from "@/app/context/Error/ErrorContext";
 import { fpTableStyles, stakingStyles } from "@/app/scalar/theme";
+import { Bond } from "@/app/types/bonds";
 import { DApp as DAppInterface } from "@/app/types/dApps";
-import { Delegation } from "@/app/types/delegations";
 import { ErrorHandlerParam, ErrorState } from "@/app/types/errors";
 import { FinalityProvider as FinalityProviderInterface } from "@/app/types/finalityProviders";
 import { getNetworkConfig } from "@/config/network.config";
-import {
-  createStakingTx,
-  signStakingTx,
-} from "@/utils/delegations/signStakingTx";
+import { createStakingTx, signStakingTx } from "@/utils/bonds/signStakingTx";
 import { getFeeRateFromMempool } from "@/utils/getFeeRateFromMempool";
 import {
   getCurrentGlobalParamsVersion,
   ParamsWithContext,
 } from "@/utils/globalParams";
 import { isStakingSignReady } from "@/utils/isStakingSignReady";
-import { toLocalStorageDelegation } from "@/utils/local_storage/delegations/toLocalStorageDelegation";
+import { toLocalStorageBond } from "@/utils/local_storage/bonds/toLocalStorageBond";
 import { WalletProvider } from "@/utils/wallet/wallet_provider";
 
 import { AddDAppButton } from "../Button/AddDAppButton";
@@ -70,10 +67,10 @@ interface StakingProps {
   btcWalletNetwork: networks.Network | undefined;
   address: string | undefined;
   publicKeyNoCoord: string;
-  setDelegationsLocalStorage: Dispatch<SetStateAction<Delegation[]>>;
+  setBondsLocalStorage: Dispatch<SetStateAction<Bond[]>>;
 }
 
-export const Staking: React.FC<StakingProps> = ({
+export const StakingBond: React.FC<StakingProps> = ({
   btcHeight,
   finalityProviders,
   dApps,
@@ -93,7 +90,7 @@ export const Staking: React.FC<StakingProps> = ({
   btcWalletNetwork,
   address,
   publicKeyNoCoord,
-  setDelegationsLocalStorage,
+  setBondsLocalStorage,
   btcWalletBalanceSat,
 }) => {
   // Staking form state
@@ -197,7 +194,7 @@ export const Staking: React.FC<StakingProps> = ({
           When btc height is approching the staking cap height,
           there is higher chance of overflow due to tx not being included in the next few blocks on time
           We also don't take the confirmation depth into account here as majority
-          of the delegation will be overflow after the cap is reached, unless btc fork happens but it's unlikely
+          of the bond will be overflow after the cap is reached, unless btc fork happens but it's unlikely
         */
         approchingCapRange:
           nextBlockHeight >=
@@ -313,7 +310,7 @@ export const Staking: React.FC<StakingProps> = ({
       );
       // UI
       handleFeedbackModal("success");
-      handleLocalStorageDelegations(stakingTxHex, stakingTerm);
+      handleLocalStorageBonds(stakingTxHex, stakingTerm);
       handleResetState();
     } catch (error: Error | any) {
       showError({
@@ -327,13 +324,13 @@ export const Staking: React.FC<StakingProps> = ({
     }
   };
 
-  // Save the delegation to local storage
-  const handleLocalStorageDelegations = (
+  // Save the bond to local storage
+  const handleLocalStorageBonds = (
     signedTxHex: string,
     stakingTerm: number,
   ) => {
-    setDelegationsLocalStorage((delegations) => [
-      toLocalStorageDelegation(
+    setBondsLocalStorage((bonds) => [
+      toLocalStorageBond(
         Transaction.fromHex(signedTxHex).getId(),
         publicKeyNoCoord,
         finalityProvider!.btcPk,
@@ -341,7 +338,7 @@ export const Staking: React.FC<StakingProps> = ({
         signedTxHex,
         stakingTerm,
       ),
-      ...delegations,
+      ...bonds,
     ]);
   };
 

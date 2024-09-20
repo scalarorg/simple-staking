@@ -1,6 +1,6 @@
 import { Delegation } from "@/app/types/delegations";
 
-import { getTxInfo } from "../mempool_api";
+import { getTxInfo } from "../../mempool_api";
 
 // Duration after which a delegation should be removed from the local storage
 // if not identified by the API or mempool.

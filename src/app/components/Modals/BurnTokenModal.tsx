@@ -38,6 +38,7 @@ interface BurnTokenModalProps {
   signPsbt:
     | ((psbt: string, options?: UnisatOptions) => Promise<string>)
     | undefined;
+  stakingTxHex: string;
 }
 
 const FormSchema = z.object({
@@ -57,6 +58,7 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   onClose,
   btcAddress,
   signPsbt,
+  stakingTxHex,
 }) => {
   const account = useAccount();
   const signer = useEthersSigner();

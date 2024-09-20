@@ -13,8 +13,8 @@ import stone from "@/app/assets/stone.webp";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { GLOBAL_NETWORK_INSTANCE } from "@/config/network.config";
 import { getCurrentGlobalParamsVersion } from "@/utils/globalParams";
-import { calculateDelegationsDiff } from "@/utils/local_storage/calculateDelegationsDiff";
-import { getDelegationsLocalStorageKey } from "@/utils/local_storage/getDelegationsLocalStorageKey";
+import { calculateBondsDiff } from "@/utils/local_storage/bonds/calculateBondsDiff";
+import { getBondsLocalStorageKey } from "@/utils/local_storage/bonds/getBondsLocalStorageKey";
 import { WalletError, WalletErrorType } from "@/utils/wallet/errors";
 import {
   getPublicKeyNoCoord,
@@ -24,18 +24,17 @@ import {
 import { RegtestWallet } from "@/utils/wallet/providers/regtest_wallet";
 import { Network, WalletProvider } from "@/utils/wallet/wallet_provider";
 
-import { PaginatedDelegations, getDelegations } from "./api/getDelegations";
+import { PaginatedBonds, getBonds } from "./api/getBonds";
 import {
   PaginatedFinalityProviders,
   getFinalityProviders,
 } from "./api/getFinalityProviders";
 import { getGlobalParams } from "./api/getGlobalParams";
 import { signPsbtTransaction } from "./common/utils/psbt";
-import { Delegations } from "./components/Delegations/Delegations";
+import { Bonds } from "./components/Bonds/Bonds";
 import { Footer } from "./components/Footer/Footer";
 import { Header } from "./components/Header/Header";
 import { AddDAppModal } from "./components/Modals/AddDAppModal";
-import { BurnTokenModal } from "./components/Modals/BurnTokenModal";
 import { ConnectModal } from "./components/Modals/ConnectModal";
 import { ErrorModal } from "./components/Modals/ErrorModal";
 import { MintTxModal } from "./components/Modals/MintTxModal";
@@ -43,12 +42,12 @@ import { ShowWalletModal } from "./components/Modals/ShowWalletModal";
 import { SignTxModal } from "./components/Modals/SignTxModal";
 import { TermsModal } from "./components/Modals/Terms/TermsModal";
 import { UpdateDAppModal } from "./components/Modals/UpdateDAppModal";
-import { Staking } from "./components/Staking/Staking";
+import { StakingBond } from "./components/Staking/StakingBond";
 import { Stats } from "./components/Stats/Stats";
 import { Summary } from "./components/Summary/Summary";
 import { useError } from "./context/Error/ErrorContext";
 import { useTerms } from "./context/Terms/TermsContext";
-import { Delegation, DelegationState } from "./types/delegations";
+import { Bond, BondState } from "./types/bonds";
 import { ErrorHandlerParam, ErrorState } from "./types/errors";
 
 interface HomeProps {}
@@ -148,17 +147,16 @@ const Home: React.FC<HomeProps> = () => {
   });
 
   const {
-    data: delegations,
-    fetchNextPage: fetchNextDelegationsPage,
-    hasNextPage: hasNextDelegationsPage,
-    isFetchingNextPage: isFetchingNextDelegationsPage,
-    error: delegationsError,
-    isError: hasDelegationsError,
-    refetch: refetchDelegationData,
+    data: bonds,
+    fetchNextPage: fetchNextBondsPage,
+    hasNextPage: hasNextBondsPage,
+    isFetchingNextPage: isFetchingNextBondsPage,
+    error: bondsError,
+    isError: hasBondsError,
+    refetch: refetchBondData,
   } = useInfiniteQuery({
-    queryKey: ["delegations", address, publicKeyNoCoord],
-    queryFn: ({ pageParam = "" }) =>
-      getDelegations(pageParam, publicKeyNoCoord),
+    queryKey: ["bonds", address, publicKeyNoCoord],
+    queryFn: ({ pageParam = "" }) => getBonds(pageParam, publicKeyNoCoord),
     getNextPageParam: (lastPage) =>
       lastPage?.pagination?.next_key !== ""
         ? lastPage?.pagination?.next_key
@@ -167,13 +165,13 @@ const Home: React.FC<HomeProps> = () => {
     refetchInterval: 60000, // 1 minute
     enabled: !!(btcWallet && publicKeyNoCoord && address),
     select: (data) => {
-      const flattenedData = data.pages.reduce<PaginatedDelegations>(
+      const flattenedData = data.pages.reduce<PaginatedBonds>(
         (acc, page) => {
-          acc.delegations.push(...page.delegations);
+          acc.bonds.push(...page.bonds);
           acc.pagination = page.pagination;
           return acc;
         },
-        { delegations: [], pagination: { next_key: "" } },
+        { bonds: [], pagination: { next_key: "" } },
       );
 
       return flattenedData;
@@ -215,10 +213,10 @@ const Home: React.FC<HomeProps> = () => {
       refetchFunction: refetchDApps,
     });
     handleError({
-      error: delegationsError,
-      hasError: hasDelegationsError,
+      error: bondsError,
+      hasError: hasBondsError,
       errorState: ErrorState.SERVER_ERROR,
-      refetchFunction: refetchDelegationData,
+      refetchFunction: refetchBondData,
     });
     handleError({
       error: globalParamsVersionError,
@@ -230,7 +228,7 @@ const Home: React.FC<HomeProps> = () => {
   }, [
     hasFinalityProvidersError,
     hasGlobalParamsVersionError,
-    hasDelegationsError,
+    hasBondsError,
     isRefetchFinalityProvidersError,
   ]);
 
@@ -240,13 +238,13 @@ const Home: React.FC<HomeProps> = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Local storage state for delegations
-  const delegationsLocalStorageKey =
-    getDelegationsLocalStorageKey(publicKeyNoCoord);
+  // Local storage state for bonds
+  const bondsLocalStorageKey = getBondsLocalStorageKey(publicKeyNoCoord);
 
-  const [delegationsLocalStorage, setDelegationsLocalStorage] = useLocalStorage<
-    Delegation[]
-  >(delegationsLocalStorageKey, []);
+  const [bondsLocalStorage, setBondsLocalStorage] = useLocalStorage<Bond[]>(
+    bondsLocalStorageKey,
+    [],
+  );
 
   const [connectModalOpen, setConnectModalOpen] = useState(false);
   const [ShowWalletModalOpen, setShowWalletModalOpen] = useState(false);
@@ -378,26 +376,25 @@ const Home: React.FC<HomeProps> = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [btcWallet]);
 
-  // Clean up the local storage delegations
+  // Clean up the local storage bonds
   useEffect(() => {
-    if (!delegations?.delegations) {
+    if (!bonds?.bonds) {
       return;
     }
 
-    const updateDelegationsLocalStorage = async () => {
-      const { areDelegationsDifferent, delegations: newDelegations } =
-        await calculateDelegationsDiff(
-          delegations.delegations,
-          delegationsLocalStorage,
-        );
-      if (areDelegationsDifferent) {
-        setDelegationsLocalStorage(newDelegations);
+    const updateBondsLocalStorage = async () => {
+      const { areBondsDifferent, bonds: newBonds } = await calculateBondsDiff(
+        bonds.bonds,
+        bondsLocalStorage,
+      );
+      if (areBondsDifferent) {
+        setBondsLocalStorage(newBonds);
       }
     };
 
-    updateDelegationsLocalStorage();
+    updateBondsLocalStorage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [delegations, setDelegationsLocalStorage, delegationsLocalStorage]);
+  }, [bonds, setBondsLocalStorage, bondsLocalStorage]);
 
   // Finality providers key-value map { pk: moniker }
   const finalityProvidersKV = finalityProviders?.finalityProviders.reduce(
@@ -407,10 +404,10 @@ const Home: React.FC<HomeProps> = () => {
 
   let totalStakedSat = 0;
 
-  if (delegations) {
-    totalStakedSat = delegations.delegations
-      // using only active delegations
-      .filter((delegation) => delegation?.state === DelegationState.ACTIVE)
+  if (bonds) {
+    totalStakedSat = bonds.bonds
+      // using only active bonds
+      .filter((bond) => bond?.state === BondState.ACTIVE)
       .reduce(
         (accumulator: number, item) => accumulator + item?.stakingValueSat,
         0,
@@ -498,7 +495,7 @@ const Home: React.FC<HomeProps> = () => {
               balanceSat={btcWalletBalanceSat}
             />
           )}
-          <Staking
+          <StakingBond
             btcHeight={paramWithContext?.currentHeight}
             finalityProviders={finalityProviders?.finalityProviders}
             dApps={dApps?.dApps}
@@ -521,17 +518,17 @@ const Home: React.FC<HomeProps> = () => {
             btcWalletNetwork={btcWalletNetwork}
             address={address}
             publicKeyNoCoord={publicKeyNoCoord}
-            setDelegationsLocalStorage={setDelegationsLocalStorage}
+            setBondsLocalStorage={setBondsLocalStorage}
           />
           {btcWallet &&
-            delegations &&
+            bonds &&
             paramWithContext?.nextBlockParams.currentVersion &&
             btcWalletNetwork &&
             finalityProvidersKV && (
-              <Delegations
+              <Bonds
                 finalityProvidersKV={finalityProvidersKV}
-                delegationsAPI={delegations.delegations}
-                delegationsLocalStorage={delegationsLocalStorage}
+                bondsAPI={bonds.bonds}
+                bondsLocalStorage={bondsLocalStorage}
                 globalParamsVersion={
                   paramWithContext.nextBlockParams.currentVersion
                 }
@@ -541,11 +538,12 @@ const Home: React.FC<HomeProps> = () => {
                 signPsbtTx={signPsbtTransaction(btcWallet)}
                 pushTx={btcWallet.pushTx}
                 queryMeta={{
-                  next: fetchNextDelegationsPage,
-                  hasMore: hasNextDelegationsPage,
-                  isFetchingMore: isFetchingNextDelegationsPage,
+                  next: fetchNextBondsPage,
+                  hasMore: hasNextBondsPage,
+                  isFetchingMore: isFetchingNextBondsPage,
                 }}
                 getNetworkFees={btcWallet.getNetworkFees}
+                signPsbt={btcWallet?.signPsbt}
               />
             )}
           {/* At this point of time is not used */}
@@ -559,12 +557,6 @@ const Home: React.FC<HomeProps> = () => {
 
       {/*<FAQ />*/}
       <Footer />
-      <BurnTokenModal
-        open={burnTokenModalOpen}
-        onClose={setBurnTokenModalOpen}
-        btcAddress={address}
-        signPsbt={btcWallet?.signPsbt}
-      />
       <MintTxModal
         btcWalletNetwork={btcWalletNetwork}
         open={mintTxModalOpen}
