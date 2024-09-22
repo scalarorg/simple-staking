@@ -3,6 +3,7 @@ import * as bitcoin from "bitcoinjs-lib";
 import ECPairFactory from "ecpair";
 
 import { getBitcoindBlocksHeight, getBitcoindUTXOs } from "@/app/api/bitcoind";
+import { MempoolUTXO } from "@/app/types";
 import { getNetworkConfig } from "@/config/network.config";
 import { ProjectENV } from "@/env";
 
@@ -64,7 +65,9 @@ export class RegtestWallet extends WalletProvider {
     );
     const psbt = bitcoin.Psbt.fromBase64(psbtBase64);
     psbt.signAllInputs(keyPair);
-    psbt.finalizeAllInputs();
+    if (options?.autoFinalized) {
+      psbt.finalizeAllInputs();
+    }
     return psbt.toHex();
   };
 
@@ -90,9 +93,10 @@ export class RegtestWallet extends WalletProvider {
   // Mempool calls
 
   getBalance = async (): Promise<number> => {
-    // TODO: Change to get from bitcoind
-    return 100000;
-    // return await getAddressBalance(await this.getAddress());
+    const regularUTXOs: MempoolUTXO[] = await getBitcoindUTXOs(
+      this.stakerAddress!,
+    );
+    return regularUTXOs.reduce((acc, utxo) => acc + utxo.value, 0);
   };
 
   getNetworkFees = async (): Promise<Fees> => {
@@ -105,7 +109,7 @@ export class RegtestWallet extends WalletProvider {
 
   getUtxos = async (address: string, amount: number): Promise<UTXO[]> => {
     // Call to bitcoind
-    const nominatedUTXOs = await getBitcoindUTXOs(address);
+    const nominatedUTXOs: MempoolUTXO[] = await getBitcoindUTXOs(address);
     return await getFundingUTXOs(address, amount, nominatedUTXOs);
   };
 

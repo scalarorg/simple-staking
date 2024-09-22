@@ -1,6 +1,9 @@
+import * as bitcoin from "bitcoinjs-lib";
 import { Psbt, Transaction } from "bitcoinjs-lib";
 
 import { WalletProvider } from "@/utils/wallet/wallet_provider";
+
+import crypto from "./crypto";
 
 const SIGN_PSBT_NOT_COMPATIBLE_WALLETS = ["OneKey"];
 
@@ -21,4 +24,19 @@ export const signPsbtTransaction = (wallet: WalletProvider) => {
     // We need to extract the transaction from the PSBT
     return Psbt.fromHex(signedHex).extractTransaction();
   };
+};
+
+export const signInputs = function (
+  WIF: string,
+  network: bitcoin.Network,
+  psbtBase64: string,
+  finalize: boolean = false,
+): bitcoin.Psbt {
+  const keyPair = crypto.ECPair.fromWIF(WIF, network);
+  const psbt = bitcoin.Psbt.fromBase64(psbtBase64);
+  psbt.signAllInputs(keyPair);
+  if (finalize) {
+    psbt.finalizeAllInputs();
+  }
+  return psbt;
 };

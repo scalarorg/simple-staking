@@ -152,10 +152,11 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   async function signPsbtUsingWallet(
     psbtHex: string,
     signFunction: signedPsbtFunctionType,
+    options?: UnisatOptions | undefined,
   ): Promise<string | undefined> {
     if (network === Network.REGTEST) {
       const privateKey = await waitForPrivateKey?.();
-      return await signFunction?.(psbtHex, undefined, privateKey);
+      return await signFunction?.(psbtHex, options, privateKey);
     } else {
       return await signFunction?.(psbtHex);
     }
@@ -204,6 +205,9 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       const hexSignedPsbt = await signPsbtUsingWallet(
         unsignedVaultPsbtHex,
         signPsbt,
+        {
+          autoFinalized: true,
+        },
       );
 
       if (!hexSignedPsbt) {
