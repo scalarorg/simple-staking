@@ -1,6 +1,6 @@
 import { Delegation } from "@/app/types/delegations";
-import { calculateDelegationsDiff } from "@/utils/local_storage/calculateDelegationsDiff";
-import { filterDelegationsLocalStorage } from "@/utils/local_storage/filterDelegationsLocalStorage";
+import { calculateDelegationsDiff } from "@/utils/local_storage/delegations/calculateDelegationsDiff";
+import { filterDelegationsLocalStorage } from "@/utils/local_storage/delegations/filterDelegationsLocalStorage";
 
 // Mock the filterDelegationsLocalStorage function
 jest.mock("@/utils/local_storage/filterDelegationsLocalStorage");

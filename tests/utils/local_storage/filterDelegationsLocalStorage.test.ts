@@ -1,5 +1,5 @@
 import { Delegation } from "@/app/types/delegations";
-import { filterDelegationsLocalStorage } from "@/utils/local_storage/filterDelegationsLocalStorage";
+import { filterDelegationsLocalStorage } from "@/utils/local_storage/delegations/filterDelegationsLocalStorage";
 import { getTxInfo } from "@/utils/mempool_api";
 
 import { generateMockDelegation } from "../../helper/generateMockDelegation";

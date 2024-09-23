@@ -1,5 +1,5 @@
 import { DelegationState } from "@/app/types/delegations";
-import { toLocalStorageDelegation } from "@/utils/local_storage/toLocalStorageDelegation";
+import { toLocalStorageDelegation } from "@/utils/local_storage/delegations/toLocalStorageDelegation";
 
 describe("utils/local_storage/toLocalStorageDelegation", () => {
   it("should create a delegation object with the correct values", () => {

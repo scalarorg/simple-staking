@@ -16,8 +16,8 @@ import { ErrorState } from "@/app/types/errors";
 import { GlobalParamsVersion } from "@/app/types/globalParams";
 import { signUnbondingTx } from "@/utils/delegations/signUnbondingTx";
 import { signWithdrawalTx } from "@/utils/delegations/signWithdrawalTx";
-import { getIntermediateDelegationsLocalStorageKey } from "@/utils/local_storage/getIntermediateDelegationsLocalStorageKey";
-import { toLocalStorageIntermediateDelegation } from "@/utils/local_storage/toLocalStorageIntermediateDelegation";
+import { getIntermediateDelegationsLocalStorageKey } from "@/utils/local_storage/delegations/getIntermediateDelegationsLocalStorageKey";
+import { toLocalStorageIntermediateDelegation } from "@/utils/local_storage/delegations/toLocalStorageIntermediateDelegation";
 import { WalletProvider } from "@/utils/wallet/wallet_provider";
 
 import {

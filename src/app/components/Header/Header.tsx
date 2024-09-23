@@ -45,17 +45,6 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden md:flex">Mint Token</span>
             </button>
 
-            <button
-              className={`
-        btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg 
-        ${buttonStyles}
-        `}
-              disabled={!address}
-              onClick={onOpenBurnTokenModal}
-            >
-              <span className="hidden md:flex">Burn Token</span>
-            </button>
-
             <ConnectSmall
               onConnect={onConnect}
               address={address}
