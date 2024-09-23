@@ -1,7 +1,5 @@
 import { LoadingView } from "@/app/components/Loading/Loading";
-import { Bond as BondInterface } from "@/app/types/Bonds";
-
-import { Bond } from "./Bond";
+import { Bond as BondInterface } from "@/app/types/bonds";
 
 interface BondsProps {
   Bonds: BondInterface[] | undefined;
@@ -38,19 +36,7 @@ export const Bonds: React.FC<BondsProps> = ({
         className="no-scrollbar max-h-[21rem] overflow-y-auto"
       >
         <div className="flex flex-col gap-4">
-          {Bonds?.map((bond, idx) => (
-            <Bond
-              key={idx}
-              id={bond.id}
-              no={(idx + 1).toString().padStart(3, "0")}
-              txhash={bond.txhash}
-              chainName={bond.chainName}
-              smAddress={bond.smAddress}
-              amount={bond.amount}
-              onClick={() => onBondChange(bond.id)}
-              selected={selectedBond?.id === bond.id}
-            />
-          ))}
+          {Bonds?.map((bond, idx) => <></>)}
         </div>
       </div>
     </>

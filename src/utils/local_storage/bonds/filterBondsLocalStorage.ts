@@ -18,7 +18,7 @@ export const filterBondsLocalStorage = async (
   for (const localBond of bondsLocalStorage) {
     // Check if the bond is already present in the API
     const bondInAPI = bondsFromAPI.find(
-      (bond) => bond?.stakingTxHashHex === localBond?.stakingTxHashHex,
+      (bond) => bond?.sourceTxHash === localBond?.sourceTxHash,
     );
 
     if (bondInAPI) {
@@ -26,9 +26,7 @@ export const filterBondsLocalStorage = async (
     }
 
     // Check if the bond has exceeded the max duration
-    const startTimestamp = new Date(
-      localBond.stakingTx.startTimestamp,
-    ).getTime();
+    const startTimestamp = new Date(localBond.createdAt * 1000).getTime();
     const currentTime = Date.now();
     const hasExceededDuration =
       currentTime - startTimestamp > maxBondPendingDuration;
@@ -41,7 +39,7 @@ export const filterBondsLocalStorage = async (
       // Check if the transaction is in the mempool
       let isInMempool = true;
       try {
-        const fetchedTx = await getTxInfo(localBond.stakingTxHashHex);
+        const fetchedTx = await getTxInfo(localBond.sourceTxHash);
         if (!fetchedTx) {
           throw new Error("Transaction not found in the mempool");
         }

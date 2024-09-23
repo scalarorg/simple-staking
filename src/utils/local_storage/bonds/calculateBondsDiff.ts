@@ -14,10 +14,10 @@ export const calculateBondsDiff = async (
 
   // Extract the stakingTxHashHex
   const validBondsHashes = validBondsLocalStorage
-    .map((bond) => bond.stakingTxHashHex)
+    .map((bond) => bond.sourceTxHash)
     .sort();
   const bondsLocalStorageHashes = bondsLocalStorage
-    .map((bond) => bond.stakingTxHashHex)
+    .map((bond) => bond.sourceTxHash)
     .sort();
 
   // Check if the validBonds are different from the current bondsLocalStorage
