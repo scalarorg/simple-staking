@@ -39,7 +39,6 @@ import { cn } from "@/utils";
 import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
 
 import Mainnet from "@/../chains/mainnet.json";
-import Testnet from "@/../chains/testnet.json";
 import { getPsbtByHex } from "vault/index";
 
 import { GeneralModal } from "./GeneralModal";
@@ -123,7 +122,12 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   if (network === "mainnet") {
     chains = Mainnet.chains;
   } else {
-    chains = Testnet.chains;
+    chains = [
+      {
+        name: "ethereum-local",
+        chainId: "0539",
+      },
+    ]; // TODO: Fix this
   }
 
   const form = useForm<z.infer<typeof FormSchema>>({

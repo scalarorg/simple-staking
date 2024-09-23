@@ -73,8 +73,11 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
       ? ""
       : "testnet/";
   const account = useAccount();
-  const signer = useEthersSigner();
-  const provider = useEthersProvider();
+  const signer = useEthersSigner({ chainId: 1337 });
+  const provider = useEthersProvider({ chainId: 1337 });
+
+  console.log({ signer, provider });
+
   const [burnContract, setBurnContract] = useState<ethers.Contract | null>(
     null,
   );
@@ -193,29 +196,35 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
       }
       const signedPsbt = getPsbtByHex(hexSignedPsbt, btcStakerAddress);
 
+      console.log({ txHex: hexSignedPsbt });
+      console.log({ signedPsbt });
+
       // TODO: FINISH IMPLEMENT CALLING CONTRACT TO BURN THE TOKEN
       // Step 3: Call the contract to burn the token
-      // const amountToBurn = ethers.parseUnits(burnAmount, 18);
+      const amountToBurn = ethers.parseUnits(burnAmount, 18);
 
-      // setStatus("Approving the token");
+      setStatus("Approving the token");
 
-      // const txApprove = await sBTCContract.approve(
-      //   burnContractAddress,
-      //   amountToBurn,
-      // );
-      // await txApprove.wait();
+      const txApprove = await sBTCContract.approve(
+        burnContractAddress,
+        amountToBurn,
+      );
+      const response = await txApprove.wait();
+      console.log("response", response);
 
-      // setStatus("Burning the token");
+      setStatus("Burning the token");
 
-      // const txCallBurn = await burnContract.callBurn(
-      //   destinationChain,
-      //   destinationAddress,
-      //   amountToBurn,
-      //   signedPsbt.toBase64(),
-      // );
-      // await txCallBurn.wait();
+      const txCallBurn = await burnContract.callBurn(
+        destinationChain,
+        destinationAddress,
+        amountToBurn,
+        signedPsbt.toBase64(),
+      );
+      await txCallBurn.wait();
 
-      // setStatus("Token burned successfully");
+      setStatus("Token burned successfully");
+
+      // Unlock btc
 
       // Step 4: dApp service sign the transaction
       const serviceSignedPsbt = signInputs(
@@ -270,12 +279,11 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
       // });
       console.error(error);
     } finally {
-      setIsBurning(false);
-
-      const resetStatusTimeoutMs = 5000;
-      setTimeout(() => {
-        setStatus("");
-      }, resetStatusTimeoutMs);
+      // setIsBurning(false);
+      // const resetStatusTimeoutMs = 5000;
+      // setTimeout(() => {
+      //   setStatus("");
+      // }, resetStatusTimeoutMs);
     }
   }
 

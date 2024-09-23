@@ -60,6 +60,7 @@ export const ChainName: React.FC<ChainNameProps> = ({
       >
         <option value="">Chain Type</option>
         <option value="ethereum-sepolia">ethereum-sepolia</option>
+        <option value="ethereum-local">ethereum-local</option>
         <option value="bitcoin">bitcoin</option>
         <option value="avalanche">avalanche</option>
       </select>
