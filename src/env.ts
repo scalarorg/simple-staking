@@ -3,6 +3,7 @@ import { z } from "zod";
 const ProjectENVSchema = z.object({
   NODE_ENV: z.string().default("development"),
   NEXT_PUBLIC_MEMPOOL_API: z.string().default(""),
+  NEXT_PUBLIC_MEMPOOL_API2: z.string().default(""),
   NEXT_PUBLIC_MEMPOOL_WEB: z.string().default(""),
   NEXT_PUBLIC_API_URL: z.string().default(""),
   NEXT_PUBLIC_NETWORK: z.string().default("regtest"),
@@ -38,6 +39,7 @@ const ProjectENVSchema = z.object({
 export const ProjectENV = ProjectENVSchema.parse({
   NODE_ENV: process.env.NODE_ENV,
   NEXT_PUBLIC_MEMPOOL_API: process.env.NEXT_PUBLIC_MEMPOOL_API,
+  NEXT_PUBLIC_MEMPOOL_API2: process.env.NEXT_PUBLIC_MEMPOOL_API2,
   NEXT_PUBLIC_MEMPOOL_WEB: process.env.NEXT_PUBLIC_MEMPOOL_WEB,
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   NEXT_PUBLIC_NETWORK: process.env.NEXT_PUBLIC_NETWORK,

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { networks, Transaction } from "bitcoinjs-lib";
+import { networks } from "bitcoinjs-lib";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import { FaPenToSquare, FaTrash } from "react-icons/fa6";
 import { Tooltip } from "react-tooltip";
@@ -23,7 +23,6 @@ import {
   ParamsWithContext,
 } from "@/utils/globalParams";
 import { isStakingSignReady } from "@/utils/isStakingSignReady";
-import { toLocalStorageBond } from "@/utils/local_storage/bonds/toLocalStorageBond";
 import { WalletProvider } from "@/utils/wallet/wallet_provider";
 
 import { AddDAppButton } from "../Button/AddDAppButton";
@@ -329,17 +328,17 @@ export const StakingBond: React.FC<StakingProps> = ({
     signedTxHex: string,
     stakingTerm: number,
   ) => {
-    setBondsLocalStorage((bonds) => [
-      toLocalStorageBond(
-        Transaction.fromHex(signedTxHex).getId(),
-        publicKeyNoCoord,
-        finalityProvider!.btcPk,
-        stakingAmountSat,
-        signedTxHex,
-        stakingTerm,
-      ),
-      ...bonds,
-    ]);
+    // setBondsLocalStorage((bonds) => [
+    //   toLocalStorageBond(
+    //     Transaction.fromHex(signedTxHex).getId(),
+    //     publicKeyNoCoord,
+    //     finalityProvider!.btcPk,
+    //     stakingAmountSat,
+    //     signedTxHex,
+    //     stakingTerm,
+    //   ),
+    //   ...bonds,
+    // ]);
   };
 
   // Memoize the staking fee calculation
