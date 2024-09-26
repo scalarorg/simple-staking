@@ -4,6 +4,7 @@ import { fromBtcUnspentToMempoolUTXO } from "@/app/api/bitcoind";
 import { getClient } from "@/app/api/broadcast-btc-transaction/client";
 import { ProjectENV } from "@/env";
 import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
+import { convertToHexOfChainId } from "@/utils/blockchain";
 
 import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
 import { getUTXOs, Staker, UTXO } from "vault/index";
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
       quorum,
       tag,
       version,
-      Number(destinationChainId).toString(16), // Convert to hex
+      convertToHexOfChainId(destinationChainId),
       tokenReceiverAddressWithout0x,
       smartContractAddressWithout0x,
       mintingAmount,

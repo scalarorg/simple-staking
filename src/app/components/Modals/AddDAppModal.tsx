@@ -2,10 +2,12 @@ import { useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
 import { postDApp } from "@/app/api/dApp";
+import { getConfig } from "@/app/wagmi";
 
 import { BtcAddress } from "../Staking/Form/BtcAddress";
 import { BtcPubKey } from "../Staking/Form/BtcPubkey";
 import { ChainName } from "../Staking/Form/ChainName";
+import { InputField } from "../Staking/Form/InputField";
 
 import { GeneralModal } from "./GeneralModal";
 
@@ -22,9 +24,27 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
   const [btcAddress, setBtcAddress] = useState("");
   const [btcPubKey, setBtcPubKey] = useState("");
   const [smartContractAddress, setSmartContractAddress] = useState("");
+  const [chainId, setChainId] = useState("");
+  const [chainEndpoint, setChainEndpoint] = useState("");
+
+  const [isCustomChain, setIsCustomChain] = useState(false);
+
+  const config = getConfig();
+  const chains = config.chains;
 
   const handleChainNameChange = (input: string) => {
     setChainName(input);
+    // Find the selected chain based on the name
+    const selectedChain = chains.find((chain) => chain.name === input);
+    if (selectedChain) {
+      // Update chainId and chainEndpoint based on the selected chain
+      setChainId(selectedChain.id.toString());
+      setChainEndpoint(selectedChain.rpcUrls.default.http[0]);
+    } else {
+      // If no matching chain is found, reset the values
+      setChainId("");
+      setChainEndpoint("");
+    }
   };
   const handleBtcAddressChange = (input: string) => {
     setBtcAddress(input);
@@ -37,12 +57,27 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
     setSmartContractAddress(input);
   };
 
+  // TODO: add chainID and chainEndpoint to the postDApp function
   const handleAdd = async () => {
-    if (!chainName || !btcAddress || !btcPubKey || !smartContractAddress) {
+    if (
+      !chainName ||
+      !chainId ||
+      !chainEndpoint ||
+      !btcAddress ||
+      !btcPubKey ||
+      !smartContractAddress
+    ) {
       console.error("Missing required fields");
       return;
     }
-    await postDApp(chainName, btcAddress, btcPubKey, smartContractAddress)
+    await postDApp(
+      chainName,
+      chainId,
+      chainEndpoint,
+      btcAddress,
+      btcPubKey,
+      smartContractAddress,
+    )
       .then(() => {
         console.log("Successfully added DApp");
         onClose(false);
@@ -68,6 +103,31 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
             onChange={handleChainNameChange}
             reset={false}
             initValue=""
+            chainNames={chains.map((chain) => chain.name)}
+            isCustom={isCustomChain}
+            setIsCustom={setIsCustomChain}
+          />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <InputField
+            onChange={setChainId}
+            reset={false}
+            initValue={isCustomChain ? "" : chainId}
+            label="Chain ID"
+            placeholder=""
+            generalErrorMessage="Please input a chain ID"
+            disabled={!isCustomChain}
+          />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <InputField
+            onChange={setChainEndpoint}
+            reset={false}
+            initValue={isCustomChain ? "" : chainEndpoint}
+            label="Chain Endpoint"
+            placeholder=""
+            generalErrorMessage="Please input a chain endpoint"
+            disabled={!isCustomChain}
           />
         </div>
         <div className="flex flex-1 flex-col">
@@ -75,6 +135,7 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
             onChange={handleBtcAddressChange}
             reset={false}
             initValue=""
+            label="DApp Bitcoin Address"
           />
         </div>
         <div className="flex flex-1 flex-col">
@@ -82,6 +143,7 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
             onChange={handleBtcPubKeyChange}
             reset={false}
             initValue=""
+            label="DApp Bitcoin Public Key"
           />
         </div>
         <div className="flex flex-1 flex-col">
@@ -89,7 +151,8 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
             onChange={handleSmartContractAddressChange}
             reset={false}
             initValue=""
-            label="Smart contract address"
+            label="Minting Smart Contract Address"
+            placeholder="0x"
           />
         </div>
       </div>

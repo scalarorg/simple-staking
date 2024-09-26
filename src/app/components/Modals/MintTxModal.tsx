@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { networks } from "bitcoinjs-lib";
-import { Check, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -11,14 +10,6 @@ import { z } from "zod";
 
 import { Button } from "@/app/components/ui/button";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/app/components/ui/command";
-import {
   Form,
   FormControl,
   FormField,
@@ -27,19 +18,11 @@ import {
   FormMessage,
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/app/components/ui/popover";
 import { toast } from "@/app/components/ui/use-toast";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { ProjectENV } from "@/env";
-import { cn } from "@/utils";
 import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
 
-import Mainnet from "@/../chains/mainnet.json";
-import Testnet from "@/../chains/testnet.json";
 import { getPsbtByHex } from "vault/index";
 
 import { GeneralModal } from "./GeneralModal";
@@ -119,12 +102,6 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
     network === Network.MAINNET || network === Network.REGTEST
       ? ""
       : "testnet/";
-  let chains;
-  if (network === "mainnet") {
-    chains = Mainnet.chains;
-  } else {
-    chains = Testnet.chains;
-  }
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -140,12 +117,18 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
     },
   });
 
+  const account = useAccount();
+  if (account.status === "connected") {
+    form.setValue("tokenReceiverAddress", account.address?.toString() || "");
+  }
+
   useEffect(() => {
     if (btcAddress && btcPublicKey && dApp) {
       form.setValue("sourceChainAddress", btcAddress);
       form.setValue("sourceChainPublicKey", btcPublicKey);
       form.setValue("servicePublicKey", dApp.btcPk);
       form.setValue("smartContractAddress", dApp.scAddress);
+      form.setValue("destinationChainId", dApp.chainId);
     }
   }, [btcAddress, btcPublicKey, dApp, form]);
 
@@ -274,8 +257,6 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
     }
   }
 
-  const account = useAccount();
-
   return (
     <GeneralModal open={open} big onClose={onClose}>
       <div className="mb-4 flex items-center justify-between">
@@ -337,76 +318,12 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
               />
             </div>
             <div className="space-y-4 w-full">
-              <FormField
-                control={form.control}
-                name="destinationChainId"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Destination chain</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn(
-                              "w-full justify-between",
-                              !field.value && "text-muted-foreground",
-                            )}
-                          >
-                            {field.value
-                              ? chains.find(
-                                  (chain) => chain.chainId === field.value,
-                                )?.name
-                              : "Select chain"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent align="end" className="w-full p-0">
-                        <Command>
-                          <CommandInput placeholder="Search chain..." />
-                          <CommandList>
-                            <CommandEmpty>No chain found.</CommandEmpty>
-                            <CommandGroup>
-                              {chains.map((chain) => (
-                                <CommandItem
-                                  value={chain.chainId}
-                                  key={chain.chainId}
-                                  onSelect={async () => {
-                                    form.setValue(
-                                      "destinationChainId",
-                                      chain.chainId,
-                                    );
-
-                                    if (account.status === "connected") {
-                                      form.setValue(
-                                        "tokenReceiverAddress",
-                                        account.address?.toString() || "",
-                                      );
-                                    }
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      chain.chainId === field.value
-                                        ? "opacity-100"
-                                        : "opacity-0",
-                                    )}
-                                  />
-                                  {chain.name}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-2 -mt-2">
+                <FormLabel className="text-gray-500">
+                  Destination chain
+                </FormLabel>
+                <Input disabled value={dApp?.chainName} />
+              </div>
 
               <FormField
                 control={form.control}

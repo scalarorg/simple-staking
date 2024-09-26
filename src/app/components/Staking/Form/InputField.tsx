@@ -1,24 +1,28 @@
 import { ChangeEvent, FocusEvent, useEffect, useState } from "react";
 
-interface BtcPubKeyProps {
+interface InputFieldProps {
   onChange: (input: string) => void;
   reset: boolean;
   initValue: string;
   label?: string;
+  placeholder?: string;
+  generalErrorMessage?: string;
+  disabled?: boolean;
 }
 
-export const BtcPubKey: React.FC<BtcPubKeyProps> = ({
+export const InputField: React.FC<InputFieldProps> = ({
   onChange,
   reset,
   initValue,
-  label = "Bitcoin Public Key",
+  label = "Input Field",
+  placeholder = "Input",
+  generalErrorMessage = "Please input a value",
+  disabled = true,
 }) => {
   const [value, setValue] = useState(initValue);
   const [error, setError] = useState("");
   // Track if the input field has been interacted with
   const [touched, setTouched] = useState(false);
-
-  const generalErrorMessage = "You should input a BTC address";
 
   // Use effect to reset the state when reset prop changes
   useEffect(() => {
@@ -61,7 +65,8 @@ export const BtcPubKey: React.FC<BtcPubKeyProps> = ({
         value={value}
         onChange={handleChange}
         onBlur={handleBlur}
-        placeholder="0x"
+        placeholder={placeholder}
+        disabled={disabled}
       />
       <div className="mb-2 mt-4 min-h-[20px]">
         <p className="text-center text-sm text-error">{error}</p>

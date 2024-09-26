@@ -31,6 +31,7 @@ function apply_path {
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BOND_HOLDER_ADDRESS#$BOND_HOLDER_ADDRESS#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BOND_HOLDER_PUBLIC_KEY#$BOND_HOLDER_PUBLIC_KEY#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BOND_HOLDER_PRIVATE_KEY#$BOND_HOLDER_PRIVATE_KEY#g"
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_DEFAULT_DAPP_CHAINS#$DEFAULT_DAPP_CHAINS#g"
 
 }
 

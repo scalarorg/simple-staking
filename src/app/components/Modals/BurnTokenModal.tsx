@@ -1,9 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { networks } from "bitcoinjs-lib";
 import { ethers } from "ethers";
 import { Loader2 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
@@ -12,7 +10,6 @@ import { z } from "zod";
 
 import burnContractJSON from "@/abis/burn-contract.json";
 import sBTCJSON from "@/abis/sbtc.json";
-import { signInputs } from "@/app/common/utils/psbt";
 import { Button } from "@/app/components/ui/button";
 import {
   Form,
@@ -25,7 +22,7 @@ import {
 import { Input } from "@/app/components/ui/input";
 import { ProjectENV } from "@/env";
 import { useEthersProvider, useEthersSigner } from "@/utils/ethers";
-import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
+import { UnisatOptions } from "@/utils/wallet/wallet_provider";
 
 import { getPsbtByHex } from "vault/index";
 import { toast } from "../ui/use-toast";
@@ -43,7 +40,6 @@ interface BurnTokenModalProps {
     | ((psbt: string, options?: UnisatOptions) => Promise<string>)
     | undefined;
   stakingTxHex: string;
-  btcWalletNetwork: networks.Network;
 }
 
 const FormSchema = z.object({
@@ -64,17 +60,13 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   btcAddress,
   signPsbt,
   stakingTxHex,
-  btcWalletNetwork,
 }) => {
-  const network = ProjectENV.NEXT_PUBLIC_NETWORK;
-  const mempool_web_url = ProjectENV.NEXT_PUBLIC_MEMPOOL_WEB;
-  const tx_preview_prefix =
-    network === Network.MAINNET || network === Network.REGTEST
-      ? ""
-      : "testnet/";
   const account = useAccount();
-  const signer = useEthersSigner();
-  const provider = useEthersProvider();
+  const signer = useEthersSigner({ chainId: 1337 });
+  const provider = useEthersProvider({ chainId: 1337 });
+
+  console.log({ signer, provider });
+
   const [burnContract, setBurnContract] = useState<ethers.Contract | null>(
     null,
   );
@@ -193,86 +185,43 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
       }
       const signedPsbt = getPsbtByHex(hexSignedPsbt, btcStakerAddress);
 
-      // TODO: FINISH IMPLEMENT CALLING CONTRACT TO BURN THE TOKEN
       // Step 3: Call the contract to burn the token
-      // const amountToBurn = ethers.parseUnits(burnAmount, 18);
+      const amountToBurn = ethers.parseUnits(burnAmount, 18);
 
-      // setStatus("Approving the token");
+      setStatus("Approving the token");
 
-      // const txApprove = await sBTCContract.approve(
-      //   burnContractAddress,
-      //   amountToBurn,
-      // );
-      // await txApprove.wait();
-
-      // setStatus("Burning the token");
-
-      // const txCallBurn = await burnContract.callBurn(
-      //   destinationChain,
-      //   destinationAddress,
-      //   amountToBurn,
-      //   signedPsbt.toBase64(),
-      // );
-      // await txCallBurn.wait();
-
-      // setStatus("Token burned successfully");
-
-      // Step 4: dApp service sign the transaction
-      const serviceSignedPsbt = signInputs(
-        ProjectENV.NEXT_PUBLIC_SERVICE_PRIVATE_KEY!,
-        btcWalletNetwork,
-        signedPsbt.toBase64(),
-        true,
+      const txApprove = await sBTCContract.approve(
+        burnContractAddress,
+        amountToBurn,
       );
+      const response = await txApprove.wait();
+      console.log("response", response);
 
-      // Step 5: Push the transaction
-      const hexTxFromPsbt = serviceSignedPsbt.extractTransaction().toHex();
-      const result = await axios.post(`${url}/api/broadcast-btc-transaction`, {
-        hexTxFromPsbt,
-      });
+      setStatus("Burning the token");
 
-      if (!result.data.data) {
-        throw new Error("Failed to broadcast the transaction");
-      }
+      const txCallBurn = await burnContract.callBurn(
+        destinationChain,
+        destinationAddress,
+        amountToBurn,
+        signedPsbt.toBase64(),
+      );
+      await txCallBurn.wait();
 
-      setStatus("Burn sBTC transaction sent successfully");
-      onClose(false);
-
-      toast({
-        title: "Burn sBTC transaction sent successfully",
-        description: (
-          <div className="mt-2 w-[640px] rounded-md bg-slate-950">
-            <p className="text-white">
-              Txid:{" "}
-              <Link
-                className="text-blue-500 underline"
-                href={`${mempool_web_url}/${tx_preview_prefix}tx/${result.data.data}`}
-                target="_blank"
-                rel="noreferrer noopener nofollow"
-              >
-                {result.data.data.slice(0, 8)}...{result.data.data.slice(-8)}{" "}
-                (click to view)
-              </Link>
-            </p>
-          </div>
-        ),
-      });
+      setStatus("Token burned successfully");
     } catch (error) {
-      setStatus("Failed to burn the token");
       setStatus(
         // @ts-ignore
         "Failed to burn the token: " + error?.message || JSON.stringify(error),
       );
-      // toast({
-      //   title: "Failed to burn the token: ",
-      //   // @ts-ignore
-      //   description: error?.message || "An error occurred",
-      // });
+      toast({
+        title: "Failed to burn the token: ",
+        // @ts-ignore
+        description: error?.message || "An error occurred",
+      });
       console.error(error);
     } finally {
       setIsBurning(false);
-
-      const resetStatusTimeoutMs = 5000;
+      const resetStatusTimeoutMs = 10000;
       setTimeout(() => {
         setStatus("");
       }, resetStatusTimeoutMs);

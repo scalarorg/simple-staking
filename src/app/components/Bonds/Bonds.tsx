@@ -8,6 +8,7 @@ import { historyContainerStyles } from "@/app/scalar/theme";
 import { QueryMeta } from "@/app/types/api";
 import { Bond as BondInterface } from "@/app/types/bonds";
 import { GlobalParamsVersion } from "@/app/types/globalParams";
+import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
 import { datetimeStringOf } from "@/utils/formatTime";
 import { UnisatOptions, WalletProvider } from "@/utils/wallet/wallet_provider";
 
@@ -94,7 +95,7 @@ export const Bonds: React.FC<BondsProps> = ({
                 <th className="py-2">Source Chain</th>
                 <th className="py-2">Destination Chain</th>
                 <th className="py-2">Dest. SC Address</th>
-                <th className="py-2">Amount</th>
+                <th className="py-2">Amount (Satoshi)</th>
                 <th className="py-2">Created At</th>
                 <th className="py-2">Action</th>
               </tr>
@@ -121,7 +122,9 @@ export const Bonds: React.FC<BondsProps> = ({
                     {bond.destinationSmartContractAddress.slice(2, 6)}...
                     {bond.destinationSmartContractAddress.slice(-4)}
                   </td>
-                  <td className="py-2 px-4 text-center">{bond.amount}</td>
+                  <td className="py-2 px-4 text-center">
+                    {getBondValueStringFromStakingTxHex(bond.sourceTxHex)}
+                  </td>
                   <td className="py-2 px-4 text-center">
                     {datetimeStringOf(bond.createdAt)}
                   </td>
@@ -146,7 +149,6 @@ export const Bonds: React.FC<BondsProps> = ({
         btcAddress={address}
         signPsbt={signPsbt}
         stakingTxHex={txHex}
-        btcWalletNetwork={btcWalletNetwork}
       />
     </div>
   );

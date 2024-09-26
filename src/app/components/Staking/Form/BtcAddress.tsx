@@ -5,6 +5,7 @@ interface BtcAddressProps {
   reset: boolean;
   initValue: string;
   label?: string;
+  placeholder?: string;
 }
 
 export const BtcAddress: React.FC<BtcAddressProps> = ({
@@ -12,6 +13,7 @@ export const BtcAddress: React.FC<BtcAddressProps> = ({
   reset,
   initValue,
   label = "Bitcoin Address",
+  placeholder = "",
 }) => {
   const [value, setValue] = useState(initValue);
   const [error, setError] = useState("");
@@ -61,7 +63,7 @@ export const BtcAddress: React.FC<BtcAddressProps> = ({
         value={value}
         onChange={handleChange}
         onBlur={handleBlur}
-        placeholder="0x"
+        placeholder={placeholder}
       />
       <div className="mb-2 mt-4 min-h-[20px]">
         <p className="text-center text-sm text-error">{error}</p>
