@@ -7,9 +7,9 @@ import { ProjectENV } from "@/env";
 
 const defaultChainNames = ProjectENV.NEXT_PUBLIC_DEFAULT_DAPP_CHAINS.split(",");
 
-const defaultChains = defaultChainNames.map(
-  (k) => supportedChains[k as keyof typeof supportedChains],
-) as supportedChains.Prettify<
+const defaultChains = defaultChainNames
+  .map((k) => supportedChains[k as keyof typeof supportedChains])
+  .filter((chain) => chain !== undefined) as supportedChains.Prettify<
   supportedChains.Assign<
     supportedChains.Chain<undefined>,
     supportedChains.Chain<ChainFormatters>
