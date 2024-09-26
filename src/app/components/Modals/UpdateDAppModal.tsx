@@ -3,10 +3,12 @@ import { IoMdClose } from "react-icons/io";
 
 import { updateDApp } from "@/app/api/dApp";
 import { DApp as DAppInterface } from "@/app/types/dApps";
+import { getConfig } from "@/app/wagmi";
 
 import { BtcAddress } from "../Staking/Form/BtcAddress";
 import { BtcPubKey } from "../Staking/Form/BtcPubkey";
 import { ChainName } from "../Staking/Form/ChainName";
+import { InputField } from "../Staking/Form/InputField";
 
 import { GeneralModal } from "./GeneralModal";
 
@@ -22,12 +24,29 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
   dApp,
 }) => {
   const [chainName, setChainName] = useState(dApp?.chainName);
+  const [chainId, setChainId] = useState(dApp?.chainId || "");
+  const [chainEndpoint, setChainEndpoint] = useState(dApp?.chainEndpoint || "");
   const [btcAddress, setBtcAddress] = useState(dApp?.btcAddress);
   const [btcPubKey, setBtcPubKey] = useState(dApp?.btcPk);
   const [scAddress, setScAddress] = useState(dApp?.scAddress);
   const [id, setId] = useState(dApp?.id);
+  const [isCustomChain, setIsCustomChain] = useState(false);
+
+  const config = getConfig();
+  const chains = config.chains;
+
+  // setIsCustomChain(
+  //   chains.find((chain) => {
+  //     chain.name === chainName;
+  //   })
+  //     ? false
+  //     : true,
+  // );
+
   useEffect(() => {
     setChainName(dApp?.chainName);
+    setChainId(dApp?.chainId || "");
+    setChainEndpoint(dApp?.chainEndpoint || "");
     setBtcAddress(dApp?.btcAddress);
     setBtcPubKey(dApp?.btcPk);
     setId(dApp?.id);
@@ -36,6 +55,17 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
 
   const handleChainNameChange = (input: string) => {
     setChainName(input);
+    // Find the selected chain based on the name
+    const selectedChain = chains.find((chain) => chain.name === input);
+    if (selectedChain) {
+      // Update chainId and chainEndpoint based on the selected chain
+      setChainId(selectedChain.id.toString());
+      setChainEndpoint(selectedChain.rpcUrls.default.http[0]);
+    } else if (!isCustomChain) {
+      // If no matching chain is found, reset the values
+      setChainId("");
+      setChainEndpoint("");
+    }
   };
   const handleBtcAddressChange = (input: string) => {
     setBtcAddress(input);
@@ -49,11 +79,27 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
   };
 
   const handleUpdate = async () => {
-    if (!id || !chainName || !btcAddress || !btcPubKey || !scAddress) {
+    if (
+      !id ||
+      !chainName ||
+      !chainId ||
+      !chainEndpoint ||
+      !btcAddress ||
+      !btcPubKey ||
+      !scAddress
+    ) {
       console.error("Missing required fields");
       return;
     }
-    await updateDApp(id, chainName, btcAddress, btcPubKey, scAddress)
+    await updateDApp(
+      id,
+      chainName,
+      chainId,
+      chainEndpoint,
+      btcAddress,
+      btcPubKey,
+      scAddress,
+    )
       .then(() => {
         console.log("Successfully update DApp");
         onClose(false);
@@ -79,6 +125,31 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
             onChange={handleChainNameChange}
             reset={false}
             initValue={chainName || ""}
+            chainNames={chains.map((chain) => chain.name)}
+            isCustom={isCustomChain}
+            setIsCustom={setIsCustomChain}
+          />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <InputField
+            onChange={setChainId}
+            reset={false}
+            initValue={isCustomChain ? "" : chainId}
+            label="Chain ID"
+            placeholder=""
+            generalErrorMessage="Please input a chain ID"
+            disabled={!isCustomChain}
+          />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <InputField
+            onChange={setChainEndpoint}
+            reset={false}
+            initValue={isCustomChain ? "" : chainEndpoint}
+            label="Chain endpoint"
+            placeholder=""
+            generalErrorMessage="Please input a chain endpoint"
+            disabled={!isCustomChain}
           />
         </div>
         <div className="flex flex-1 flex-col">

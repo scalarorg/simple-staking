@@ -1,4 +1,4 @@
-import { Network, networks } from "bitcoinjs-lib";
+import { Network, networks, Transaction } from "bitcoinjs-lib";
 
 export function getBtcNetwork(network?: networks.Network): string {
   switch (network) {
@@ -34,4 +34,16 @@ export function getAddressNetworkType(address: string): Network {
     return networks.regtest;
   }
   throw new Error(`Unknown address: ${address}`);
+}
+
+export function getBondValueStringFromStakingTxHex(
+  txHex: string | undefined,
+): string {
+  if (!txHex) {
+    return "Is coming...";
+  }
+  const tx = Transaction.fromHex(txHex);
+  const output = tx.outs[0];
+  const value = output.value;
+  return value.toLocaleString();
 }

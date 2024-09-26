@@ -7,8 +7,13 @@ import {
   IdPayload,
   UpdatePayload,
 } from "../types/dApps";
+import { getConfig } from "../wagmi";
 
 import { apiWrapper } from "./apiWrapper";
+
+// TODO: remove this after xchains-api is done implemeting the chainId and chainEndpoint
+const config = getConfig();
+const chains = config.chains;
 
 export const getDApps = async (): Promise<DApps> => {
   // const limit = 100;
@@ -17,25 +22,37 @@ export const getDApps = async (): Promise<DApps> => {
   const response = await apiWrapper("GET", "/v1/dApp", "Error getting dApps");
   const dAppsAPIResponse: DAppsAPIResponse = response.data;
   const dAppsAPI: DAppAPI[] = dAppsAPIResponse.data;
-  const dApps = dAppsAPI.map(
-    (da: DAppAPI): DApp => ({
+  // TODO: remove this after xchains-api is done implemeting the chainId and chainEndpoint
+  const dApps = dAppsAPI.map((da: DAppAPI): DApp => {
+    const lookUpChains = chains.find((chain) => chain.name === da.ChainName);
+    let [lookUpChainId, lookUpChainEndpoint] = ["", ""];
+    if (lookUpChains) {
+      lookUpChainId = lookUpChains.id.toString();
+      lookUpChainEndpoint = lookUpChains.rpcUrls.default.http[0];
+    }
+    return {
       id: da.ID,
+      chainId: lookUpChainId,
+      chainEndpoint: lookUpChainEndpoint,
       chainName: da.ChainName,
       btcAddress: da.BTCAddressHex,
       btcPk: da.PublicKeyHex,
       scAddress: da.SmartContractAddress,
       state: da.State,
-    }),
-  );
+    };
+  });
   return { dApps };
 };
 
 export const postDApp = async (
   chainName: string,
+  chainId: string,
+  chainEndpoint: string,
   btcAddressHex: string,
   publicKeyHex: string,
   smartContractAddress: string,
 ) => {
+  // TODO: Update this after xchains-api done
   const payload: CreatePayload = {
     chain_name: chainName,
     btc_address_hex: btcAddressHex,
@@ -57,6 +74,8 @@ export const postDApp = async (
 export const updateDApp = async (
   id: string,
   chainName: string,
+  chainId: string,
+  chainEndpoint: string,
   btcAddressHex: string,
   publicKeyHex: string,
   smartContractAddress: string,
@@ -68,7 +87,7 @@ export const updateDApp = async (
     public_key_hex: publicKeyHex,
     smart_contract_address: smartContractAddress,
   };
-
+  // TODO: Update this after xchains-api done
   const response = await apiWrapper(
     "PUT",
     "/v1/dApp",

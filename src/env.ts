@@ -31,6 +31,8 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_BOND_HOLDER_ADDRESS: z.string().default(""),
   NEXT_PUBLIC_BOND_HOLDER_PRIVATE_KEY: z.string().default(""),
   NEXT_PUBLIC_BOND_HOLDER_PUBLIC_KEY: z.string().default(""),
+
+  NEXT_PUBLIC_DEFAULT_DAPP_CHAINS: z.string().default(""),
 });
 
 /**
@@ -72,4 +74,5 @@ export const ProjectENV = ProjectENVSchema.parse({
     process.env.NEXT_PUBLIC_BOND_HOLDER_PRIVATE_KEY,
   NEXT_PUBLIC_BOND_HOLDER_PUBLIC_KEY:
     process.env.NEXT_PUBLIC_BOND_HOLDER_PUBLIC_KEY,
+  NEXT_PUBLIC_DEFAULT_DAPP_CHAINS: process.env.NEXT_PUBLIC_DEFAULT_DAPP_CHAINS,
 });

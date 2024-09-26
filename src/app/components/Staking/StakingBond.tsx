@@ -737,6 +737,7 @@ export const StakingBond: React.FC<StakingProps> = ({
             <button
               className="btn btn-circle btn-ghost btn-sm"
               onClick={onUpdate}
+              disabled={!dApp}
             >
               <FaPenToSquare />
             </button>
