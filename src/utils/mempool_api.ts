@@ -1,5 +1,7 @@
 import { MempoolUTXO } from "@/app/types";
 import { getNetworkConfig } from "@/config/network.config";
+import { ProjectENV } from "@/env";
+import { Network } from "@/utils/wallet/wallet_provider";
 
 import { Fees, UTXO } from "./wallet/wallet_provider";
 
@@ -47,6 +49,16 @@ function validateAddressUrl(address: string): URL {
 // URL for the transaction info endpoint
 function txInfoUrl(txId: string): URL {
   return new URL(mempoolAPI + "tx/" + txId);
+}
+
+export function mempoolWebTxUrl(txId: string): URL {
+  const network = ProjectENV.NEXT_PUBLIC_NETWORK;
+  const mempool_web_url = ProjectENV.NEXT_PUBLIC_MEMPOOL_WEB;
+  const tx_preview_prefix =
+    network === Network.MAINNET || network === Network.REGTEST
+      ? ""
+      : "testnet/";
+  return new URL(`${mempool_web_url}/${tx_preview_prefix}tx/${txId}`);
 }
 
 /**

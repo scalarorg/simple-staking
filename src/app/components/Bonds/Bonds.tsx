@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { networks } from "bitcoinjs-lib";
+import Link from "next/link";
 import { useState } from "react";
 
 import { getBonds } from "@/app/api/getBonds";
@@ -10,6 +11,7 @@ import { Bond as BondInterface } from "@/app/types/bonds";
 import { GlobalParamsVersion } from "@/app/types/globalParams";
 import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
 import { datetimeStringOf } from "@/utils/formatTime";
+import { mempoolWebTxUrl } from "@/utils/mempool_api";
 import { UnisatOptions, WalletProvider } from "@/utils/wallet/wallet_provider";
 
 import { BurnTokenModal } from "../Modals/BurnTokenModal";
@@ -95,7 +97,7 @@ export const Bonds: React.FC<BondsProps> = ({
                 <th className="py-2">Source Chain</th>
                 <th className="py-2">Destination Chain</th>
                 <th className="py-2">Dest. SC Address</th>
-                <th className="py-2">Amount (Satoshi)</th>
+                <th className="py-2">Amount (sats)</th>
                 <th className="py-2">Created At</th>
                 <th className="py-2">Action</th>
               </tr>
@@ -108,8 +110,15 @@ export const Bonds: React.FC<BondsProps> = ({
                 <tr key={bond.id} className="border-b">
                   <td className="py-2 px-4 text-center">{index + 1}</td>
                   <td className="py-2 px-4 text-center">
-                    {bond.sourceTxHash.slice(2, 6)}...
-                    {bond.sourceTxHash.slice(-4)}
+                    <Link
+                      className="text-blue-500 underline"
+                      href={mempoolWebTxUrl(bond.sourceTxHash.slice(2))}
+                      target="_blank"
+                      rel="noreferrer noopener nofollow"
+                    >
+                      {bond.sourceTxHash.slice(2, 6)}...
+                      {bond.sourceTxHash.slice(-4)}
+                    </Link>
                   </td>
                   <td className="py-2 px-4 text-center">
                     {bond.simplifiedStatus}
