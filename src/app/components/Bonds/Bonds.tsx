@@ -56,9 +56,11 @@ export const Bonds: React.FC<BondsProps> = ({
 }) => {
   const [burnTokenModalOpen, setBurnTokenModalOpen] = useState(false);
   const [txHex, setTxHex] = useState("");
+  const [tokenBurnAmount, setTokenBurnAmount] = useState("");
 
-  const handleModal = (txHex: string) => {
+  const handleModal = (txHex: string, amount: string) => {
     setTxHex(txHex);
+    setTokenBurnAmount(amount);
     setBurnTokenModalOpen(true);
   };
 
@@ -92,12 +94,13 @@ export const Bonds: React.FC<BondsProps> = ({
             <thead className="">
               <tr>
                 <th className="py-2">No</th>
-                <th className="py-2">TxHash</th>
-                <th className="py-2">Status</th>
                 <th className="py-2">Source Chain</th>
-                <th className="py-2">Destination Chain</th>
-                <th className="py-2">Dest. SC Address</th>
+                <th className="py-2">TxID</th>
                 <th className="py-2">Amount (sats)</th>
+                <th className="py-2">Status</th>
+                <th className="py-2">Dest. Chain</th>
+                <th className="py-2">Dest. SC Address</th>
+                <th className="py-2">Minted Amount</th>
                 <th className="py-2">Created At</th>
                 <th className="py-2">Action</th>
               </tr>
@@ -109,6 +112,7 @@ export const Bonds: React.FC<BondsProps> = ({
               {data?.bonds.map((bond, index) => (
                 <tr key={bond.id} className="border-b">
                   <td className="py-2 px-4 text-center">{index + 1}</td>
+                  <td className="py-2 px-4 text-center">{bond.sourceChain}</td>
                   <td className="py-2 px-4 text-center">
                     <Link
                       className="text-blue-500 underline"
@@ -121,9 +125,11 @@ export const Bonds: React.FC<BondsProps> = ({
                     </Link>
                   </td>
                   <td className="py-2 px-4 text-center">
+                    {getBondValueStringFromStakingTxHex(bond.sourceTxHex)}
+                  </td>
+                  <td className="py-2 px-4 text-center">
                     {bond.simplifiedStatus}
                   </td>
-                  <td className="py-2 px-4 text-center">{bond.sourceChain}</td>
                   <td className="py-2 px-4 text-center">
                     {bond.destinationChain}
                   </td>
@@ -131,16 +137,14 @@ export const Bonds: React.FC<BondsProps> = ({
                     {bond.destinationSmartContractAddress.slice(2, 6)}...
                     {bond.destinationSmartContractAddress.slice(-4)}
                   </td>
-                  <td className="py-2 px-4 text-center">
-                    {getBondValueStringFromStakingTxHex(bond.sourceTxHex)}
-                  </td>
+                  <td className="py-2 px-4 text-center">{bond.amount}</td>
                   <td className="py-2 px-4 text-center">
                     {datetimeStringOf(bond.createdAt)}
                   </td>
                   <td className="py-2 px-4 text-center">
                     <button
                       className="btn btn-outline btn-xs inline-flex text-sm font-normal text-primary"
-                      onClick={() => handleModal(bond.sourceTxHex)}
+                      onClick={() => handleModal(bond.sourceTxHex, bond.amount)}
                     >
                       Unbond
                     </button>
@@ -158,6 +162,7 @@ export const Bonds: React.FC<BondsProps> = ({
         btcAddress={address}
         signPsbt={signPsbt}
         stakingTxHex={txHex}
+        tokenBurnAmount={tokenBurnAmount}
       />
     </div>
   );
