@@ -63,21 +63,30 @@ export async function POST(request: Request) {
     ).fastestFee; // Get this from Mempool API
 
     const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
-    const { psbt: unsignedVaultPsbt, feeEstimate: fee } =
-      await staker.getUnsignedVaultPsbt(
-        regularUTXOs,
-        stakingAmount,
-        feeRate,
-        rbf,
-      );
 
-    return NextResponse.json({
+    const result = await staker.getUnsignedVaultPsbt(
+      regularUTXOs,
+      stakingAmount,
+      feeRate,
+      rbf,
+    );
+
+    console.log("result", result);
+
+    const { psbt: unsignedVaultPsbt, feeEstimate: fee } = result;
+
+    const response = {
       status: 200,
       data: {
         unsignedVaultPsbtHex: unsignedVaultPsbt.toHex(),
       },
-    });
+    };
+
+    console.log("response", response);
+
+    return NextResponse.json(response);
   } catch (error) {
+    console.error("Error in mint-tx-psbt", error);
     return NextResponse.json({
       status: 500,
       // @ts-ignore

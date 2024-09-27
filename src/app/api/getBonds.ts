@@ -24,6 +24,7 @@ interface BondAPI {
   source_tx_hex: string;
   staker_pubkey: string;
   amount: string;
+  executed_amount?: string;
   created_at: number;
   updated_at: number;
 }
@@ -62,6 +63,7 @@ export const getBonds = async (
       sourceTxHex: apiBond.source_tx_hex,
       stakerPubkey: apiBond.staker_pubkey,
       amount: apiBond.amount,
+      executedAmount: apiBond.executed_amount,
       createdAt: apiBond.created_at,
       updatedAt: apiBond.updated_at,
     }),
