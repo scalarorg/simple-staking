@@ -21,7 +21,9 @@ import {
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
 import { ProjectENV } from "@/env";
+import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
 import { useEthersProvider, useEthersSigner } from "@/utils/ethers";
+import { isNumeric } from "@/utils/typeCheck";
 import { UnisatOptions } from "@/utils/wallet/wallet_provider";
 
 import { getPsbtByHex } from "vault/index";
@@ -40,6 +42,7 @@ interface BurnTokenModalProps {
     | ((psbt: string, options?: UnisatOptions) => Promise<string>)
     | undefined;
   stakingTxHex: string;
+  tokenBurnAmount: string;
 }
 
 const FormSchema = z.object({
@@ -52,6 +55,9 @@ const FormSchema = z.object({
   btcReceiverAddress: z.string({
     required_error: "Please enter your btc receiver address.",
   }),
+  tokenBurnAmount: z.string({
+    required_error: "Please enter the token burn amount.",
+  }),
 });
 
 export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
@@ -60,12 +66,11 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   btcAddress,
   signPsbt,
   stakingTxHex,
+  tokenBurnAmount,
 }) => {
   const account = useAccount();
   const signer = useEthersSigner({ chainId: 1337 });
   const provider = useEthersProvider({ chainId: 1337 });
-
-  console.log({ signer, provider });
 
   const [burnContract, setBurnContract] = useState<ethers.Contract | null>(
     null,
@@ -80,6 +85,7 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
       vaultTxHex: "",
       btcStakerAddress: "",
       btcReceiverAddress: "",
+      tokenBurnAmount: "",
     },
   });
 
@@ -112,13 +118,23 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
     if (stakingTxHex) {
       form.setValue("vaultTxHex", stakingTxHex);
     }
-  }, [btcAddress, stakingTxHex, form]);
+    if (tokenBurnAmount) {
+      form.setValue("tokenBurnAmount", tokenBurnAmount);
+    }
+  }, [btcAddress, stakingTxHex, tokenBurnAmount, form]);
 
   const [status, setStatus] = useState<string>("");
   const [isBurning, setIsBurning] = useState<boolean>(false);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     try {
+      const {
+        btcStakerAddress,
+        btcReceiverAddress,
+        vaultTxHex,
+        tokenBurnAmount,
+      } = data;
+
       const burnContractAddress = ProjectENV.NEXT_PUBLIC_BURN_CONTRACT_ADDRESS;
       const sBTCContractAddress = ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
 
@@ -133,17 +149,19 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
         throw new Error("Missing destination chain or address");
       }
 
-      const burnAmount = ProjectENV.NEXT_PUBLIC_BURNING_AMOUNT;
+      const defaultBurnAmount = ProjectENV.NEXT_PUBLIC_BURNING_AMOUNT;
 
-      if (!burnAmount) {
+      if (!defaultBurnAmount && !tokenBurnAmount) {
         throw new Error("Missing burn amount");
       }
+
+      const amountToBurn = isNumeric(tokenBurnAmount)
+        ? ethers.parseUnits(tokenBurnAmount, 0)
+        : ethers.parseUnits(defaultBurnAmount, 18);
 
       if (sBTCContract === null || burnContract === null) {
         throw new Error("Contracts not initialized");
       }
-
-      const { btcStakerAddress, btcReceiverAddress, vaultTxHex } = data;
 
       const url = window.location.origin;
 
@@ -186,8 +204,6 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
       const signedPsbt = getPsbtByHex(hexSignedPsbt, btcStakerAddress);
 
       // Step 3: Call the contract to burn the token
-      const amountToBurn = ethers.parseUnits(burnAmount, 18);
-
       setStatus("Approving the token");
 
       const txApprove = await sBTCContract.approve(
@@ -195,7 +211,6 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
         amountToBurn,
       );
       const response = await txApprove.wait();
-      console.log("response", response);
 
       setStatus("Burning the token");
 
@@ -263,9 +278,24 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
               />
               <div className="space-y-2">
                 <FormLabel className="text-gray-500">
-                  Token Holder Address
+                  Token Return Address
                 </FormLabel>
                 <Input disabled value={account.address} />
+              </div>
+              <div className="space-y-2">
+                <FormLabel className="text-gray-500">
+                  BTC Staked Amount (sats)
+                </FormLabel>
+                <Input
+                  disabled
+                  value={getBondValueStringFromStakingTxHex(stakingTxHex)}
+                />
+              </div>
+              <div className="space-y-2">
+                <FormLabel className="text-gray-500">
+                  Token Burn Amount
+                </FormLabel>
+                <Input disabled value={tokenBurnAmount} />
               </div>
             </div>
 
@@ -277,20 +307,6 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
                   <FormLabel>BTC Receiver Address</FormLabel>
                   <FormControl>
                     <Input placeholder="" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="vaultTxHex"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Vault Tx Hex</FormLabel>
-                  <FormControl>
-                    <Input placeholder="" {...field} disabled />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

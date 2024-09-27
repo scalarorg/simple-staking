@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { networks } from "bitcoinjs-lib";
+import Link from "next/link";
 import { useState } from "react";
 
 import { getBonds } from "@/app/api/getBonds";
@@ -8,8 +9,9 @@ import { historyContainerStyles } from "@/app/scalar/theme";
 import { QueryMeta } from "@/app/types/api";
 import { Bond as BondInterface } from "@/app/types/bonds";
 import { GlobalParamsVersion } from "@/app/types/globalParams";
+import { ProjectENV } from "@/env";
 import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
-import { datetimeStringOf } from "@/utils/formatTime";
+import { getRelativeTime } from "@/utils/tool";
 import { UnisatOptions, WalletProvider } from "@/utils/wallet/wallet_provider";
 
 import { BurnTokenModal } from "../Modals/BurnTokenModal";
@@ -54,9 +56,11 @@ export const Bonds: React.FC<BondsProps> = ({
 }) => {
   const [burnTokenModalOpen, setBurnTokenModalOpen] = useState(false);
   const [txHex, setTxHex] = useState("");
+  const [tokenBurnAmount, setTokenBurnAmount] = useState("");
 
-  const handleModal = (txHex: string) => {
+  const handleModal = (txHex: string, amount: string) => {
     setTxHex(txHex);
+    setTokenBurnAmount(amount);
     setBurnTokenModalOpen(true);
   };
 
@@ -90,14 +94,14 @@ export const Bonds: React.FC<BondsProps> = ({
             <thead className="">
               <tr>
                 <th className="py-2">No</th>
-                <th className="py-2">TxHash</th>
-                <th className="py-2">Status</th>
                 <th className="py-2">Source Chain</th>
-                <th className="py-2">Destination Chain</th>
+                <th className="py-2">TxID</th>
+                <th className="py-2">Amount (sats)</th>
+                <th className="py-2">Dest. Chain</th>
                 <th className="py-2">Dest. SC Address</th>
-                <th className="py-2">Amount (Satoshi)</th>
-                <th className="py-2">Created At</th>
-                <th className="py-2">Action</th>
+                <th className="py-2">Minted Amount</th>
+                <th className="py-2">Time</th>
+                <th className="py-2">Unbonded $BTC</th>
               </tr>
             </thead>
             <tbody
@@ -107,14 +111,25 @@ export const Bonds: React.FC<BondsProps> = ({
               {data?.bonds.map((bond, index) => (
                 <tr key={bond.id} className="border-b">
                   <td className="py-2 px-4 text-center">{index + 1}</td>
-                  <td className="py-2 px-4 text-center">
-                    {bond.sourceTxHash.slice(2, 6)}...
-                    {bond.sourceTxHash.slice(-4)}
-                  </td>
-                  <td className="py-2 px-4 text-center">
-                    {bond.simplifiedStatus}
-                  </td>
                   <td className="py-2 px-4 text-center">{bond.sourceChain}</td>
+                  <td className="py-2 px-4 text-center">
+                    <Link
+                      className="text-blue-500 underline"
+                      // href={mempoolWebTxUrl(bond.sourceTxHash.slice(2))}
+                      href={`${ProjectENV.NEXT_PUBLIC_SCALAR_SCANNER}/gmp/${bond.sourceTxHash}`}
+                      target="_blank"
+                      rel="noreferrer noopener nofollow"
+                    >
+                      {bond.sourceTxHash.slice(2, 6)}...
+                      {bond.sourceTxHash.slice(-4)}
+                    </Link>
+                  </td>
+                  <td className="py-2 px-4 text-center">
+                    {getBondValueStringFromStakingTxHex(bond.sourceTxHex)}
+                  </td>
+                  {/* <td className="py-2 px-4 text-center">
+                    {bond.simplifiedStatus}
+                  </td> */}
                   <td className="py-2 px-4 text-center">
                     {bond.destinationChain}
                   </td>
@@ -123,18 +138,30 @@ export const Bonds: React.FC<BondsProps> = ({
                     {bond.destinationSmartContractAddress.slice(-4)}
                   </td>
                   <td className="py-2 px-4 text-center">
-                    {getBondValueStringFromStakingTxHex(bond.sourceTxHex)}
+                    {Number(bond.amount).toLocaleString()}
                   </td>
                   <td className="py-2 px-4 text-center">
-                    {datetimeStringOf(bond.createdAt)}
+                    {getRelativeTime(bond.createdAt)}
                   </td>
                   <td className="py-2 px-4 text-center">
-                    <button
-                      className="btn btn-outline btn-xs inline-flex text-sm font-normal text-primary"
-                      onClick={() => handleModal(bond.sourceTxHex)}
-                    >
-                      Unbond
-                    </button>
+                    {!bond.executedAmount && (
+                      <button
+                        className="btn btn-outline btn-xs inline-flex text-sm font-normal text-primary"
+                        onClick={() =>
+                          handleModal(bond.sourceTxHex, bond.amount)
+                        }
+                      >
+                        Unbond
+                      </button>
+                    )}
+                    {bond.executedAmount && (
+                      <div className="text-white flex gap-2">
+                        Unbonded:
+                        <span className="text-orange-700 bg-white rounded-lg px-2">
+                          {bond.executedAmount}
+                        </span>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -149,6 +176,7 @@ export const Bonds: React.FC<BondsProps> = ({
         btcAddress={address}
         signPsbt={signPsbt}
         stakingTxHex={txHex}
+        tokenBurnAmount={tokenBurnAmount}
       />
     </div>
   );

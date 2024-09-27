@@ -39,12 +39,12 @@ import { ConnectModal } from "./components/Modals/ConnectModal";
 import { ErrorModal } from "./components/Modals/ErrorModal";
 import { MintTxModal } from "./components/Modals/MintTxModal";
 import { ShowWalletModal } from "./components/Modals/ShowWalletModal";
-import { SignTxModal } from "./components/Modals/SignTxModal";
 import { TermsModal } from "./components/Modals/Terms/TermsModal";
 import { UpdateDAppModal } from "./components/Modals/UpdateDAppModal";
 import { StakingBond } from "./components/Staking/StakingBond";
 import { Stats } from "./components/Stats/Stats";
 import { Summary } from "./components/Summary/Summary";
+import { toast } from "./components/ui/use-toast";
 import { useError } from "./context/Error/ErrorContext";
 import { useTerms } from "./context/Terms/TermsContext";
 import { Bond } from "./types/bonds";
@@ -64,7 +64,6 @@ const Home: React.FC<HomeProps> = () => {
   const [address, setAddress] = useState("");
   const [pubkey, setPubkey] = useState("");
   const [privkey, setPrivkey] = useState("");
-  const [inputPrivkey, setInputPrivkey] = useState("");
   const { error, isErrorOpen, showError, hideError, retryErrorAction } =
     useError();
   const { isTermsOpen, closeTerms } = useTerms();
@@ -264,22 +263,17 @@ const Home: React.FC<HomeProps> = () => {
   };
 
   const [mintTxModalOpen, setMintTxModalOpen] = useState(false);
-  const [signTxModalOpen, setSignTxModalOpen] = useState(false);
-  const [isInputPrivkey, setIsInputPrivkey] = useState<any>(null);
 
   const handleMintTxModal = () => {
-    setMintTxModalOpen(true);
-  };
-
-  const waitForPrivateKey = () => {
-    setSignTxModalOpen(true);
-    return new Promise<string>((resolve) => {
-      const getPrivateKeyWIF = (privkey: string) => {
-        setSignTxModalOpen(false);
-        resolve(privkey);
-      };
-      setIsInputPrivkey(() => getPrivateKeyWIF);
-    });
+    if (dApp) {
+      setMintTxModalOpen(true);
+    } else {
+      toast({
+        title: "Warning",
+        // @ts-ignore
+        description: "Please select a dApp to mint a transaction",
+      });
+    }
   };
 
   const handleAddDAppModal = () => {
@@ -555,13 +549,6 @@ const Home: React.FC<HomeProps> = () => {
         btcPublicKey={pubkey}
         dApp={dApp}
         signPsbt={btcWallet?.signPsbt}
-        waitForPrivateKey={waitForPrivateKey}
-      />
-      <SignTxModal
-        open={signTxModalOpen}
-        onClose={setSignTxModalOpen}
-        onSign={isInputPrivkey}
-        address={address}
       />
       <ConnectModal
         open={connectModalOpen}

@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { networks } from "bitcoinjs-lib";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import { useAccount } from "wagmi";
@@ -21,11 +21,13 @@ import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/components/ui/use-toast";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { ProjectENV } from "@/env";
+import { mempoolWebTxUrl } from "@/utils/mempool_api";
 import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
 
 import { getPsbtByHex } from "vault/index";
 
 import { GeneralModal } from "./GeneralModal";
+import { SignTxModal } from "./SignTxModal";
 
 type signedPsbtFunctionType =
   | ((psbt: string) => Promise<string>)
@@ -44,7 +46,6 @@ interface SendTxModalProps {
   btcWalletNetwork: networks.Network | undefined;
   signPsbt: signedPsbtFunctionType;
   dApp?: DAppInterface;
-  waitForPrivateKey?: () => Promise<string>;
 }
 
 const FormSchema = z.object({
@@ -94,14 +95,10 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   btcWalletNetwork,
   dApp,
   signPsbt,
-  waitForPrivateKey,
 }) => {
-  let network = ProjectENV.NEXT_PUBLIC_NETWORK;
-  let mempool_web_url = ProjectENV.NEXT_PUBLIC_MEMPOOL_WEB;
-  let tx_preview_prefix =
-    network === Network.MAINNET || network === Network.REGTEST
-      ? ""
-      : "testnet/";
+  const network = ProjectENV.NEXT_PUBLIC_NETWORK;
+  const [signTxModalOpen, setSignTxModalOpen] = useState(false);
+  const [isSignConfirm, setIsSignConfirm] = useState<any>(null);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -138,12 +135,24 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
     options?: UnisatOptions | undefined,
   ): Promise<string | undefined> {
     if (network === Network.REGTEST) {
-      const privateKey = await waitForPrivateKey?.();
-      return await signFunction?.(psbtHex, options, privateKey);
+      return (await waitForSignConfirm?.())
+        ? await signFunction?.(psbtHex, options)
+        : undefined;
     } else {
       return await signFunction?.(psbtHex);
     }
   }
+
+  const waitForSignConfirm = () => {
+    setSignTxModalOpen(true);
+    return new Promise<boolean>((resolve) => {
+      const getSignConfirm = (isConfirm: boolean) => {
+        setSignTxModalOpen(false);
+        resolve(isConfirm);
+      };
+      setIsSignConfirm(() => getSignConfirm);
+    });
+  };
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     const {
@@ -237,7 +246,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
               Txid:{" "}
               <Link
                 className="text-blue-500 underline"
-                href={`${mempool_web_url}/${tx_preview_prefix}tx/${result.data.data}`}
+                href={mempoolWebTxUrl(result.data.data)}
                 target="_blank"
                 rel="noreferrer noopener nofollow"
               >
@@ -258,148 +267,159 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   }
 
   return (
-    <GeneralModal open={open} big onClose={onClose}>
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-bold">Mint Token</h3>
-        <button
-          className="btn btn-circle btn-ghost btn-sm"
-          onClick={() => onClose(false)}
-        >
-          <IoMdClose size={24} />
-        </button>
-      </div>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4 w-full"
-        >
-          <div className="flex gap-4 w-full">
-            <div className="space-y-4 w-full">
-              <div className="space-y-2 -mt-2">
-                <FormLabel className="text-gray-500">Source chain</FormLabel>
-                <Input disabled value={"Bitcoin"} />
+    <>
+      <GeneralModal open={open} big onClose={onClose}>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-bold">Mint Token</h3>
+          <button
+            className="btn btn-circle btn-ghost btn-sm"
+            onClick={() => onClose(false)}
+          >
+            <IoMdClose size={24} />
+          </button>
+        </div>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 w-full"
+          >
+            <div className="flex gap-4 w-full">
+              <div className="space-y-4 w-full">
+                <div className="space-y-2 -mt-2">
+                  <FormLabel className="text-gray-500">Source chain</FormLabel>
+                  <Input disabled value={"Bitcoin"} />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="sourceChainAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-500">
+                        Source chain address
+                      </FormLabel>
+                      <FormControl>
+                        <Input disabled placeholder="" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="stakingAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Staking amount (sats)</FormLabel>
+                      <FormControl>
+                        <Input
+                          inputMode="numeric"
+                          step="any"
+                          type="number"
+                          placeholder=""
+                          // disabled
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
+              <div className="space-y-4 w-full">
+                <div className="space-y-2 -mt-2">
+                  <FormLabel className="text-gray-500">
+                    Destination chain
+                  </FormLabel>
+                  <Input disabled value={dApp?.chainName} />
+                </div>
 
-              <FormField
-                control={form.control}
-                name="sourceChainAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-500">
-                      Source chain address
-                    </FormLabel>
-                    <FormControl>
-                      <Input disabled placeholder="" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="tokenReceiverAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Token receiver address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="stakingAmount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Staking amount (sats)</FormLabel>
-                    <FormControl>
-                      <Input
-                        inputMode="numeric"
-                        step="any"
-                        type="number"
-                        placeholder=""
-                        // disabled
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="space-y-4 w-full">
-              <div className="space-y-2 -mt-2">
-                <FormLabel className="text-gray-500">
-                  Destination chain
-                </FormLabel>
-                <Input disabled value={dApp?.chainName} />
+                <FormField
+                  control={form.control}
+                  name="mintingAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Minting amount</FormLabel>
+                      <FormControl>
+                        <Input
+                          inputMode="numeric"
+                          step="any"
+                          type="number"
+                          placeholder=""
+                          // disabled
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-
-              <FormField
-                control={form.control}
-                name="tokenReceiverAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Token receiver address</FormLabel>
-                    <FormControl>
-                      <Input placeholder="" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="mintingAmount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Minting amount</FormLabel>
-                    <FormControl>
-                      <Input
-                        inputMode="numeric"
-                        step="any"
-                        type="number"
-                        placeholder=""
-                        // disabled
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
-          </div>
-          <div className="space-y-2 py-3">
-            <h3 className="text-base font-medium">dApp infomation</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="servicePublicKey"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>BTC Service Pubkey</FormLabel>
-                    <FormControl>
-                      <Input disabled placeholder="" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="space-y-2 py-3">
+              <h3 className="text-base font-medium">dApp infomation</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="servicePublicKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>BTC Service Pubkey</FormLabel>
+                      <FormControl>
+                        <Input disabled placeholder="" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="smartContractAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Smart contract address</FormLabel>
-                    <FormControl>
-                      <Input disabled placeholder="" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="smartContractAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Smart contract address</FormLabel>
+                      <FormControl>
+                        <Input disabled placeholder="" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-          </div>
-          <div className="flex justify-end">
-            <Button className="" variant="outline" type="submit">
-              Mint sBTC
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </GeneralModal>
+            <div className="flex justify-end">
+              <Button className="" variant="outline" type="submit">
+                Mint sBTC
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </GeneralModal>
+      <SignTxModal
+        open={signTxModalOpen}
+        onClose={setSignTxModalOpen}
+        onSign={isSignConfirm}
+        stakerAddress={form.getValues("sourceChainAddress")}
+        stakingAmount={form.getValues("stakingAmount")}
+        tokenReceiveAddress={form.getValues("tokenReceiverAddress")}
+        tokenAmount={form.getValues("mintingAmount")}
+      />
+    </>
   );
 };

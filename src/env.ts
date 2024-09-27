@@ -33,6 +33,8 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_BOND_HOLDER_PUBLIC_KEY: z.string().default(""),
 
   NEXT_PUBLIC_DEFAULT_DAPP_CHAINS: z.string().default(""),
+
+  NEXT_PUBLIC_SCALAR_SCANNER: z.string().default("http://localhost:3001"),
 });
 
 /**
@@ -75,4 +77,5 @@ export const ProjectENV = ProjectENVSchema.parse({
   NEXT_PUBLIC_BOND_HOLDER_PUBLIC_KEY:
     process.env.NEXT_PUBLIC_BOND_HOLDER_PUBLIC_KEY,
   NEXT_PUBLIC_DEFAULT_DAPP_CHAINS: process.env.NEXT_PUBLIC_DEFAULT_DAPP_CHAINS,
+  NEXT_PUBLIC_SCALAR_SCANNER: process.env.NEXT_PUBLIC_SCALAR_SCANNER,
 });

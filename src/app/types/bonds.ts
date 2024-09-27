@@ -9,6 +9,7 @@ export interface Bond {
   destinationSmartContractAddress: string;
   stakerPubkey: string;
   amount: string;
+  executedAmount?: string;
   createdAt: number;
   updatedAt: number;
 }
