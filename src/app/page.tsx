@@ -44,6 +44,7 @@ import { UpdateDAppModal } from "./components/Modals/UpdateDAppModal";
 import { StakingBond } from "./components/Staking/StakingBond";
 import { Stats } from "./components/Stats/Stats";
 import { Summary } from "./components/Summary/Summary";
+import { toast } from "./components/ui/use-toast";
 import { useError } from "./context/Error/ErrorContext";
 import { useTerms } from "./context/Terms/TermsContext";
 import { Bond } from "./types/bonds";
@@ -264,7 +265,15 @@ const Home: React.FC<HomeProps> = () => {
   const [mintTxModalOpen, setMintTxModalOpen] = useState(false);
 
   const handleMintTxModal = () => {
-    setMintTxModalOpen(true);
+    if (dApp) {
+      setMintTxModalOpen(true);
+    } else {
+      toast({
+        title: "Warning",
+        // @ts-ignore
+        description: "Please select a dApp to mint a transaction",
+      });
+    }
   };
 
   const handleAddDAppModal = () => {

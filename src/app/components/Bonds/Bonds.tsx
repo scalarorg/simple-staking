@@ -97,20 +97,11 @@ export const Bonds: React.FC<BondsProps> = ({
                 <th className="py-2">Source Chain</th>
                 <th className="py-2">TxID</th>
                 <th className="py-2">Amount (sats)</th>
-<<<<<<< HEAD
-                <th className="py-2">Status</th>
-                <th className="py-2">Dest. Chain</th>
-                <th className="py-2">Dest. SC Address</th>
-                <th className="py-2">Minted Amount</th>
-                <th className="py-2">Created At</th>
-                <th className="py-2">Action</th>
-=======
                 <th className="py-2">Dest. Chain</th>
                 <th className="py-2">Dest. SC Address</th>
                 <th className="py-2">Minted Amount</th>
                 <th className="py-2">Time</th>
                 <th className="py-2">Unbonded $BTC</th>
->>>>>>> d741a4b (feat(bond): list unbonded vault)
               </tr>
             </thead>
             <tbody
@@ -135,17 +126,10 @@ export const Bonds: React.FC<BondsProps> = ({
                   </td>
                   <td className="py-2 px-4 text-center">
                     {getBondValueStringFromStakingTxHex(bond.sourceTxHex)}
-<<<<<<< HEAD
-                  </td>
-                  <td className="py-2 px-4 text-center">
-                    {bond.simplifiedStatus}
-                  </td>
-=======
                   </td>
                   {/* <td className="py-2 px-4 text-center">
                     {bond.simplifiedStatus}
                   </td> */}
->>>>>>> d741a4b (feat(bond): list unbonded vault)
                   <td className="py-2 px-4 text-center">
                     {bond.destinationChain}
                   </td>
@@ -153,25 +137,13 @@ export const Bonds: React.FC<BondsProps> = ({
                     {bond.destinationSmartContractAddress.slice(2, 6)}...
                     {bond.destinationSmartContractAddress.slice(-4)}
                   </td>
-<<<<<<< HEAD
-                  <td className="py-2 px-4 text-center">{bond.amount}</td>
-=======
                   <td className="py-2 px-4 text-center">
                     {Number(bond.amount).toLocaleString()}
                   </td>
->>>>>>> d741a4b (feat(bond): list unbonded vault)
                   <td className="py-2 px-4 text-center">
                     {getRelativeTime(bond.createdAt)}
                   </td>
                   <td className="py-2 px-4 text-center">
-<<<<<<< HEAD
-                    <button
-                      className="btn btn-outline btn-xs inline-flex text-sm font-normal text-primary"
-                      onClick={() => handleModal(bond.sourceTxHex, bond.amount)}
-                    >
-                      Unbond
-                    </button>
-=======
                     {!bond.executedAmount && (
                       <button
                         className="btn btn-outline btn-xs inline-flex text-sm font-normal text-primary"
@@ -190,7 +162,6 @@ export const Bonds: React.FC<BondsProps> = ({
                         </span>
                       </div>
                     )}
->>>>>>> d741a4b (feat(bond): list unbonded vault)
                   </td>
                 </tr>
               ))}
