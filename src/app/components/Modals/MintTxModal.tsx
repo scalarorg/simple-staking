@@ -3,7 +3,7 @@ import axios from "axios";
 import { networks } from "bitcoinjs-lib";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -113,6 +113,16 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       servicePublicKey: ProjectENV.NEXT_PUBLIC_SERVICE_PUBKEY || "",
     },
   });
+
+  // TODO: Change minting amount according to exchange rate later when we have the necessary API
+  const watchStakingAmount = useWatch({
+    control: form.control,
+    name: "stakingAmount",
+  });
+
+  useEffect(() => {
+    form.setValue("mintingAmount", watchStakingAmount);
+  }, [watchStakingAmount, form]);
 
   const account = useAccount();
   if (account.status === "connected") {
@@ -361,7 +371,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                           step="any"
                           type="number"
                           placeholder=""
-                          // disabled
+                          disabled
                           {...field}
                         />
                       </FormControl>
