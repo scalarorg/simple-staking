@@ -6,7 +6,7 @@ export const fromBtcUnspentToMempoolUTXO = (utxo: BtcUnspent): MempoolUTXO => {
   return {
     txid: utxo.txid,
     vout: utxo.vout,
-    value: utxo.amount * 100000000, // convert to satoshis
+    value: Math.floor(utxo.amount * 100000000), // convert to satoshis
     status: {
       confirmed: utxo.confirmations > 0,
       block_height: 0,

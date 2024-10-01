@@ -58,9 +58,13 @@ export async function POST(request: Request) {
           ).map(fromBtcUnspentToMempoolUTXO)
         : await getUTXOs(sourceChainAddress);
 
+    console.log("regularUTXOs", regularUTXOs);
+
     let feeRate = (
       await getFeesRecommended(getBTCNetworkFromAddress(sourceChainAddress))
     ).fastestFee; // Get this from Mempool API
+
+    console.log("feeRate", feeRate);
 
     const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
 

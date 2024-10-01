@@ -22,12 +22,28 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenBurnTokenModal,
   onOpenExportPrivateKeyModal,
 }) => {
+  const handleSelectChange = () => {};
+  const handleBlur = () => {};
+
   return (
     <nav>
       {/*<div className="bg-base-300 shadow-sm">*/}
       <div>
         <div className="container mx-auto flex w-full items-center justify-between gap-4 p-6">
-          <Logo />
+          <div className="flex gap-4">
+            <Logo />
+            <select
+              className={`select select-bordered`}
+              value={""}
+              onChange={handleSelectChange}
+              onBlur={handleBlur}
+            >
+              <option value="">Testnet 3</option>
+              <option value="">Testnet 4</option>
+              <option value="">Regtest</option>
+            </select>
+          </div>
+
           {/*<div className="flex flex-1">*/}
           {/*  <div className="hidden flex-1 xl:flex">*/}
           {/*    <TestingInfo />*/}
