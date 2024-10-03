@@ -1,6 +1,8 @@
 import axios from "axios";
 
-import { ProjectENV } from "@/env";
+import { parseENV } from "@/env";
+
+const ProjectENV = parseENV();
 
 export const apiWrapper = async (
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",

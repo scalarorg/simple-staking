@@ -1,8 +1,4 @@
-import {
-  getNetworkConfig,
-  GLOBAL_NETWORK_INSTANCE,
-  validateAddress,
-} from "@/config/network.config";
+import { getNetworkConfig, validateAddress } from "@/config/network.config";
 
 import {
   getAddressBalance,
@@ -28,7 +24,7 @@ export class OKXWallet extends WalletProvider {
   private bitcoinNetworkProvider: any;
   private networkEnv: Network | undefined;
 
-  constructor() {
+  constructor(btcNetworkName: string) {
     super();
 
     // check whether there is an OKX Wallet extension
@@ -37,7 +33,7 @@ export class OKXWallet extends WalletProvider {
     }
 
     this.okxWallet = window[okxProvider];
-    this.networkEnv = getNetworkConfig().network;
+    this.networkEnv = getNetworkConfig(btcNetworkName).network;
 
     // OKX uses different providers for different networks
     switch (this.networkEnv) {
@@ -82,7 +78,7 @@ export class OKXWallet extends WalletProvider {
 
     const { address, compressedPublicKey } = result;
 
-    validateAddress(GLOBAL_NETWORK_INSTANCE, address);
+    validateAddress(this.networkEnv!, address);
 
     if (compressedPublicKey && address) {
       this.okxWalletInfo = {

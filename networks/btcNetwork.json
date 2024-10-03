@@ -1,0 +1,60 @@
+{
+  "btcNetworks": [
+    {
+      "btcNetworkName": "Regtest",
+      "MEMPOOL_API": "http://localhost:8999",
+      "MEMPOOL_API2": "http://localhost:8999",
+      "MEMPOOL_WEB": "http://localhost:8080",
+      "NETWORK": "regtest",
+      "BTC_NODE_URL": "http://localhost:18332",
+      "BTC_NODE_HOST": "localhost",
+      "BTC_NODE_PORT": "18332",
+      "BTC_NODE_WALLET": "legacy",
+      "BTC_NODE_USER": "user",
+      "BTC_NODE_PASSWORD": "password",
+      "BTC_CHAIN_NAME": "bitcoin-regtest"
+    },
+    {
+      "btcNetworkName": "Testnet3",
+      "MEMPOOL_API": "https://mempool.space/testnet/api",
+      "MEMPOOL_API2": "https://mempool.space/testnet/api",
+      "MEMPOOL_WEB": "https://mempool.space/testnet",
+      "NETWORK": "testnet",
+      "BTC_NODE_URL": "https://testnet.bitindex.network",
+      "BTC_NODE_HOST": "testnet.bitindex.network",
+      "BTC_NODE_PORT": "443",
+      "BTC_NODE_WALLET": "legacy",
+      "BTC_NODE_USER": "user",
+      "BTC_NODE_PASSWORD": "password",
+      "BTC_CHAIN_NAME": "bitcoin-testnet"
+    },
+    {
+      "btcNetworkName": "Testnet4",
+      "MEMPOOL_API": "http://localhost:8999",
+      "MEMPOOL_API2": "http://localhost:8999",
+      "MEMPOOL_WEB": "http://localhost:8080",
+      "NETWORK": "testnet",
+      "BTC_NODE_URL": "http://localhost:18332",
+      "BTC_NODE_HOST": "localhost",
+      "BTC_NODE_PORT": "18332",
+      "BTC_NODE_WALLET": "legacy",
+      "BTC_NODE_USER": "user",
+      "BTC_NODE_PASSWORD": "password",
+      "BTC_CHAIN_NAME": "bitcoin-regtest"
+    },
+    {
+      "btcNetworkName": "Mainnet",
+      "MEMPOOL_API": "http://localhost:8999",
+      "MEMPOOL_API2": "http://localhost:8999",
+      "MEMPOOL_WEB": "http://localhost:8080",
+      "NETWORK": "mainnet",
+      "BTC_NODE_URL": "http://localhost:18332",
+      "BTC_NODE_HOST": "localhost",
+      "BTC_NODE_PORT": "18332",
+      "BTC_NODE_WALLET": "legacy",
+      "BTC_NODE_USER": "user",
+      "BTC_NODE_PASSWORD": "password",
+      "BTC_CHAIN_NAME": "bitcoin-regtest"
+    }
+  ]
+}

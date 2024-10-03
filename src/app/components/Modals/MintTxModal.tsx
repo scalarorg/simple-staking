@@ -3,7 +3,7 @@ import axios from "axios";
 import { networks } from "bitcoinjs-lib";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -19,8 +19,9 @@ import {
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/components/ui/use-toast";
+import { useBtcNetwork } from "@/app/context/BtcNetworkProvider";
 import { DApp as DAppInterface } from "@/app/types/dApps";
-import { ProjectENV } from "@/env";
+import { parseENV } from "@/env";
 import { mempoolWebTxUrl } from "@/utils/mempool_api";
 import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
 
@@ -96,6 +97,8 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   dApp,
   signPsbt,
 }) => {
+  const { btcNetwork } = useBtcNetwork();
+  const ProjectENV = parseENV(btcNetwork);
   const network = ProjectENV.NEXT_PUBLIC_NETWORK;
   const [signTxModalOpen, setSignTxModalOpen] = useState(false);
   const [isSignConfirm, setIsSignConfirm] = useState<any>(null);
@@ -113,6 +116,16 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       servicePublicKey: ProjectENV.NEXT_PUBLIC_SERVICE_PUBKEY || "",
     },
   });
+
+  // TODO: Change minting amount according to exchange rate later when we have the necessary API
+  const watchStakingAmount = useWatch({
+    control: form.control,
+    name: "stakingAmount",
+  });
+
+  useEffect(() => {
+    form.setValue("mintingAmount", watchStakingAmount);
+  }, [watchStakingAmount, form]);
 
   const account = useAccount();
   if (account.status === "connected") {
@@ -182,6 +195,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
         stakingAmount,
         mintingAmount,
         servicePublicKey,
+        btcNetwork,
       });
 
       const unsignedVaultPsbtHex =
@@ -234,6 +248,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       // await utils.node.sendToBitcoinNetwork(ProjectENV.url!, hexTxfromPsbt);
       const result = await axios.post(`${url}/api/broadcast-btc-transaction`, {
         hexTxFromPsbt,
+        btcNetwork,
       });
 
       onClose(false);
@@ -246,7 +261,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
               Txid:{" "}
               <Link
                 className="text-blue-500 underline"
-                href={mempoolWebTxUrl(result.data.data)}
+                href={mempoolWebTxUrl(result.data.data, btcNetwork!)}
                 target="_blank"
                 rel="noreferrer noopener nofollow"
               >
@@ -361,7 +376,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                           step="any"
                           type="number"
                           placeholder=""
-                          // disabled
+                          disabled
                           {...field}
                         />
                       </FormControl>

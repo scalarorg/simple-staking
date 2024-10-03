@@ -20,7 +20,8 @@ import {
   FormMessage,
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
-import { ProjectENV } from "@/env";
+import { useBtcNetwork } from "@/app/context/BtcNetworkProvider";
+import { parseENV } from "@/env";
 import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
 import { useEthersProvider, useEthersSigner } from "@/utils/ethers";
 import { isNumeric } from "@/utils/typeCheck";
@@ -68,6 +69,8 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   stakingTxHex,
   tokenBurnAmount,
 }) => {
+  const { btcNetwork } = useBtcNetwork();
+  const ProjectENV = parseENV(btcNetwork);
   const account = useAccount();
   const signer = useEthersSigner({ chainId: 1337 });
   const provider = useEthersProvider({ chainId: 1337 });
@@ -173,6 +176,7 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
         btcStakerAddress,
         btcReceiverAddress,
         vaultTxHex,
+        btcNetwork,
       });
 
       const unsignedUnbondPsbtHex =

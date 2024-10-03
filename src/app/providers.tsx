@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import React from "react";
 import { WagmiProvider } from "wagmi";
 
+import { BtcNetworkProvider } from "./context/BtcNetworkProvider";
 import { ErrorProvider } from "./context/Error/ErrorContext";
 import { TermsProvider } from "./context/Terms/TermsContext";
 import { GlobalParamsProvider } from "./context/api/GlobalParamsProvider";
@@ -25,13 +26,15 @@ function Providers({ children }: React.PropsWithChildren) {
           <TermsProvider>
             <ErrorProvider>
               <GlobalParamsProvider>
-                <BtcHeightProvider>
-                  <StakingStatsProvider>
-                    <ReactQueryStreamedHydration>
-                      {children}
-                    </ReactQueryStreamedHydration>
-                  </StakingStatsProvider>
-                </BtcHeightProvider>
+                <BtcNetworkProvider>
+                  <BtcHeightProvider>
+                    <StakingStatsProvider>
+                      <ReactQueryStreamedHydration>
+                        {children}
+                      </ReactQueryStreamedHydration>
+                    </StakingStatsProvider>
+                  </BtcHeightProvider>
+                </BtcNetworkProvider>
               </GlobalParamsProvider>
             </ErrorProvider>
           </TermsProvider>

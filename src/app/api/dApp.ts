@@ -11,13 +11,13 @@ import { getConfig } from "../wagmi";
 
 import { apiWrapper } from "./apiWrapper";
 
-// TODO: remove this after xchains-api is done implemeting the chainId and chainEndpoint
-const config = getConfig();
-const chains = config.chains;
-
 export const getDApps = async (): Promise<DApps> => {
   // const limit = 100;
   // const reverse = false;
+
+  // TODO: remove this after xchains-api is done implemeting the chainId and chainEndpoint
+  const config = getConfig();
+  const chains = config.chains;
 
   const response = await apiWrapper("GET", "/v1/dApp", "Error getting dApps");
   const dAppsAPIResponse: DAppsAPIResponse = response.data;

@@ -3,18 +3,7 @@ import { cookieStorage, createConfig, createStorage, http } from "wagmi";
 import * as supportedChains from "wagmi/chains";
 import { injected } from "wagmi/connectors";
 
-import { ProjectENV } from "@/env";
-
-const defaultChainNames = ProjectENV.NEXT_PUBLIC_DEFAULT_DAPP_CHAINS.split(",");
-
-const defaultChains = defaultChainNames
-  .map((k) => supportedChains[k as keyof typeof supportedChains])
-  .filter((chain) => chain !== undefined) as supportedChains.Prettify<
-  supportedChains.Assign<
-    supportedChains.Chain<undefined>,
-    supportedChains.Chain<ChainFormatters>
-  >
->[];
+import { parseENV } from "@/env";
 
 const localChain = defineChain({
   id: 1337,
@@ -64,15 +53,29 @@ const localEthereumSepoliaChain = defineChain({
   testnet: true,
 });
 
-const defaultChainTransports = defaultChains.reduce(
-  (acc, chain) => {
-    acc[chain.id] = http();
-    return acc;
-  },
-  {} as Record<number, ReturnType<typeof http>>,
-);
+export function getConfig(btcNetwork?: string) {
+  const ProjectENV = parseENV(btcNetwork);
 
-export function getConfig() {
+  const defaultChainNames =
+    ProjectENV.NEXT_PUBLIC_DEFAULT_DAPP_CHAINS.split(",");
+
+  const defaultChains = defaultChainNames
+    .map((k) => supportedChains[k as keyof typeof supportedChains])
+    .filter((chain) => chain !== undefined) as supportedChains.Prettify<
+    supportedChains.Assign<
+      supportedChains.Chain<undefined>,
+      supportedChains.Chain<ChainFormatters>
+    >
+  >[];
+
+  const defaultChainTransports = defaultChains.reduce(
+    (acc, chain) => {
+      acc[chain.id] = http();
+      return acc;
+    },
+    {} as Record<number, ReturnType<typeof http>>,
+  );
+
   return createConfig({
     chains: [localEthereumSepoliaChain, localChain, ...defaultChains],
     connectors: [injected()],

@@ -5,7 +5,7 @@ import ECPairFactory from "ecpair";
 import { getBitcoindBlocksHeight, getBitcoindUTXOs } from "@/app/api/bitcoind";
 import { MempoolUTXO } from "@/app/types";
 import { getNetworkConfig } from "@/config/network.config";
-import { ProjectENV } from "@/env";
+import { parseENV } from "@/env";
 
 import { getFundingUTXOs, getNetworkFees } from "../../mempool_api";
 import {
@@ -23,10 +23,13 @@ export class RegtestWallet extends WalletProvider {
   private stakerAddress: string | undefined;
   private stakerPrivateKey: string | undefined;
   private stakerPublicKey: string | undefined;
+  private btcNetworkName: string;
 
-  constructor() {
+  constructor(btcNetworkName: string) {
     super();
-    this.networkEnv = getNetworkConfig().network;
+    this.btcNetworkName = btcNetworkName;
+    const ProjectENV = parseENV(this.btcNetworkName);
+    this.networkEnv = getNetworkConfig(btcNetworkName).network;
     this.stakerAddress = ProjectENV.NEXT_PUBLIC_BOND_HOLDER_ADDRESS;
     this.stakerPrivateKey = ProjectENV.NEXT_PUBLIC_BOND_HOLDER_PRIVATE_KEY;
     this.stakerPublicKey = ProjectENV.NEXT_PUBLIC_BOND_HOLDER_PUBLIC_KEY;
@@ -95,6 +98,7 @@ export class RegtestWallet extends WalletProvider {
   getBalance = async (): Promise<number> => {
     const regularUTXOs: MempoolUTXO[] = await getBitcoindUTXOs(
       this.stakerAddress!,
+      this.btcNetworkName!,
     );
     return regularUTXOs.reduce((acc, utxo) => acc + utxo.value, 0);
   };
@@ -109,11 +113,19 @@ export class RegtestWallet extends WalletProvider {
 
   getUtxos = async (address: string, amount: number): Promise<UTXO[]> => {
     // Call to bitcoind
-    const nominatedUTXOs: MempoolUTXO[] = await getBitcoindUTXOs(address);
-    return await getFundingUTXOs(address, amount, nominatedUTXOs);
+    const nominatedUTXOs: MempoolUTXO[] = await getBitcoindUTXOs(
+      address,
+      this.btcNetworkName!,
+    );
+    return await getFundingUTXOs(
+      address,
+      amount,
+      nominatedUTXOs,
+      this.btcNetworkName,
+    );
   };
 
   getBTCTipHeight = async (): Promise<number> => {
-    return await getBitcoindBlocksHeight();
+    return await getBitcoindBlocksHeight(this.btcNetworkName);
   };
 }

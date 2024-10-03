@@ -3,6 +3,8 @@ import React, { ReactNode, createContext, useContext } from "react";
 
 import { getTipHeight } from "@/utils/mempool_api";
 
+import { useBtcNetwork } from "../BtcNetworkProvider";
+
 interface BtcHeightProviderProps {
   children: ReactNode;
 }
@@ -12,9 +14,11 @@ const BtcHeightContext = createContext<number | undefined>(undefined);
 export const BtcHeightProvider: React.FC<BtcHeightProviderProps> = ({
   children,
 }) => {
+  const { btcNetwork } = useBtcNetwork();
+
   const { data } = useQuery({
     queryKey: ["BTC_HEIGHT_MEMPOOL_API"],
-    queryFn: async () => getTipHeight(),
+    queryFn: async () => getTipHeight(btcNetwork),
     refetchInterval: 60000, // 1 minute
   });
 

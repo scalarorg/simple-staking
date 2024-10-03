@@ -38,3 +38,7 @@ npm run dev
 
 Instructions for wallet integration can be found in this
 [document](./docs/WalletIntegration.md).
+
+## Notes for running into errors
+
+- In Dev Mode, when failed to burn the token, try to clear the ETH account nonce

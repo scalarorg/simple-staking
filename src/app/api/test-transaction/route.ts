@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { ProjectENV } from "@/env";
+import { parseENV } from "@/env";
 
 import { testMempoolAcceptance } from "bitcoin-flow/utils/node";
 
 export async function POST(request: Request) {
   try {
-    const { hexTxFromPsbt } = await request.json();
+    const { hexTxFromPsbt, btcNetwork } = await request.json();
+    const ProjectENV = parseENV(btcNetwork);
 
     if (!hexTxFromPsbt) {
       throw new Error("Please provide the hex tx from psbt");

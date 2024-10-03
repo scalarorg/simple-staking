@@ -6,6 +6,7 @@ import { IoMdClose } from "react-icons/io";
 import { PiWalletBold } from "react-icons/pi";
 import { Tooltip } from "react-tooltip";
 
+import { useBtcNetwork } from "@/app/context/BtcNetworkProvider";
 import { useTerms } from "@/app/context/Terms/TermsContext";
 import { getNetworkConfig } from "@/config/network.config";
 import { BROWSER_INJECTED_WALLET_NAME, walletList } from "@/utils/wallet/list";
@@ -26,6 +27,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
   onConnect,
   connectDisabled,
 }) => {
+  const { btcNetwork } = useBtcNetwork();
   const [accepted, setAccepted] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<string>("");
   const [mounted, setMounted] = useState(false);
@@ -67,7 +69,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
   }
 
   const isInjectable = !!window[BROWSER];
-  const { networkName } = getNetworkConfig();
+  const { networkName } = getNetworkConfig(btcNetwork!);
 
   const handleConnect = async () => {
     if (selectedWallet) {
@@ -177,7 +179,9 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
                 // If the wallet is integrated but does not support the current network, do not display it
                 if (
                   !supportedNetworks ||
-                  !supportedNetworks.includes(getNetworkConfig().network)
+                  !supportedNetworks.includes(
+                    getNetworkConfig(btcNetwork!).network,
+                  )
                 ) {
                   return null;
                 }

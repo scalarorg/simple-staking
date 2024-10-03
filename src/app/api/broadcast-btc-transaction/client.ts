@@ -1,8 +1,9 @@
 import Client from "bitcoin-core-ts";
 
-import { ProjectENV } from "@/env";
+import { parseENV } from "@/env";
 let client: Client;
-export const getClient = function () {
+export const getClient = function (btcNetwork: string) {
+  const ProjectENV = parseENV(btcNetwork);
   if (!client) {
     client = new Client({
       network: ProjectENV.NEXT_PUBLIC_NETWORK,

@@ -1,6 +1,8 @@
 import { ConnectSmall } from "@/app/components/Connect/ConnectSmall";
 import { buttonStyles } from "@/app/scalar/theme";
 
+import { ChooseNetwork } from "../Connect/ChooseNetwork";
+
 import { Logo } from "./Logo";
 
 interface HeaderProps {
@@ -27,7 +29,11 @@ export const Header: React.FC<HeaderProps> = ({
       {/*<div className="bg-base-300 shadow-sm">*/}
       <div>
         <div className="container mx-auto flex w-full items-center justify-between gap-4 p-6">
-          <Logo />
+          <div className="flex gap-8">
+            <Logo />
+            <ChooseNetwork />
+          </div>
+
           {/*<div className="flex flex-1">*/}
           {/*  <div className="hidden flex-1 xl:flex">*/}
           {/*    <TestingInfo />*/}

@@ -1,8 +1,4 @@
-import {
-  getNetworkConfig,
-  GLOBAL_NETWORK_INSTANCE,
-  validateAddress,
-} from "@/config/network.config";
+import { getNetworkConfig, validateAddress } from "@/config/network.config";
 
 import {
   getAddressBalance,
@@ -15,8 +11,8 @@ import {
   Fees,
   INTERNAL_NETWORK_NAMES,
   Network,
-  UnisatOptions,
   UTXO,
+  UnisatOptions,
   WalletInfo,
   WalletProvider,
 } from "../wallet_provider";
@@ -29,8 +25,9 @@ export class UnisatWallet extends WalletProvider {
   private unisatWallet: any;
   private bitcoinNetworkProvider: any;
   private networkEnv: Network | undefined;
+  private btcNetworkName: string;
 
-  constructor() {
+  constructor(btcNetworkName: string) {
     super();
 
     // check whether there is an Unisat Wallet extension
@@ -39,7 +36,8 @@ export class UnisatWallet extends WalletProvider {
     }
 
     this.unisatWallet = window[unisatProvider];
-    this.networkEnv = getNetworkConfig().network;
+    this.btcNetworkName = btcNetworkName;
+    this.networkEnv = getNetworkConfig(this.btcNetworkName).network;
 
     // Unisat uses different providers for different networks
     this.bitcoinNetworkProvider = this.unisatWallet;
@@ -94,7 +92,7 @@ export class UnisatWallet extends WalletProvider {
 
     const address = result[0];
 
-    validateAddress(GLOBAL_NETWORK_INSTANCE, address);
+    validateAddress(this.networkEnv, address);
 
     const compressedPublicKey =
       await this.bitcoinNetworkProvider.getPublicKey();
@@ -179,7 +177,10 @@ export class UnisatWallet extends WalletProvider {
   // Mempool calls
 
   getBalance = async (): Promise<number> => {
-    return await getAddressBalance(await this.getAddress());
+    return await getAddressBalance(
+      await this.getAddress(),
+      this.btcNetworkName,
+    );
   };
 
   getNetworkFees = async (): Promise<Fees> => {
@@ -187,15 +188,20 @@ export class UnisatWallet extends WalletProvider {
   };
 
   pushTx = async (txHex: string): Promise<string> => {
-    return await pushTx(txHex);
+    return await pushTx(txHex, this.btcNetworkName);
   };
 
   getUtxos = async (address: string, amount: number): Promise<UTXO[]> => {
     // mempool call
-    return await getFundingUTXOs(address, amount);
+    return await getFundingUTXOs(
+      address,
+      amount,
+      undefined,
+      this.btcNetworkName,
+    );
   };
 
   getBTCTipHeight = async (): Promise<number> => {
-    return await getTipHeight();
+    return await getTipHeight(this.btcNetworkName);
   };
 }

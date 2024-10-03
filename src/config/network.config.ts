@@ -1,8 +1,5 @@
-import { ProjectENV } from "@/env";
+import { parseENV } from "@/env";
 import { Network } from "@/utils/wallet/wallet_provider";
-
-export const GLOBAL_NETWORK_INSTANCE =
-  (ProjectENV.NEXT_PUBLIC_NETWORK as Network) || Network.SIGNET;
 
 interface NetworkConfig {
   coinName: string;
@@ -12,47 +9,48 @@ interface NetworkConfig {
   network: Network;
 }
 
-const mainnetConfig: NetworkConfig = {
-  coinName: "BTC",
-  coinSymbol: "BTC",
-  networkName: "BTC",
-  mempoolApiUrl: `${ProjectENV.NEXT_PUBLIC_MEMPOOL_API}`,
-  network: Network.MAINNET,
+export const getBtcNetworkType = (btcNetworkName?: string): Network => {
+  const ProjectENV = parseENV(btcNetworkName);
+  return (ProjectENV.NEXT_PUBLIC_NETWORK as Network) || Network.REGTEST;
 };
 
-const signetConfig: NetworkConfig = {
-  coinName: "Signet BTC",
-  coinSymbol: "sBTC",
-  networkName: "BTC signet",
-  mempoolApiUrl: `${ProjectENV.NEXT_PUBLIC_MEMPOOL_API}/signet`,
-  network: Network.SIGNET,
-};
-
-const testnetConfig: NetworkConfig = {
-  coinName: "Testnet BTC",
-  coinSymbol: "tBTC",
-  networkName: "BTC testnet",
-  mempoolApiUrl: `${ProjectENV.NEXT_PUBLIC_MEMPOOL_API}/testnet`,
-  network: Network.TESTNET,
-};
-
-const regtestConfig: NetworkConfig = {
-  coinName: "Regtest BTC",
-  coinSymbol: "rBTC",
-  networkName: "BTC regtest",
-  mempoolApiUrl: `${ProjectENV.NEXT_PUBLIC_MEMPOOL_API}`,
-  network: Network.REGTEST,
-};
-
-const config: Record<string, NetworkConfig> = {
-  mainnet: mainnetConfig,
-  signet: signetConfig,
-  testnet: testnetConfig,
-  regtest: regtestConfig,
-};
-
-export function getNetworkConfig(): NetworkConfig {
-  switch (GLOBAL_NETWORK_INSTANCE) {
+export function getNetworkConfig(btcNetworkName?: string): NetworkConfig {
+  const ProjectENV = parseENV(btcNetworkName);
+  const mainnetConfig: NetworkConfig = {
+    coinName: "BTC",
+    coinSymbol: "BTC",
+    networkName: "BTC",
+    mempoolApiUrl: `${ProjectENV.NEXT_PUBLIC_MEMPOOL_API}`,
+    network: Network.MAINNET,
+  };
+  const signetConfig: NetworkConfig = {
+    coinName: "Signet BTC",
+    coinSymbol: "sBTC",
+    networkName: "BTC signet",
+    mempoolApiUrl: `${ProjectENV.NEXT_PUBLIC_MEMPOOL_API}/signet`,
+    network: Network.SIGNET,
+  };
+  const testnetConfig: NetworkConfig = {
+    coinName: "Testnet BTC",
+    coinSymbol: "tBTC",
+    networkName: "BTC testnet",
+    mempoolApiUrl: `${ProjectENV.NEXT_PUBLIC_MEMPOOL_API}/testnet`,
+    network: Network.TESTNET,
+  };
+  const regtestConfig: NetworkConfig = {
+    coinName: "Regtest BTC",
+    coinSymbol: "rBTC",
+    networkName: "BTC regtest",
+    mempoolApiUrl: `${ProjectENV.NEXT_PUBLIC_MEMPOOL_API}`,
+    network: Network.REGTEST,
+  };
+  const config: Record<string, NetworkConfig> = {
+    mainnet: mainnetConfig,
+    signet: signetConfig,
+    testnet: testnetConfig,
+    regtest: regtestConfig,
+  };
+  switch (getBtcNetworkType(btcNetworkName)) {
     case Network.MAINNET:
       return config.mainnet;
     case Network.SIGNET:
