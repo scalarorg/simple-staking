@@ -2,6 +2,7 @@ import { useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
 import { postDApp } from "@/app/api/dApp";
+import { useBtcNetwork } from "@/app/context/BtcNetworkProvider";
 import { getConfig } from "@/app/wagmi";
 
 import { BtcAddress } from "../Staking/Form/BtcAddress";
@@ -20,6 +21,7 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
   open,
   onClose,
 }) => {
+  const { btcNetwork } = useBtcNetwork();
   const [chainName, setChainName] = useState("");
   const [btcAddress, setBtcAddress] = useState("");
   const [btcPubKey, setBtcPubKey] = useState("");
@@ -29,7 +31,7 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
 
   const [isCustomChain, setIsCustomChain] = useState(false);
 
-  const config = getConfig();
+  const config = getConfig(btcNetwork!);
   const chains = config.chains;
 
   const handleChainNameChange = (input: string) => {

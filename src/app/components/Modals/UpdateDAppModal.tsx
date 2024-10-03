@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
 import { updateDApp } from "@/app/api/dApp";
+import { useBtcNetwork } from "@/app/context/BtcNetworkProvider";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { getConfig } from "@/app/wagmi";
 
@@ -23,6 +24,7 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
   onClose,
   dApp,
 }) => {
+  const { btcNetwork } = useBtcNetwork();
   const [chainName, setChainName] = useState(dApp?.chainName);
   const [chainId, setChainId] = useState(dApp?.chainId || "");
   const [chainEndpoint, setChainEndpoint] = useState(dApp?.chainEndpoint || "");
@@ -32,7 +34,7 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
   const [id, setId] = useState(dApp?.id);
   const [isCustomChain, setIsCustomChain] = useState(false);
 
-  const config = getConfig();
+  const config = getConfig(btcNetwork!);
   const chains = config.chains;
 
   // setIsCustomChain(

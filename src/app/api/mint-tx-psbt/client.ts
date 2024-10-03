@@ -1,7 +1,10 @@
 import axios from "axios";
 
-import { ProjectENV } from "@/env";
+import { parseENV } from "@/env";
 
-export const mempoolAxios = axios.create({
-  baseURL: ProjectENV.NEXT_PUBLIC_MEMPOOL_API2,
-});
+export const getMempoolAxios = (btcNetwork: string) => {
+  const ProjectENV = parseENV(btcNetwork);
+  return axios.create({
+    baseURL: ProjectENV.NEXT_PUBLIC_MEMPOOL_API2,
+  });
+};

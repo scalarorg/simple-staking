@@ -1,6 +1,7 @@
 import Image from "next/image";
 
-import { GLOBAL_NETWORK_INSTANCE } from "@/config/network.config";
+import { useBtcNetwork } from "@/app/context/BtcNetworkProvider";
+import { getBtcNetworkType } from "@/config/network.config";
 import { Network } from "@/utils/wallet/wallet_provider";
 
 import testnetIcon from "./testnet-icon.png";
@@ -9,9 +10,12 @@ import testnetIcon from "./testnet-icon.png";
 interface NetworkBadgeProps {}
 
 export const NetworkBadge: React.FC<NetworkBadgeProps> = () => {
+  const { btcNetwork } = useBtcNetwork();
   return (
     <div className="absolute left-2 top-[6rem]">
-      {[Network.SIGNET, Network.TESTNET].includes(GLOBAL_NETWORK_INSTANCE) && (
+      {[Network.SIGNET, Network.TESTNET].includes(
+        getBtcNetworkType(btcNetwork!),
+      ) && (
         <>
           <Image src={testnetIcon} alt="Testnet" className="w-[10rem]" />
           {/* 

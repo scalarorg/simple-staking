@@ -4,11 +4,9 @@ import { IoMdClose } from "react-icons/io";
 import { PiArrowUpRightBold, PiWalletBold } from "react-icons/pi";
 import { useOnClickOutside } from "usehooks-ts";
 
+import { useBtcNetwork } from "@/app/context/BtcNetworkProvider";
 import { buttonStyles } from "@/app/scalar/theme";
-import {
-  GLOBAL_NETWORK_INSTANCE,
-  getNetworkConfig,
-} from "@/config/network.config";
+import { getBtcNetworkType, getNetworkConfig } from "@/config/network.config";
 import { satoshiToBtc } from "@/utils/btcConversions";
 import { maxDecimals } from "@/utils/maxDecimals";
 import { trim } from "@/utils/trim";
@@ -30,6 +28,7 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
   onDisconnect,
   onExportPrivateKey,
 }) => {
+  const { btcNetwork } = useBtcNetwork();
   const [showMenu, setShowMenu] = useState(false);
   const handleClickOutside = () => {
     setShowMenu(false);
@@ -38,7 +37,7 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
   const ref = useRef(null);
   useOnClickOutside(ref, handleClickOutside);
 
-  const { coinName, networkName } = getNetworkConfig();
+  const { coinName, networkName } = getNetworkConfig(btcNetwork!);
 
   return address ? (
     <div className="relative mr-[-10px] flex text-sm" ref={ref}>
@@ -89,7 +88,7 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
           >
             Disconnect
           </button>
-          {GLOBAL_NETWORK_INSTANCE === "regtest" ? (
+          {getBtcNetworkType(btcNetwork!) === "regtest" ? (
             <button
               className="btn btn-outline btn-sm"
               onClick={() => {

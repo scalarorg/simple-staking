@@ -5,11 +5,12 @@ import { useState } from "react";
 
 import { getBonds } from "@/app/api/getBonds";
 import { SignPsbtTransaction } from "@/app/common/utils/psbt";
+import { useBtcNetwork } from "@/app/context/BtcNetworkProvider";
 import { historyContainerStyles } from "@/app/scalar/theme";
 import { QueryMeta } from "@/app/types/api";
 import { Bond as BondInterface } from "@/app/types/bonds";
 import { GlobalParamsVersion } from "@/app/types/globalParams";
-import { ProjectENV } from "@/env";
+import { parseENV } from "@/env";
 import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
 import { getRelativeTime } from "@/utils/tool";
 import { UnisatOptions, WalletProvider } from "@/utils/wallet/wallet_provider";
@@ -54,6 +55,8 @@ export const Bonds: React.FC<BondsProps> = ({
   getNetworkFees,
   signPsbt,
 }) => {
+  const { btcNetwork } = useBtcNetwork();
+  const ProjectENV = parseENV(btcNetwork);
   const [burnTokenModalOpen, setBurnTokenModalOpen] = useState(false);
   const [txHex, setTxHex] = useState("");
   const [tokenBurnAmount, setTokenBurnAmount] = useState("");
@@ -115,7 +118,6 @@ export const Bonds: React.FC<BondsProps> = ({
                   <td className="py-2 px-4 text-center">
                     <Link
                       className="text-blue-500 underline"
-                      // href={mempoolWebTxUrl(bond.sourceTxHash.slice(2))}
                       href={`${ProjectENV.NEXT_PUBLIC_SCALAR_SCANNER}/gmp/${bond.sourceTxHash}`}
                       target="_blank"
                       rel="noreferrer noopener nofollow"

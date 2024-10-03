@@ -11,7 +11,7 @@ import { deleteDApp, getDApps } from "@/app/api/dApp";
 import earth from "@/app/assets/earth.webp";
 import stone from "@/app/assets/stone.webp";
 import { DApp as DAppInterface } from "@/app/types/dApps";
-import { GLOBAL_NETWORK_INSTANCE } from "@/config/network.config";
+import { getBtcNetworkType } from "@/config/network.config";
 import { getCurrentGlobalParamsVersion } from "@/utils/globalParams";
 import { calculateBondsDiff } from "@/utils/local_storage/bonds/calculateBondsDiff";
 import { getBondsLocalStorageKey } from "@/utils/local_storage/bonds/getBondsLocalStorageKey";
@@ -45,6 +45,7 @@ import { StakingBond } from "./components/Staking/StakingBond";
 import { Stats } from "./components/Stats/Stats";
 import { Summary } from "./components/Summary/Summary";
 import { toast } from "./components/ui/use-toast";
+import { useBtcNetwork } from "./context/BtcNetworkProvider";
 import { useError } from "./context/Error/ErrorContext";
 import { useTerms } from "./context/Terms/TermsContext";
 import { Bond } from "./types/bonds";
@@ -53,6 +54,7 @@ import { ErrorHandlerParam, ErrorState } from "./types/errors";
 interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
+  const { btcNetwork } = useBtcNetwork();
   const [btcWallet, setBTCWallet] = useState<WalletProvider>();
   const [btcWalletBalanceSat, setBTCWalletBalanceSat] = useState(0);
   const [btcWalletNetwork, setBTCWalletNetwork] = useState<networks.Network>();
@@ -400,7 +402,7 @@ const Home: React.FC<HomeProps> = () => {
 
   return (
     <main
-      className={`overflow-hidden relative h-full min-h-svh z-0 w-full ${GLOBAL_NETWORK_INSTANCE === Network.MAINNET ? "main-app-mainnet" : "main-app-testnet"}`}
+      className={`overflow-hidden relative h-full min-h-svh z-0 w-full ${getBtcNetworkType(btcNetwork!) === Network.MAINNET ? "main-app-mainnet" : "main-app-testnet"}`}
     >
       {/*BACKGROUND start here*/}
 

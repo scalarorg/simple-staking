@@ -1,24 +1,18 @@
 import { NextResponse } from "next/server";
 
-import { fromBtcUnspentToMempoolUTXO } from "@/app/api/bitcoind";
 import { getClient } from "@/app/api/broadcast-btc-transaction/client";
-import { ProjectENV } from "@/env";
+import { parseENV } from "@/env";
 import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 import { convertToHexOfChainId } from "@/utils/blockchain";
 
 import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
 import { getUTXOs, Staker, UTXO } from "vault/index";
+import { fromBtcUnspentToMempoolUTXO } from "../bitcoind";
 
 export async function POST(request: Request) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
 
   try {
-    const quorum = Number(ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM!) || 0;
-    const tag = ProjectENV.NEXT_PUBLIC_TAG!;
-    const version = Number(ProjectENV.NEXT_PUBLIC_VERSION!) || 0;
-    const covenantPublicKeys =
-      ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS!.split(",");
-
     const {
       sourceChainAddress,
       sourceChainPublicKey,
@@ -28,7 +22,16 @@ export async function POST(request: Request) {
       stakingAmount,
       mintingAmount,
       servicePublicKey,
+      btcNetwork,
     } = await request.json();
+
+    const ProjectENV = parseENV(btcNetwork);
+
+    const quorum = Number(ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM!) || 0;
+    const tag = ProjectENV.NEXT_PUBLIC_TAG!;
+    const version = Number(ProjectENV.NEXT_PUBLIC_VERSION!) || 0;
+    const covenantPublicKeys =
+      ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS!.split(",");
 
     // Remove 0x prefix
     const smartContractAddressWithout0x = smartContractAddress.slice(2);
@@ -52,19 +55,15 @@ export async function POST(request: Request) {
     const regularUTXOs: UTXO[] =
       getBTCNetworkFromAddress(sourceChainAddress) === "regtest"
         ? (
-            await getClient().command("listunspent", 0, 9999999, [
+            await getClient(btcNetwork).command("listunspent", 0, 9999999, [
               sourceChainAddress,
             ])
           ).map(fromBtcUnspentToMempoolUTXO)
         : await getUTXOs(sourceChainAddress);
 
-    console.log("regularUTXOs", regularUTXOs);
-
     let feeRate = (
       await getFeesRecommended(getBTCNetworkFromAddress(sourceChainAddress))
     ).fastestFee; // Get this from Mempool API
-
-    console.log("feeRate", feeRate);
 
     const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
 

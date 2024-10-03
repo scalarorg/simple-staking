@@ -1,57 +1,64 @@
 import { MempoolUTXO } from "@/app/types";
 import { getNetworkConfig } from "@/config/network.config";
-import { ProjectENV } from "@/env";
+import { parseENV } from "@/env";
 import { Network } from "@/utils/wallet/wallet_provider";
 
 import { Fees, UTXO } from "./wallet/wallet_provider";
 
-const { mempoolApiUrl } = getNetworkConfig();
-
 /*
     URL Construction methods
 */
+
+const getMempoolAPI = (btcNetworkName: string) => {
+  const { mempoolApiUrl } = getNetworkConfig(btcNetworkName);
+  return `${mempoolApiUrl}/api/`;
+};
+
 // The base URL for the signet API
 // Utilises an environment variable specifying the mempool API we intend to
 // utilise
-const mempoolAPI = `${mempoolApiUrl}/api/`;
-
 // URL for the address info endpoint
-function addressInfoUrl(address: string): URL {
-  return new URL(mempoolAPI + "address/" + address);
+function addressInfoUrl(address: string, btcNetworkName: string): URL {
+  return new URL(getMempoolAPI(btcNetworkName) + "address/" + address);
 }
 
 // URL for the push transaction endpoint
-function pushTxUrl(): URL {
-  return new URL(mempoolAPI + "tx");
+function pushTxUrl(btcNetworkName: string): URL {
+  return new URL(getMempoolAPI(btcNetworkName) + "tx");
 }
 
 // URL for retrieving information about an address' UTXOs
-function utxosInfoUrl(address: string): URL {
-  return new URL(mempoolAPI + "address/" + address + "/utxo");
+function utxosInfoUrl(address: string, btcNetworkName: string): URL {
+  return new URL(
+    getMempoolAPI(btcNetworkName) + "address/" + address + "/utxo",
+  );
 }
 
 // URL for retrieving information about the recommended network fees
-function networkFeesUrl(): URL {
-  return new URL(mempoolAPI + "v1/fees/recommended");
+function networkFeesUrl(btcNetworkName: string): URL {
+  return new URL(getMempoolAPI(btcNetworkName) + "v1/fees/recommended");
 }
 
 // URL for retrieving the tip height of the BTC chain
-function btcTipHeightUrl(): URL {
-  return new URL(mempoolAPI + "blocks/tip/height");
+function btcTipHeightUrl(btcNetworkName: string): URL {
+  return new URL(getMempoolAPI(btcNetworkName) + "blocks/tip/height");
 }
 
 // URL for validating an address which contains a set of information about the address
 // including the scriptPubKey
-function validateAddressUrl(address: string): URL {
-  return new URL(mempoolAPI + "v1/validate-address/" + address);
+function validateAddressUrl(address: string, btcNetworkName: string): URL {
+  return new URL(
+    getMempoolAPI(btcNetworkName) + "v1/validate-address/" + address,
+  );
 }
 
 // URL for the transaction info endpoint
-function txInfoUrl(txId: string): URL {
-  return new URL(mempoolAPI + "tx/" + txId);
+function txInfoUrl(txId: string, btcNetworkName: string): URL {
+  return new URL(getMempoolAPI(btcNetworkName) + "tx/" + txId);
 }
 
-export function mempoolWebTxUrl(txId: string): URL {
+export function mempoolWebTxUrl(txId: string, btcNetwork?: string): URL {
+  const ProjectENV = parseENV(btcNetwork);
   const network = ProjectENV.NEXT_PUBLIC_NETWORK;
   const mempool_web_url = ProjectENV.NEXT_PUBLIC_MEMPOOL_WEB;
   const tx_preview_prefix =
@@ -66,8 +73,11 @@ export function mempoolWebTxUrl(txId: string): URL {
  * @param txHex - The hex string corresponding to the full transaction.
  * @returns A promise that resolves to the response message.
  */
-export async function pushTx(txHex: string): Promise<string> {
-  const response = await fetch(pushTxUrl(), {
+export async function pushTx(
+  txHex: string,
+  btcNetworkName?: string,
+): Promise<string> {
+  const response = await fetch(pushTxUrl(btcNetworkName!), {
     method: "POST",
     body: txHex,
   });
@@ -95,8 +105,11 @@ export async function pushTx(txHex: string): Promise<string> {
  * @returns A promise that resolves to the amount of satoshis that the address
  *          holds.
  */
-export async function getAddressBalance(address: string): Promise<number> {
-  const response = await fetch(addressInfoUrl(address));
+export async function getAddressBalance(
+  address: string,
+  btcNetworkName?: string,
+): Promise<number> {
+  const response = await fetch(addressInfoUrl(address, btcNetworkName!));
   if (!response.ok) {
     const err = await response.text();
     throw new Error(err);
@@ -113,8 +126,8 @@ export async function getAddressBalance(address: string): Promise<number> {
  * Retrieve the recommended Bitcoin network fees.
  * @returns A promise that resolves into a `Fees` object.
  */
-export async function getNetworkFees(): Promise<Fees> {
-  const response = await fetch(networkFeesUrl());
+export async function getNetworkFees(btcNetworkName?: string): Promise<Fees> {
+  const response = await fetch(networkFeesUrl(btcNetworkName!));
   if (!response.ok) {
     const err = await response.text();
     throw new Error(err);
@@ -123,8 +136,8 @@ export async function getNetworkFees(): Promise<Fees> {
   }
 }
 // Get the tip height of the BTC chain
-export async function getTipHeight(): Promise<number> {
-  const response = await fetch(btcTipHeightUrl());
+export async function getTipHeight(btcNetworkName?: string): Promise<number> {
+  const response = await fetch(btcTipHeightUrl(btcNetworkName!));
   const result = await response.text();
   if (!response.ok) {
     throw new Error(result);
@@ -148,6 +161,7 @@ export async function getFundingUTXOs(
   address: string,
   amount?: number,
   nominatedUTXOs?: MempoolUTXO[],
+  btcNetworkName?: string,
 ): Promise<UTXO[]> {
   // Get all UTXOs for the given address
 
@@ -156,7 +170,7 @@ export async function getFundingUTXOs(
     if (nominatedUTXOs) {
       utxos = nominatedUTXOs;
     } else {
-      const response = await fetch(utxosInfoUrl(address));
+      const response = await fetch(utxosInfoUrl(address, btcNetworkName!));
       utxos = await response.json();
     }
   } catch (error: Error | any) {
@@ -189,7 +203,7 @@ export async function getFundingUTXOs(
     sliced = confirmedUTXOs.slice(0, i + 1);
   }
 
-  const response = await fetch(validateAddressUrl(address));
+  const response = await fetch(validateAddressUrl(address, btcNetworkName!));
   const addressInfo = await response.json();
   const { isvalid, scriptPubKey } = addressInfo;
   if (!isvalid) {
@@ -213,8 +227,11 @@ export async function getFundingUTXOs(
  * @param txId - The transaction ID in string format.
  * @returns A promise that resolves into the transaction information.
  */
-export async function getTxInfo(txId: string): Promise<any> {
-  const response = await fetch(txInfoUrl(txId));
+export async function getTxInfo(
+  txId: string,
+  btcNetworkName?: string,
+): Promise<any> {
+  const response = await fetch(txInfoUrl(txId, btcNetworkName!));
   if (!response.ok) {
     const err = await response.text();
     throw new Error(err);

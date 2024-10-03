@@ -16,6 +16,7 @@ COPY package.json yarn.lock* ./
 # Omit --production flag for TypeScript devDependencies
 RUN yarn --frozen-lockfile
 
+COPY networks ./networks
 COPY chains ./chains
 COPY src ./src
 COPY public ./public

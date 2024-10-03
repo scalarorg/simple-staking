@@ -18,6 +18,7 @@ export const fromBtcUnspentToMempoolUTXO = (utxo: BtcUnspent): MempoolUTXO => {
 
 export const getBitcoindUTXOs = async (
   address: string,
+  btcNetwork: string,
 ): Promise<MempoolUTXO[]> => {
   // ------------------------------
   const url = window.location.origin;
@@ -25,6 +26,7 @@ export const getBitcoindUTXOs = async (
   const bitcoind_client_result = await axios.post(`${url}/api/bitcoind-api`, {
     method: "listunspent",
     params: [0, 9999999, [address]],
+    btcNetwork: btcNetwork,
   });
 
   const listUnspent: BtcUnspent[] =
@@ -34,12 +36,15 @@ export const getBitcoindUTXOs = async (
   return utxos;
 };
 
-export const getBitcoindBlocksHeight = async (): Promise<number> => {
+export const getBitcoindBlocksHeight = async (
+  btcNetwork: string,
+): Promise<number> => {
   const url = window.location.origin;
 
   const bitcoind_client_result = await axios.post(`${url}/api/bitcoind-api`, {
     method: "getblockcount",
     params: [],
+    btcNetwork: btcNetwork,
   });
   return bitcoind_client_result?.data?.data?.response;
 };

@@ -4,8 +4,12 @@ import { getClient } from "@/app/api/broadcast-btc-transaction/client";
 
 export async function POST(request: Request) {
   try {
-    const { method: method, params: params } = await request.json();
-    const client = getClient();
+    const {
+      method: method,
+      params: params,
+      btcNetwork: btcNetwork,
+    } = await request.json();
+    const client = getClient(btcNetwork);
     const response = await client.command(method, ...params);
 
     return NextResponse.json({

@@ -4,12 +4,12 @@ import { getClient } from "./client";
 
 export async function POST(request: Request) {
   try {
-    const { hexTxFromPsbt } = await request.json();
+    const { hexTxFromPsbt, btcNetwork } = await request.json();
 
     if (!hexTxFromPsbt) {
       throw new Error("Please provide the hex tx from psbt");
     }
-    let client = getClient();
+    let client = getClient(btcNetwork);
     const response = await client.command("sendrawtransaction", hexTxFromPsbt);
 
     return NextResponse.json({ status: 200, data: response });
