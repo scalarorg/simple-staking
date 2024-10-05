@@ -20,19 +20,26 @@ export function getBTCNetworkFromAddress(address: string): string {
 }
 
 export function getAddressNetworkType(address: string): Network {
-  // mainnet
-  if (address.startsWith("bc1q")) {
-    return networks.bitcoin;
-  }
-  // testnet
-  else if (address.startsWith("tb1q")) {
-    return networks.testnet;
+  if (!address || address.length < 4) {
+    throw new Error("Invalid address");
   }
 
-  // regtest
-  else if (address.startsWith("bcrt1q")) {
-    return networks.regtest;
+  // Define network prefixes
+  const networkPrefixMap: { [prefix: string]: Network } = {
+    bc1q: networks.bitcoin, // Mainnet
+    bc1p: networks.bitcoin, // Taproot
+    tb1q: networks.testnet, // Testnet Native SegWit (P2WPKH)
+    tb1p: networks.testnet, // Testnet Taproot
+    bcrt1q: networks.regtest, // Regtest
+    bcrt1p: networks.regtest, // Regtest Taproot
+  };
+
+  for (const prefix in networkPrefixMap) {
+    if (address.startsWith(prefix)) {
+      return networkPrefixMap[prefix];
+    }
   }
+
   throw new Error(`Unknown address: ${address}`);
 }
 
