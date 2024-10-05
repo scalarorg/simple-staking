@@ -13,6 +13,8 @@ export async function POST(request: Request) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
 
   try {
+    let warnings = [];
+
     const quorum = Number(ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM!) || 0;
     const tag = ProjectENV.NEXT_PUBLIC_TAG!;
     const version = Number(ProjectENV.NEXT_PUBLIC_VERSION!) || 0;
@@ -58,9 +60,20 @@ export async function POST(request: Request) {
           ).map(fromBtcUnspentToMempoolUTXO)
         : await getUTXOs(sourceChainAddress);
 
-    let feeRate = (
-      await getFeesRecommended(getBTCNetworkFromAddress(sourceChainAddress))
-    ).fastestFee; // Get this from Mempool API
+    let feeRate: number;
+    try {
+      feeRate = (
+        await getFeesRecommended(getBTCNetworkFromAddress(sourceChainAddress))
+      ).halfHourFee; // Get this from Mempool API
+    } catch (error) {
+      console.warn("Error getting feeRate: ", error);
+      console.warn("Setting fee rate equal to 1 !!!");
+      warnings.push({
+        errorType: "Error getting feeRate, setting at 1",
+        error,
+      });
+      feeRate = 1;
+    }
 
     const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
 
@@ -80,6 +93,7 @@ export async function POST(request: Request) {
       data: {
         unsignedVaultPsbtHex: unsignedVaultPsbt.toHex(),
       },
+      warnings,
     };
 
     console.log("response", response);
