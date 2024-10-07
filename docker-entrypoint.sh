@@ -5,7 +5,6 @@ set -Ex
 # https://github.com/vercel/next.js/discussions/17641#discussioncomment-339555
 function apply_path {
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_MEMPOOL_API#$MEMPOOL_API#g"
-    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_MEMPOOL_API2#$MEMPOOL_API2#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_MEMPOOL_WEB#$MEMPOOL_WEB#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_API_URL#$API_URL#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_NETWORK#$NETWORK#g"
@@ -19,12 +18,16 @@ function apply_path {
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_SERVICE_PUBKEY#$SERVICE_PUBKEY#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_SERVICE_PRIVATE_KEY#$SERVICE_PRIVATE_KEY#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BTC_CHAIN_NAME#$BTC_CHAIN_NAME#g"
-    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BTC_NODE_URL#$BTC_NODE_URL#g"
-    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BTC_NODE_HOST#$BTC_NODE_HOST#g"
-    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BTC_NODE_PORT#$BTC_NODE_PORT#g"
-    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BTC_NODE_WALLET#$BTC_NODE_WALLET#g"    
-    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BTC_NODE_USER#$BTC_NODE_USER#g"
-    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BTC_NODE_PASSWORD#$BTC_NODE_PASSWORD#g"
+
+
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BITCOIN_NODE_ADDRESS#$BITCOIN_NODE_ADDRESS#g"
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BITCOIN_NODE_PORT#$BITCOIN_NODE_PORT#g"
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_SSL_ENABLED#$SSL_ENABLED#g"
+
+
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BITCOIN_WALLET#$BITCOIN_WALLET#g"    
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BITCOIN_USER#$BITCOIN_USER#g"
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BITCOIN_PASSWORD#$BITCOIN_PASSWORD#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BTC_ADDRESS#$BTC_ADDRESS#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BURN_CONTRACT_ADDRESS#$BURN_CONTRACT_ADDRESS#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS#$SBTC_CONTRACT_ADDRESS#g"
