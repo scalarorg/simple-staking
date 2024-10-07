@@ -1,7 +1,7 @@
-import axios from "axios";
+// import axios from "axios";
 
-import { ProjectENV } from "@/env";
+// import { ProjectENV } from "@/env";
 
-export const mempoolAxios = axios.create({
-  baseURL: ProjectENV.NEXT_PUBLIC_MEMPOOL_API2,
-});
+// export const mempoolAxios = axios.create({
+//   baseURL: ProjectENV.NEXT_PUBLIC_MEMPOOL_API2,
+// });
