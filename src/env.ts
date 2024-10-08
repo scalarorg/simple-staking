@@ -14,8 +14,6 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_TAG: z.string().default(""),
   NEXT_PUBLIC_VERSION: z.string().default("0"),
   NEXT_PUBLIC_COVENANT_PUBKEYS: z.string().default(""),
-  NEXT_PUBLIC_SERVICE_PUBKEY: z.string().default(""),
-  NEXT_PUBLIC_SERVICE_PRIVATE_KEY: z.string().default(""),
   NEXT_PUBLIC_BTC_CHAIN_NAME: z.string().default(""),
 
   NEXT_PUBLIC_BITCOIN_NODE_ADDRESS: z.string().default(""),
@@ -57,8 +55,6 @@ export const ProjectENV = ProjectENVSchema.parse({
   NEXT_PUBLIC_TAG: process.env.NEXT_PUBLIC_TAG,
   NEXT_PUBLIC_VERSION: process.env.NEXT_PUBLIC_VERSION,
   NEXT_PUBLIC_COVENANT_PUBKEYS: process.env.NEXT_PUBLIC_COVENANT_PUBKEYS,
-  NEXT_PUBLIC_SERVICE_PUBKEY: process.env.NEXT_PUBLIC_SERVICE_PUBKEY,
-  NEXT_PUBLIC_SERVICE_PRIVATE_KEY: process.env.NEXT_PUBLIC_SERVICE_PRIVATE_KEY,
   NEXT_PUBLIC_BTC_CHAIN_NAME: process.env.NEXT_PUBLIC_BTC_CHAIN_NAME,
   NEXT_PUBLIC_BITCOIN_NODE_ADDRESS:
     process.env.NEXT_PUBLIC_BITCOIN_NODE_ADDRESS,

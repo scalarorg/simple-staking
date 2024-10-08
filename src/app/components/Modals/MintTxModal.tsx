@@ -110,7 +110,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       smartContractAddress: "",
       stakingAmount: Number(ProjectENV.NEXT_PUBLIC_STAKING_AMOUNT || 0),
       mintingAmount: Number(ProjectENV.NEXT_PUBLIC_MINTING_AMOUNT || 0),
-      servicePublicKey: ProjectENV.NEXT_PUBLIC_SERVICE_PUBKEY || "",
+      servicePublicKey: "",
     },
   });
 

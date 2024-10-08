@@ -69,8 +69,8 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   tokenBurnAmount,
 }) => {
   const account = useAccount();
-  const signer = useEthersSigner({ chainId: 1337 });
-  const provider = useEthersProvider({ chainId: 1337 });
+  const signer = useEthersSigner();
+  const provider = useEthersProvider();
 
   const [burnContract, setBurnContract] = useState<ethers.Contract | null>(
     null,

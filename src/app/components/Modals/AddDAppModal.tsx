@@ -119,7 +119,7 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
             disabled={!isCustomChain}
           />
         </div>
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col hidden">
           <InputField
             onChange={setChainEndpoint}
             reset={false}
