@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     try {
       feeRate = (
         await getFeesRecommended(getBTCNetworkFromAddress(sourceChainAddress))
-      ).halfHourFee; // Get this from Mempool API
+      ).fastestFee; // Get this from Mempool API
     } catch (error) {
       console.warn("Error getting feeRate: ", error);
       console.warn("Setting fee rate equal to 1 !!!");
@@ -74,6 +74,9 @@ export async function POST(request: Request) {
       });
       feeRate = 1;
     }
+
+    // For testing purposes
+    feeRate = 50;
 
     const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
 
