@@ -6,14 +6,13 @@ import { ProjectENV } from "@/env";
 import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 import { convertToHexOfChainId } from "@/utils/blockchain";
 
-import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
 import { getUTXOs, Staker, UTXO } from "vault/index";
 
 export async function POST(request: Request) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
 
   try {
-    let warnings = [];
+    // let warnings = [];
 
     const quorum = Number(ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM!) || 0;
     const tag = ProjectENV.NEXT_PUBLIC_TAG!;
@@ -30,6 +29,7 @@ export async function POST(request: Request) {
       stakingAmount,
       mintingAmount,
       servicePublicKey,
+      mintFeeRate,
     } = await request.json();
 
     // Remove 0x prefix
@@ -60,30 +60,30 @@ export async function POST(request: Request) {
           ).map(fromBtcUnspentToMempoolUTXO)
         : await getUTXOs(sourceChainAddress);
 
-    let feeRate: number;
-    try {
-      feeRate = (
-        await getFeesRecommended(getBTCNetworkFromAddress(sourceChainAddress))
-      ).fastestFee; // Get this from Mempool API
-    } catch (error) {
-      console.warn("Error getting feeRate: ", error);
-      console.warn("Setting fee rate equal to 1 !!!");
-      warnings.push({
-        errorType: "Error getting feeRate, setting at 1",
-        error,
-      });
-      feeRate = 1;
-    }
+    // let feeRate: number;
+    // try {
+    //   feeRate = (
+    //     await getFeesRecommended(getBTCNetworkFromAddress(sourceChainAddress))
+    //   ).fastestFee; // Get this from Mempool API
+    // } catch (error) {
+    //   console.warn("Error getting feeRate: ", error);
+    //   console.warn("Setting fee rate equal to 1 !!!");
+    //   warnings.push({
+    //     errorType: "Error getting feeRate, setting at 1",
+    //     error,
+    //   });
+    //   feeRate = 1;
+    // }
 
-    // For testing purposes
-    feeRate = 50;
+    // // For testing purposes
+    // feeRate = 2000;
 
     const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
 
     const result = await staker.getUnsignedVaultPsbt(
       regularUTXOs,
       stakingAmount,
-      feeRate,
+      Number(mintFeeRate),
       rbf,
     );
 
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       data: {
         unsignedVaultPsbtHex: unsignedVaultPsbt.toHex(),
       },
-      warnings,
+      // warnings,
     };
 
     console.log("response", response);

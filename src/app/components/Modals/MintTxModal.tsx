@@ -85,6 +85,12 @@ const FormSchema = z.object({
   servicePublicKey: z.string({
     required_error: "Please enter your service public key.",
   }),
+  mintFeeRate: z
+    .string()
+    .default("1")
+    .refine((value) => Number(value) > 0, {
+      message: "Please enter a positive number.",
+    }),
 });
 
 export const MintTxModal: React.FC<SendTxModalProps> = ({
@@ -111,6 +117,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       stakingAmount: Number(ProjectENV.NEXT_PUBLIC_STAKING_AMOUNT || 0),
       mintingAmount: Number(ProjectENV.NEXT_PUBLIC_MINTING_AMOUNT || 0),
       servicePublicKey: "",
+      mintFeeRate: "1",
     },
   });
 
@@ -174,6 +181,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       stakingAmount,
       mintingAmount,
       servicePublicKey,
+      mintFeeRate,
     } = data;
 
     try {
@@ -192,6 +200,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
         stakingAmount,
         mintingAmount,
         servicePublicKey,
+        mintFeeRate,
       });
 
       const unsignedVaultPsbtHex =
@@ -322,6 +331,27 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Staking amount (sats)</FormLabel>
+                      <FormControl>
+                        <Input
+                          inputMode="numeric"
+                          step="any"
+                          type="number"
+                          placeholder=""
+                          // disabled
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="mintFeeRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Minting fee rate (sat/vB)</FormLabel>
                       <FormControl>
                         <Input
                           inputMode="numeric"

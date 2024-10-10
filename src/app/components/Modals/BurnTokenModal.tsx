@@ -145,6 +145,8 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
       const destinationChain = ProjectENV.NEXT_PUBLIC_BTC_CHAIN_NAME;
       const destinationAddress = ProjectENV.NEXT_PUBLIC_BTC_ADDRESS;
 
+      console.log({ destinationAddress, destinationChain });
+
       if (!destinationChain || !destinationAddress) {
         throw new Error("Missing destination chain or address");
       }

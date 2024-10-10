@@ -27,7 +27,7 @@ export const DApp: React.FC<DAppProps> = ({
   const generalStyles =
     "card relative cursor-pointer border bg-base-300 p-4 text-sm transition-shadow hover:shadow-md dark:border-transparent dark:bg-base-200";
 
-  const dAppHasData = chainName && btcAddress && btcPk;
+  const dAppHasData = chainName;
 
   const handleClick = () => {
     if (dAppHasData) {

@@ -14,7 +14,9 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_TAG: z.string().default(""),
   NEXT_PUBLIC_VERSION: z.string().default("0"),
   NEXT_PUBLIC_COVENANT_PUBKEYS: z.string().default(""),
-  NEXT_PUBLIC_BTC_CHAIN_NAME: z.string().default(""),
+
+  NEXT_PUBLIC_BTC_CHAIN_NAME: z.string().min(1),
+  NEXT_PUBLIC_BTC_ADDRESS: z.string().min(20),
 
   NEXT_PUBLIC_BITCOIN_NODE_ADDRESS: z.string().default(""),
   NEXT_PUBLIC_BITCOIN_NODE_PORT: z.string().default("18443"),
@@ -23,7 +25,6 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_BITCOIN_WALLET: z.string().default("legacy"),
   NEXT_PUBLIC_BITCOIN_USER: z.string().default(""),
   NEXT_PUBLIC_BITCOIN_PASSWORD: z.string().default(""),
-  NEXT_PUBLIC_BTC_ADDRESS: z.string().default(""),
   NEXT_PUBLIC_BURN_CONTRACT_ADDRESS: z.string().default(""),
   NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS: z.string().default(""),
 
