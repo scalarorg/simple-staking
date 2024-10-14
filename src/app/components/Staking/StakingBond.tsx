@@ -119,27 +119,6 @@ export const StakingBond: React.FC<StakingProps> = ({
     approchingCapRange: false,
   });
 
-  // Mempool fee rates, comes from the network
-  // Fetch fee rates, sat/vB
-  const {
-    data: mempoolFeeRates,
-    error: mempoolFeeRatesError,
-    isError: hasMempoolFeeRatesError,
-    refetch: refetchMempoolFeeRates,
-  } = useQuery({
-    queryKey: ["mempool fee rates"],
-    queryFn: async () => {
-      if (btcWallet?.getNetworkFees) {
-        return await btcWallet.getNetworkFees();
-      }
-    },
-    enabled: !!btcWallet?.getNetworkFees,
-    refetchInterval: 60000, // 1 minute
-    retry: (failureCount) => {
-      return !isErrorOpen && failureCount <= 3;
-    },
-  });
-
   // Fetch all UTXOs
   const {
     data: availableUTXOs,
@@ -242,12 +221,6 @@ export const StakingBond: React.FC<StakingProps> = ({
     };
 
     handleError({
-      error: mempoolFeeRatesError,
-      hasError: hasMempoolFeeRatesError,
-      errorState: ErrorState.SERVER_ERROR,
-      refetchFunction: refetchMempoolFeeRates,
-    });
-    handleError({
       error: availableUTXOsError,
       hasError: hasAvailableUTXOsError,
       errorState: ErrorState.SERVER_ERROR,
@@ -255,10 +228,7 @@ export const StakingBond: React.FC<StakingProps> = ({
     });
   }, [
     availableUTXOsError,
-    mempoolFeeRatesError,
-    hasMempoolFeeRatesError,
     hasAvailableUTXOsError,
-    refetchMempoolFeeRates,
     refetchAvailableUTXOs,
     showError,
   ]);
@@ -273,7 +243,7 @@ export const StakingBond: React.FC<StakingProps> = ({
     setResetFormInputs(!resetFormInputs);
   };
 
-  const { minFeeRate, defaultFeeRate } = getFeeRateFromMempool(mempoolFeeRates);
+  const { minFeeRate, defaultFeeRate } = getFeeRateFromMempool();
 
   // Either use the selected fee rate or the fastest fee rate
   const feeRate = selectedFeeRate || defaultFeeRate;
@@ -350,7 +320,6 @@ export const StakingBond: React.FC<StakingProps> = ({
       stakingAmountSat &&
       finalityProvider &&
       paramWithCtx?.currentVersion &&
-      mempoolFeeRates &&
       availableUTXOs
     ) {
       try {
@@ -396,7 +365,6 @@ export const StakingBond: React.FC<StakingProps> = ({
     stakingTimeBlocks,
     finalityProvider,
     paramWithCtx,
-    mempoolFeeRates,
     selectedFeeRate,
     availableUTXOs,
     showError,
@@ -642,7 +610,6 @@ export const StakingBond: React.FC<StakingProps> = ({
               />
               {signReady && (
                 <StakingFee
-                  mempoolFeeRates={mempoolFeeRates}
                   stakingFeeSat={stakingFeeSat}
                   selectedFeeRate={selectedFeeRate}
                   onSelectedFeeRateChange={setSelectedFeeRate}

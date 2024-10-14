@@ -49,7 +49,7 @@ export class UnisatWallet extends WalletProvider {
     const workingVersion = "1.4.5";
 
     const version = await window[unisatProvider].getVersion();
-    if (version < workingVersion) {
+    if (compareVersions(version, workingVersion) < 0) {
       throw new Error("Please update Unisat Wallet to the latest version");
     }
 
@@ -198,4 +198,19 @@ export class UnisatWallet extends WalletProvider {
   getBTCTipHeight = async (): Promise<number> => {
     return await getTipHeight();
   };
+}
+
+function compareVersions(v1: string, v2: string): number {
+  const parts1 = v1.split(".").map(Number);
+  const parts2 = v2.split(".").map(Number);
+
+  for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+    const part1 = parts1[i] || 0;
+    const part2 = parts2[i] || 0;
+
+    if (part1 > part2) return 1;
+    if (part1 < part2) return -1;
+  }
+
+  return 0;
 }

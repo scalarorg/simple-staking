@@ -52,9 +52,8 @@ export const Summary: React.FC<SummaryProps> = ({
       <div
         className={`divider m-0 xl:divider-horizontal xl:m-0 ${onMainnet && "xl:hidden"}`}
       />
-      <div className="flex justify-between gap-2 text-sm">
+      {/* <div className="flex justify-between gap-2 text-sm">
         <p className="xl:hidden">{trim(address)}</p>
-        {/* Not visible on Mainnet */}
         {!onMainnet && (
           <a
             href="https://discord.com/invite/babylonglobal"
@@ -65,7 +64,7 @@ export const Summary: React.FC<SummaryProps> = ({
             Get Test Tokens
           </a>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

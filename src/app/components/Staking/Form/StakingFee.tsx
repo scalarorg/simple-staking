@@ -22,7 +22,7 @@ export const StakingFee: React.FC<StakingFeeProps> = ({
   selectedFeeRate,
   onSelectedFeeRateChange,
   reset,
-  mempoolFeeRates,
+  mempoolFeeRates = undefined,
 }) => {
   const [customMode, setCustomMode] = useState(false);
 
