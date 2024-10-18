@@ -3,6 +3,8 @@ export interface DApp {
   chainName: string;
   chainId: string;
   chainEndpoint: string;
+  dappBtcSignerEndpoint: string;
+  accessToken: string;
   btcAddress: string;
   btcPk: string;
   scAddress: string;

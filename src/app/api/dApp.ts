@@ -24,16 +24,21 @@ export const getDApps = async (): Promise<DApps> => {
   const dAppsAPI: DAppAPI[] = dAppsAPIResponse.data;
   // TODO: remove this after xchains-api is done implemeting the chainId and chainEndpoint
   const dApps = dAppsAPI.map((da: DAppAPI): DApp => {
+    // TODO: get these data from xchains-api later
     const lookUpChains = chains.find((chain) => chain.name === da.ChainName);
     let [lookUpChainId, lookUpChainEndpoint] = ["", ""];
     if (lookUpChains) {
       lookUpChainId = lookUpChains.id.toString();
       lookUpChainEndpoint = lookUpChains.rpcUrls.default.http[0];
     }
+    const dappBtcSignerEndpoint = "localhost:12345";
+    const accessToken = "temp";
     return {
       id: da.ID,
       chainId: lookUpChainId,
       chainEndpoint: lookUpChainEndpoint,
+      dappBtcSignerEndpoint: dappBtcSignerEndpoint,
+      accessToken: accessToken,
       chainName: da.ChainName,
       btcAddress: da.BTCAddressHex,
       btcPk: da.PublicKeyHex,
@@ -48,6 +53,8 @@ export const postDApp = async (
   chainName: string,
   chainId: string,
   chainEndpoint: string,
+  dappBtcSignerEndpoint: string,
+  accessToken: string,
   btcAddressHex: string,
   publicKeyHex: string,
   smartContractAddress: string,
@@ -76,6 +83,8 @@ export const updateDApp = async (
   chainName: string,
   chainId: string,
   chainEndpoint: string,
+  dappBtcSignerEndpoint: string,
+  accessToken: string,
   btcAddressHex: string,
   publicKeyHex: string,
   smartContractAddress: string,
