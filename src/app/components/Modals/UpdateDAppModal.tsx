@@ -26,6 +26,10 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
   const [chainName, setChainName] = useState(dApp?.chainName);
   const [chainId, setChainId] = useState(dApp?.chainId || "");
   const [chainEndpoint, setChainEndpoint] = useState(dApp?.chainEndpoint || "");
+  const [dappBtcSignerEndpoint, setDappBtcSignerEndpoint] = useState(
+    dApp?.dappBtcSignerEndpoint || "",
+  );
+  const [accessToken, setAccessToken] = useState(dApp?.accessToken || "");
   const [btcAddress, setBtcAddress] = useState(dApp?.btcAddress);
   const [btcPubKey, setBtcPubKey] = useState(dApp?.btcPk);
   const [scAddress, setScAddress] = useState(dApp?.scAddress);
@@ -47,6 +51,8 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
     setChainName(dApp?.chainName);
     setChainId(dApp?.chainId || "");
     setChainEndpoint(dApp?.chainEndpoint || "");
+    setDappBtcSignerEndpoint(dApp?.dappBtcSignerEndpoint || "");
+    setAccessToken(dApp?.accessToken || "");
     setBtcAddress(dApp?.btcAddress);
     setBtcPubKey(dApp?.btcPk);
     setId(dApp?.id);
@@ -84,6 +90,8 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
       !chainName ||
       !chainId ||
       !chainEndpoint ||
+      !dappBtcSignerEndpoint ||
+      !accessToken ||
       !btcAddress ||
       !btcPubKey ||
       !scAddress
@@ -96,6 +104,8 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
       chainName,
       chainId,
       chainEndpoint,
+      dappBtcSignerEndpoint,
+      accessToken,
       btcAddress,
       btcPubKey,
       scAddress,
@@ -150,6 +160,27 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
             placeholder=""
             generalErrorMessage="Please input a chain endpoint"
             disabled={!isCustomChain}
+          />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <InputField
+            onChange={setDappBtcSignerEndpoint}
+            reset={false}
+            initValue={dappBtcSignerEndpoint}
+            label="DApp Bitcoin Signer API Endpoint"
+            placeholder=""
+            generalErrorMessage="Please input a DApp Bitcoin Signer API Endpoint"
+            disabled={false}
+          />
+        </div>
+        <div className="flex flex-1 flex-col hidden">
+          <InputField
+            onChange={setAccessToken}
+            reset={false}
+            initValue={accessToken}
+            label="DApp Access Token"
+            placeholder=""
+            generalErrorMessage="Please input a DApp Access Token"
           />
         </div>
         <div className="flex flex-1 flex-col">
