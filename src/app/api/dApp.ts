@@ -31,14 +31,14 @@ export const getDApps = async (): Promise<DApps> => {
       lookUpChainId = lookUpChains.id.toString();
       lookUpChainEndpoint = lookUpChains.rpcUrls.default.http[0];
     }
-    const dappBtcSignerEndpoint = "localhost:12345";
-    const accessToken = "temp";
+    const tempDappBtcSignerEndpoint = "localhost:12345";
+    const tempAccessToken = "temp";
     return {
       id: da.ID,
-      chainId: lookUpChainId,
-      chainEndpoint: lookUpChainEndpoint,
-      dappBtcSignerEndpoint: dappBtcSignerEndpoint,
-      accessToken: accessToken,
+      chainId: da.ChainID ? da.ChainID : lookUpChainId,
+      chainEndpoint: da.ChainEndpoint ? da.ChainEndpoint : lookUpChainEndpoint,
+      dappBtcSignerEndpoint: da.RPCUrl ? da.RPCUrl : tempDappBtcSignerEndpoint,
+      accessToken: da.AccessToken ? da.AccessToken : tempAccessToken,
       chainName: da.ChainName,
       btcAddress: da.BTCAddressHex,
       btcPk: da.PublicKeyHex,
@@ -65,6 +65,10 @@ export const postDApp = async (
     btc_address_hex: btcAddressHex,
     public_key_hex: publicKeyHex,
     smart_contract_address: smartContractAddress,
+    chain_id: chainId,
+    chain_endpoint: chainEndpoint,
+    rpc_url: dappBtcSignerEndpoint,
+    access_token: accessToken,
   };
 
   const response = await apiWrapper(
@@ -95,6 +99,10 @@ export const updateDApp = async (
     btc_address_hex: btcAddressHex,
     public_key_hex: publicKeyHex,
     smart_contract_address: smartContractAddress,
+    chain_id: chainId,
+    chain_endpoint: chainEndpoint,
+    rpc_url: dappBtcSignerEndpoint,
+    access_token: accessToken,
   };
   // TODO: Update this after xchains-api done
   const response = await apiWrapper(
