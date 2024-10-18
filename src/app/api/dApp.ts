@@ -24,16 +24,21 @@ export const getDApps = async (): Promise<DApps> => {
   const dAppsAPI: DAppAPI[] = dAppsAPIResponse.data;
   // TODO: remove this after xchains-api is done implemeting the chainId and chainEndpoint
   const dApps = dAppsAPI.map((da: DAppAPI): DApp => {
+    // TODO: get these data from xchains-api later
     const lookUpChains = chains.find((chain) => chain.name === da.ChainName);
     let [lookUpChainId, lookUpChainEndpoint] = ["", ""];
     if (lookUpChains) {
       lookUpChainId = lookUpChains.id.toString();
       lookUpChainEndpoint = lookUpChains.rpcUrls.default.http[0];
     }
+    const tempDappBtcSignerEndpoint = "localhost:12345";
+    const tempAccessToken = "temp";
     return {
       id: da.ID,
-      chainId: lookUpChainId,
-      chainEndpoint: lookUpChainEndpoint,
+      chainId: da.ChainID ? da.ChainID : lookUpChainId,
+      chainEndpoint: da.ChainEndpoint ? da.ChainEndpoint : lookUpChainEndpoint,
+      dappBtcSignerEndpoint: da.RPCUrl ? da.RPCUrl : tempDappBtcSignerEndpoint,
+      accessToken: da.AccessToken ? da.AccessToken : tempAccessToken,
       chainName: da.ChainName,
       btcAddress: da.BTCAddressHex,
       btcPk: da.PublicKeyHex,
@@ -48,6 +53,8 @@ export const postDApp = async (
   chainName: string,
   chainId: string,
   chainEndpoint: string,
+  dappBtcSignerEndpoint: string,
+  accessToken: string,
   btcAddressHex: string,
   publicKeyHex: string,
   smartContractAddress: string,
@@ -58,6 +65,10 @@ export const postDApp = async (
     btc_address_hex: btcAddressHex,
     public_key_hex: publicKeyHex,
     smart_contract_address: smartContractAddress,
+    chain_id: chainId,
+    chain_endpoint: chainEndpoint,
+    rpc_url: dappBtcSignerEndpoint,
+    access_token: accessToken,
   };
 
   const response = await apiWrapper(
@@ -76,6 +87,8 @@ export const updateDApp = async (
   chainName: string,
   chainId: string,
   chainEndpoint: string,
+  dappBtcSignerEndpoint: string,
+  accessToken: string,
   btcAddressHex: string,
   publicKeyHex: string,
   smartContractAddress: string,
@@ -86,6 +99,10 @@ export const updateDApp = async (
     btc_address_hex: btcAddressHex,
     public_key_hex: publicKeyHex,
     smart_contract_address: smartContractAddress,
+    chain_id: chainId,
+    chain_endpoint: chainEndpoint,
+    rpc_url: dappBtcSignerEndpoint,
+    access_token: accessToken,
   };
   // TODO: Update this after xchains-api done
   const response = await apiWrapper(

@@ -3,6 +3,8 @@ export interface DApp {
   chainName: string;
   chainId: string;
   chainEndpoint: string;
+  dappBtcSignerEndpoint: string;
+  accessToken: string;
   btcAddress: string;
   btcPk: string;
   scAddress: string;
@@ -18,6 +20,10 @@ export interface CreatePayload {
   btc_address_hex: string;
   public_key_hex: string;
   smart_contract_address: string;
+  chain_id: string;
+  chain_endpoint: string;
+  rpc_url: string;
+  access_token: string;
 }
 
 export interface IdPayload {
@@ -35,6 +41,10 @@ export interface DAppAPI {
   PublicKeyHex: string;
   SmartContractAddress: string;
   State: boolean;
+  ChainID: string;
+  ChainEndpoint: string;
+  RPCUrl: string;
+  AccessToken: string;
 }
 
 export interface DAppsAPIResponse {
