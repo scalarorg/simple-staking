@@ -255,6 +255,10 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
         hexTxFromPsbt,
       });
 
+      if (result.data.status !== 200) {
+        throw new Error(result.data.error);
+      }
+
       onClose(false);
 
       toast({

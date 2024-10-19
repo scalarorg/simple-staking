@@ -121,6 +121,7 @@ export const StakingAmount: React.FC<StakingAmountProps> = ({
         onChange={handleChange}
         onBlur={handleBlur}
         placeholder={coinName}
+        disabled={true}
       />
       {error && (
         <div className="my-2 min-h-[20px]">

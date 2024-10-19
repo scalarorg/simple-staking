@@ -202,7 +202,7 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
             onChange={handleSmartContractAddressChange}
             reset={false}
             initValue={scAddress || ""}
-            label="Smatrt Contract Address"
+            label="Smart Contract Address"
           />
         </div>
       </div>

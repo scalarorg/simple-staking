@@ -141,6 +141,7 @@ export const StakingTime: React.FC<StakingTimeProps> = ({
         onChange={handleChange}
         onBlur={handleBlur}
         placeholder="Blocks"
+        disabled={true}
       />
       <div className="mb-2 mt-4 min-h-[20px]">
         <p className="text-center text-sm text-error">{error}</p>
