@@ -21,9 +21,11 @@ import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/components/ui/use-toast";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { ProjectENV } from "@/env";
+import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 import { mempoolWebTxUrl } from "@/utils/mempool_api";
 import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
 
+import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
 import { getPsbtByHex } from "vault/index";
 
 import { GeneralModal } from "./GeneralModal";
@@ -85,12 +87,12 @@ const FormSchema = z.object({
   servicePublicKey: z.string({
     required_error: "Please enter your service public key.",
   }),
-  mintFeeRate: z
-    .string()
-    .default("1")
-    .refine((value) => Number(value) > 0, {
-      message: "Please enter a positive number.",
-    }),
+  mintFeeRate: z.string().default("hourFee"),
+  customFeeRate: z.coerce
+    .number()
+    .int("Please enter a whole number.")
+    .positive("Please enter a positive number.")
+    .optional(),
 });
 
 export const MintTxModal: React.FC<SendTxModalProps> = ({
@@ -117,7 +119,8 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       stakingAmount: Number(ProjectENV.NEXT_PUBLIC_STAKING_AMOUNT || 0),
       mintingAmount: Number(ProjectENV.NEXT_PUBLIC_MINTING_AMOUNT || 0),
       servicePublicKey: "",
-      mintFeeRate: "1",
+      mintFeeRate: "hourFee",
+      customFeeRate: undefined,
     },
   });
 
@@ -145,6 +148,34 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       form.setValue("destinationChainId", dApp.chainId);
     }
   }, [btcAddress, btcPublicKey, dApp, form]);
+
+  const [feeRates, setFeeRates] = useState({
+    fastestFee: 1,
+    hourFee: 1,
+    minimumFee: 1,
+  });
+
+  useEffect(() => {
+    const fetchFeeRates = async () => {
+      if (open && btcAddress) {
+        try {
+          const fees = await getFeesRecommended(
+            getBTCNetworkFromAddress(btcAddress),
+          );
+          setFeeRates(fees);
+        } catch (error) {
+          console.warn("Error fetching fee rates:", error);
+          setFeeRates({
+            fastestFee: 1,
+            hourFee: 1,
+            minimumFee: 1,
+          });
+        }
+      }
+    };
+
+    fetchFeeRates();
+  }, [open, btcAddress]);
 
   async function signPsbtUsingWallet(
     psbtHex: string,
@@ -182,6 +213,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       mintingAmount,
       servicePublicKey,
       mintFeeRate,
+      customFeeRate,
     } = data;
 
     try {
@@ -200,7 +232,8 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
         stakingAmount,
         mintingAmount,
         servicePublicKey,
-        mintFeeRate,
+        mintFeeRate:
+          mintFeeRate === "custom" ? customFeeRate?.toString() : mintFeeRate,
       });
 
       const unsignedVaultPsbtHex =
@@ -349,27 +382,6 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="mintFeeRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Minting fee rate (sat/vB)</FormLabel>
-                      <FormControl>
-                        <Input
-                          inputMode="numeric"
-                          step="any"
-                          type="number"
-                          placeholder=""
-                          // disabled
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
               <div className="space-y-4 w-full">
                 <div className="space-y-2 -mt-2">
@@ -415,6 +427,104 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                 />
               </div>
             </div>
+            <FormField
+              control={form.control}
+              name="mintFeeRate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Minting fee rate</FormLabel>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant={
+                          field.value === "fastestFee" ? "default" : "outline"
+                        }
+                        onClick={() =>
+                          form.setValue("mintFeeRate", "fastestFee")
+                        }
+                        className="flex flex-col items-center justify-center h-auto py-2"
+                      >
+                        <span>Fastest</span>
+                        <span className="text-sm">
+                          ({feeRates.fastestFee} sat/vB)
+                        </span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={
+                          field.value === "hourFee" ? "default" : "outline"
+                        }
+                        onClick={() => form.setValue("mintFeeRate", "hourFee")}
+                        className="flex flex-col items-center justify-center h-auto py-2"
+                      >
+                        <span>Medium</span>
+                        <span className="text-sm">
+                          ({feeRates.hourFee} sat/vB)
+                        </span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={
+                          field.value === "minimumFee" ? "default" : "outline"
+                        }
+                        onClick={() =>
+                          form.setValue("mintFeeRate", "minimumFee")
+                        }
+                        className="flex flex-col items-center justify-center h-auto py-2"
+                      >
+                        <span>Minimum</span>
+                        <span className="text-sm">
+                          ({feeRates.minimumFee} sat/vB)
+                        </span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={
+                          field.value !== "fastestFee" &&
+                          field.value !== "hourFee" &&
+                          field.value !== "minimumFee"
+                            ? "default"
+                            : "outline"
+                        }
+                        onClick={() => {
+                          form.setValue("mintFeeRate", "custom");
+                          form.setFocus("customFeeRate");
+                        }}
+                        className="flex items-center justify-center h-auto py-2"
+                      >
+                        Custom
+                      </Button>
+                    </div>
+                    {field.value === "custom" && (
+                      <FormField
+                        control={form.control}
+                        name="customFeeRate"
+                        render={({ field: customField }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                {...customField}
+                                type="number"
+                                placeholder="Custom fee rate (sat/vB)"
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value, 10);
+                                  if (!isNaN(value) && value > 0) {
+                                    customField.onChange(value);
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="space-y-2 py-3">
               <h3 className="text-base font-medium">dApp infomation</h3>
               <div className="grid grid-cols-2 gap-4">
