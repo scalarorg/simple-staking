@@ -8,7 +8,7 @@ import { IoMdClose } from "react-icons/io";
 import { useAccount, useChainId, useConnect } from "wagmi";
 import { z } from "zod";
 
-import burnContractJSON from "@/abis/burn-contract.json";
+import protocolContractJSON from "@/abis/protocol.json";
 import sBTCJSON from "@/abis/sbtc.json";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -31,7 +31,7 @@ import { toast } from "../ui/use-toast";
 
 import { GeneralModal } from "./GeneralModal";
 
-const burnContractABI = burnContractJSON.abi;
+const protocolContractABI = protocolContractJSON;
 const sBTCABI = sBTCJSON.abi;
 
 interface BurnTokenModalProps {
@@ -72,9 +72,8 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   const signer = useEthersSigner();
   const provider = useEthersProvider();
 
-  const [burnContract, setBurnContract] = useState<ethers.Contract | null>(
-    null,
-  );
+  const [protocolContract, setProtocolContract] =
+    useState<ethers.Contract | null>(null);
   const [sBTCContract, setSBTCContract] = useState<ethers.Contract | null>(
     null,
   );
@@ -91,19 +90,20 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
 
   useEffect(() => {
     if (provider && signer) {
-      const burnContractAddress = ProjectENV.NEXT_PUBLIC_BURN_CONTRACT_ADDRESS;
+      const protocolContractAddress =
+        ProjectENV.NEXT_PUBLIC_PROTOCOL_CONTRACT_ADDRESS;
       const sBTCContractAddress = ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
 
-      if (!burnContractAddress || !sBTCContractAddress) {
+      if (!protocolContractAddress || !sBTCContractAddress) {
         throw new Error("Missing contract address");
       }
       // Initialize contracts
-      const burnContract = new ethers.Contract(
-        burnContractAddress,
-        burnContractABI,
+      const protocolContract = new ethers.Contract(
+        protocolContractAddress,
+        protocolContractABI,
         signer,
       );
-      setBurnContract(burnContract);
+      setProtocolContract(protocolContract);
 
       const sBTC = new ethers.Contract(sBTCContractAddress, sBTCABI, signer);
       setSBTCContract(sBTC);
@@ -135,10 +135,11 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
         tokenBurnAmount,
       } = data;
 
-      const burnContractAddress = ProjectENV.NEXT_PUBLIC_BURN_CONTRACT_ADDRESS;
+      const protocolContractAddress =
+        ProjectENV.NEXT_PUBLIC_PROTOCOL_CONTRACT_ADDRESS;
       const sBTCContractAddress = ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
 
-      if (!burnContractAddress || !sBTCContractAddress) {
+      if (!protocolContractAddress || !sBTCContractAddress) {
         throw new Error("Missing contract address");
       }
 
@@ -161,7 +162,7 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
         ? ethers.parseUnits(tokenBurnAmount, 0)
         : ethers.parseUnits(defaultBurnAmount, 18);
 
-      if (sBTCContract === null || burnContract === null) {
+      if (sBTCContract === null || protocolContract === null) {
         throw new Error("Contracts not initialized");
       }
 
@@ -209,14 +210,14 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
       setStatus("Approving the token");
 
       const txApprove = await sBTCContract.approve(
-        burnContractAddress,
+        protocolContractAddress,
         amountToBurn,
       );
       const response = await txApprove.wait();
 
       setStatus("Burning the token");
 
-      const txCallBurn = await burnContract.callBurn(
+      const txCallBurn = await protocolContract.unstake(
         destinationChain,
         destinationAddress,
         amountToBurn,

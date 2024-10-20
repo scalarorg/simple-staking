@@ -23,7 +23,7 @@ function apply_path {
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BITCOIN_USER#$BITCOIN_USER#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BITCOIN_PASSWORD#$BITCOIN_PASSWORD#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BTC_ADDRESS#$BTC_ADDRESS#g"
-    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BURN_CONTRACT_ADDRESS#$BURN_CONTRACT_ADDRESS#g"
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_PROTOCOL_CONTRACT_ADDRESS#$PROTOCOL_CONTRACT_ADDRESS#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS#$SBTC_CONTRACT_ADDRESS#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BOND_HOLDER_ADDRESS#$BOND_HOLDER_ADDRESS#g"
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_BOND_HOLDER_PUBLIC_KEY#$BOND_HOLDER_PUBLIC_KEY#g"
