@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { ProjectENV } from "@/env";
 import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 
 import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
@@ -8,18 +7,17 @@ import { UnStaker } from "vault/index";
 
 export async function POST(request: Request) {
   try {
-    if (!ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM) {
+    if (!process.env.COVENANT_QUORUM) {
       throw new Error("Quorum is not set");
     }
 
-    const quorum = Number(ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM) || 0;
+    const quorum = Number(process.env.COVENANT_QUORUM) || 0;
 
-    if (!ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS) {
+    if (!process.env.COVENANT_PUBKEYS) {
       throw new Error("Covenant public keys are not set");
     }
 
-    const covenantPublicKeys =
-      ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS.split(",");
+    const covenantPublicKeys = process.env.COVENANT_PUBKEYS.split(",");
 
     const { btcStakerAddress, btcReceiverAddress, vaultTxHex } =
       await request.json();

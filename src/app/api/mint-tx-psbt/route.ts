@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
+import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
+import { getUTXOs, Staker, UTXO } from "vault/index";
 
 import { fromBtcUnspentToMempoolUTXO } from "@/app/api/bitcoind";
 import { getClient } from "@/app/api/broadcast-btc-transaction/client";
-import { ProjectENV } from "@/env";
 import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 import { convertToHexOfChainId } from "@/utils/blockchain";
 
-import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
-import { getUTXOs, Staker, UTXO } from "vault/index";
+import { ServerEnv } from "..";
+
 
 export async function POST(request: Request) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -15,11 +16,10 @@ export async function POST(request: Request) {
   try {
     // let warnings = [];
 
-    const quorum = Number(ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM!) || 0;
-    const tag = ProjectENV.NEXT_PUBLIC_TAG!;
-    const version = Number(ProjectENV.NEXT_PUBLIC_VERSION!) || 0;
-    const covenantPublicKeys =
-      ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS!.split(",");
+    const quorum = Number(ServerEnv.COVENANT_QUORUM) || 0;
+    const tag = ServerEnv.TAG;
+    const version = Number(ServerEnv.VERSION) || 0;
+    const covenantPublicKeys = ServerEnv.COVENANT_PUBKEYS;
 
     const {
       sourceChainAddress,

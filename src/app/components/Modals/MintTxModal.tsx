@@ -7,6 +7,8 @@ import { useForm, useWatch } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
+import { getPsbtByHex } from "vault/index";
 
 import { Button } from "@/app/components/ui/button";
 import {
@@ -25,8 +27,6 @@ import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 import { mempoolWebTxUrl } from "@/utils/mempool_api";
 import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
 
-import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
-import { getPsbtByHex } from "vault/index";
 
 import { GeneralModal } from "./GeneralModal";
 import { SignTxModal } from "./SignTxModal";
@@ -116,8 +116,8 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       destinationChainId: "",
       tokenReceiverAddress: "",
       smartContractAddress: "",
-      stakingAmount: Number(ProjectENV.NEXT_PUBLIC_STAKING_AMOUNT || 0),
-      mintingAmount: Number(ProjectENV.NEXT_PUBLIC_MINTING_AMOUNT || 0),
+      stakingAmount: 10000,
+      mintingAmount: 10000,
       servicePublicKey: "",
       mintFeeRate: "hourFee",
       customFeeRate: undefined,

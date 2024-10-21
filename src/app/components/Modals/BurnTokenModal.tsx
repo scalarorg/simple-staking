@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { ethers } from "ethers";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -20,14 +19,9 @@ import {
   FormMessage,
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
-import { ProjectENV } from "@/env";
 import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
 import { useEthersProvider, useEthersSigner } from "@/utils/ethers";
-import { isNumeric } from "@/utils/typeCheck";
 import { UnisatOptions } from "@/utils/wallet/wallet_provider";
-
-import { getPsbtByHex } from "vault/index";
-import { toast } from "../ui/use-toast";
 
 import { GeneralModal } from "./GeneralModal";
 
@@ -88,27 +82,27 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
     },
   });
 
-  useEffect(() => {
-    if (provider && signer) {
-      const protocolContractAddress =
-        ProjectENV.NEXT_PUBLIC_PROTOCOL_CONTRACT_ADDRESS;
-      const sBTCContractAddress = ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
+  // useEffect(() => {
+  //   if (provider && signer) {
+  //     const protocolContractAddress =
+  //       ProjectENV.NEXT_PUBLIC_PROTOCOL_CONTRACT_ADDRESS;
+  //     const sBTCContractAddress = ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
 
-      if (!protocolContractAddress || !sBTCContractAddress) {
-        throw new Error("Missing contract address");
-      }
-      // Initialize contracts
-      const protocolContract = new ethers.Contract(
-        protocolContractAddress,
-        protocolContractABI,
-        signer,
-      );
-      setProtocolContract(protocolContract);
+  //     if (!protocolContractAddress || !sBTCContractAddress) {
+  //       throw new Error("Missing contract address");
+  //     }
+  //     // Initialize contracts
+  //     const protocolContract = new ethers.Contract(
+  //       protocolContractAddress,
+  //       protocolContractABI,
+  //       signer,
+  //     );
+  //     setProtocolContract(protocolContract);
 
-      const sBTC = new ethers.Contract(sBTCContractAddress, sBTCABI, signer);
-      setSBTCContract(sBTC);
-    }
-  }, [provider, signer]);
+  //     const sBTC = new ethers.Contract(sBTCContractAddress, sBTCABI, signer);
+  //     setSBTCContract(sBTC);
+  //   }
+  // }, [provider, signer]);
 
   useEffect(() => {
     if (btcAddress) {
@@ -127,123 +121,101 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   const [isBurning, setIsBurning] = useState<boolean>(false);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    try {
-      const {
-        btcStakerAddress,
-        btcReceiverAddress,
-        vaultTxHex,
-        tokenBurnAmount,
-      } = data;
-
-      const protocolContractAddress =
-        ProjectENV.NEXT_PUBLIC_PROTOCOL_CONTRACT_ADDRESS;
-      const sBTCContractAddress = ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
-
-      if (!protocolContractAddress || !sBTCContractAddress) {
-        throw new Error("Missing contract address");
-      }
-
-      const destinationChain = ProjectENV.NEXT_PUBLIC_BTC_CHAIN_NAME;
-      const destinationAddress = ProjectENV.NEXT_PUBLIC_BTC_ADDRESS;
-
-      console.log({ destinationAddress, destinationChain });
-
-      if (!destinationChain || !destinationAddress) {
-        throw new Error("Missing destination chain or address");
-      }
-
-      const defaultBurnAmount = ProjectENV.NEXT_PUBLIC_BURNING_AMOUNT;
-
-      if (!defaultBurnAmount && !tokenBurnAmount) {
-        throw new Error("Missing burn amount");
-      }
-
-      const amountToBurn = isNumeric(tokenBurnAmount)
-        ? ethers.parseUnits(tokenBurnAmount, 0)
-        : ethers.parseUnits(defaultBurnAmount, 18);
-
-      if (sBTCContract === null || protocolContract === null) {
-        throw new Error("Contracts not initialized");
-      }
-
-      const url = window.location.origin;
-
-      setStatus("Estimating the fee");
-      setIsBurning(true);
-
-      // Step 1: staker create unbonding transaction
-      const unsignedPsbtResult = await axios.post(`${url}/api/unbond-tx-psbt`, {
-        btcStakerAddress,
-        btcReceiverAddress,
-        vaultTxHex,
-      });
-
-      const unsignedUnbondPsbtHex =
-        unsignedPsbtResult?.data?.data?.unsignedUnbondPsbtHex;
-
-      if (!unsignedUnbondPsbtHex) {
-        throw new Error(
-          "Failed to get the unsigned psbt: " + unsignedPsbtResult?.data?.error,
-        );
-      }
-
-      setStatus("Signing the PSBT");
-
-      // Step 2: Sign the PSBT
-      const hexSignedPsbt = await signPsbt!(unsignedUnbondPsbtHex, {
-        autoFinalized: false,
-        toSignInputs: [
-          {
-            index: 0,
-            address: btcStakerAddress,
-            disableTweakSigner: true,
-          },
-        ],
-      });
-
-      if (!hexSignedPsbt) {
-        throw new Error("Failed to sign the psbt");
-      }
-      const signedPsbt = getPsbtByHex(hexSignedPsbt, btcStakerAddress);
-
-      // Step 3: Call the contract to burn the token
-      setStatus("Approving the token");
-
-      const txApprove = await sBTCContract.approve(
-        protocolContractAddress,
-        amountToBurn,
-      );
-      const response = await txApprove.wait();
-
-      setStatus("Burning the token");
-
-      const txCallBurn = await protocolContract.unstake(
-        destinationChain,
-        destinationAddress,
-        amountToBurn,
-        signedPsbt.toBase64(),
-      );
-      await txCallBurn.wait();
-
-      setStatus("Token burned successfully");
-    } catch (error) {
-      setStatus(
-        // @ts-ignore
-        "Failed to burn the token: " + error?.message || JSON.stringify(error),
-      );
-      toast({
-        title: "Failed to burn the token: ",
-        // @ts-ignore
-        description: error?.message || "An error occurred",
-      });
-      console.error(error);
-    } finally {
-      setIsBurning(false);
-      const resetStatusTimeoutMs = 10000;
-      setTimeout(() => {
-        setStatus("");
-      }, resetStatusTimeoutMs);
-    }
+    // try {
+    //   const {
+    //     btcStakerAddress,
+    //     btcReceiverAddress,
+    //     vaultTxHex,
+    //     tokenBurnAmount,
+    //   } = data;
+    //   const protocolContractAddress =
+    //     ProjectENV.NEXT_PUBLIC_PROTOCOL_CONTRACT_ADDRESS;
+    //   const sBTCContractAddress = ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
+    //   if (!protocolContractAddress || !sBTCContractAddress) {
+    //     throw new Error("Missing contract address");
+    //   }
+    //   const destinationChain = ProjectENV.NEXT_PUBLIC_BTC_CHAIN_NAME;
+    //   const destinationAddress = ProjectENV.NEXT_PUBLIC_BTC_ADDRESS;
+    //   console.log({ destinationAddress, destinationChain });
+    //   if (!destinationChain || !destinationAddress) {
+    //     throw new Error("Missing destination chain or address");
+    //   }
+    //   const defaultBurnAmount = ProjectENV.NEXT_PUBLIC_BURNING_AMOUNT;
+    //   if (!defaultBurnAmount && !tokenBurnAmount) {
+    //     throw new Error("Missing burn amount");
+    //   }
+    //   const amountToBurn = isNumeric(tokenBurnAmount)
+    //     ? ethers.parseUnits(tokenBurnAmount, 0)
+    //     : ethers.parseUnits(defaultBurnAmount, 18);
+    //   if (sBTCContract === null || protocolContract === null) {
+    //     throw new Error("Contracts not initialized");
+    //   }
+    //   const url = window.location.origin;
+    //   setStatus("Estimating the fee");
+    //   setIsBurning(true);
+    //   // Step 1: staker create unbonding transaction
+    //   const unsignedPsbtResult = await axios.post(`${url}/api/unbond-tx-psbt`, {
+    //     btcStakerAddress,
+    //     btcReceiverAddress,
+    //     vaultTxHex,
+    //   });
+    //   const unsignedUnbondPsbtHex =
+    //     unsignedPsbtResult?.data?.data?.unsignedUnbondPsbtHex;
+    //   if (!unsignedUnbondPsbtHex) {
+    //     throw new Error(
+    //       "Failed to get the unsigned psbt: " + unsignedPsbtResult?.data?.error,
+    //     );
+    //   }
+    //   setStatus("Signing the PSBT");
+    //   // Step 2: Sign the PSBT
+    //   const hexSignedPsbt = await signPsbt!(unsignedUnbondPsbtHex, {
+    //     autoFinalized: false,
+    //     toSignInputs: [
+    //       {
+    //         index: 0,
+    //         address: btcStakerAddress,
+    //         disableTweakSigner: true,
+    //       },
+    //     ],
+    //   });
+    //   if (!hexSignedPsbt) {
+    //     throw new Error("Failed to sign the psbt");
+    //   }
+    //   const signedPsbt = getPsbtByHex(hexSignedPsbt, btcStakerAddress);
+    //   // Step 3: Call the contract to burn the token
+    //   setStatus("Approving the token");
+    //   const txApprove = await sBTCContract.approve(
+    //     protocolContractAddress,
+    //     amountToBurn,
+    //   );
+    //   const response = await txApprove.wait();
+    //   setStatus("Burning the token");
+    //   const txCallBurn = await protocolContract.unstake(
+    //     destinationChain,
+    //     destinationAddress,
+    //     amountToBurn,
+    //     signedPsbt.toBase64(),
+    //   );
+    //   await txCallBurn.wait();
+    //   setStatus("Token burned successfully");
+    // } catch (error) {
+    //   setStatus(
+    //     // @ts-ignore
+    //     "Failed to burn the token: " + error?.message || JSON.stringify(error),
+    //   );
+    //   toast({
+    //     title: "Failed to burn the token: ",
+    //     // @ts-ignore
+    //     description: error?.message || "An error occurred",
+    //   });
+    //   console.error(error);
+    // } finally {
+    //   setIsBurning(false);
+    //   const resetStatusTimeoutMs = 10000;
+    //   setTimeout(() => {
+    //     setStatus("");
+    //   }, resetStatusTimeoutMs);
+    // }
   }
 
   return (
