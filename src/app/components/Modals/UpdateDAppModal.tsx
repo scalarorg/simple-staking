@@ -35,6 +35,9 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
   const [scAddress, setScAddress] = useState(dApp?.scAddress);
   const [id, setId] = useState(dApp?.id);
   const [isCustomChain, setIsCustomChain] = useState(false);
+  const [tokenContractAddress, setTokenContractAddress] = useState(
+    dApp?.tokenContractAddress || "",
+  );
 
   const config = getConfig();
   const chains = config.chains;
@@ -57,6 +60,7 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
     setBtcPubKey(dApp?.btcPk);
     setId(dApp?.id);
     setScAddress(dApp?.scAddress);
+    setTokenContractAddress(dApp?.tokenContractAddress || "");
   }, [dApp]);
 
   const handleChainNameChange = (input: string) => {
@@ -84,6 +88,10 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
     setScAddress(input);
   };
 
+  const handleTokenContractAddressChange = (input: string) => {
+    setTokenContractAddress(input);
+  };
+
   const handleUpdate = async () => {
     if (
       !id ||
@@ -94,7 +102,8 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
       !accessToken ||
       !btcAddress ||
       !btcPubKey ||
-      !scAddress
+      !scAddress ||
+      !tokenContractAddress
     ) {
       console.error("Missing required fields");
       return;
@@ -109,9 +118,10 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
       btcAddress,
       btcPubKey,
       scAddress,
+      tokenContractAddress,
     )
       .then(() => {
-        console.log("Successfully update DApp");
+        console.log("Successfully updated DApp");
         onClose(false);
       })
       .catch((error) => {
@@ -173,7 +183,7 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
             disabled={false}
           />
         </div>
-        <div className="flex flex-1 flex-col hidden">
+        <div className="flex flex-1 flex-col">
           <InputField
             onChange={setAccessToken}
             reset={false}
@@ -181,6 +191,7 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
             label="DApp Access Token"
             placeholder=""
             generalErrorMessage="Please input a DApp Access Token"
+            disabled={false}
           />
         </div>
         <div className="flex flex-1 flex-col">
@@ -202,7 +213,15 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
             onChange={handleSmartContractAddressChange}
             reset={false}
             initValue={scAddress || ""}
-            label="Smart Contract Address"
+            label="Minting Smart Contract Address"
+          />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <BtcAddress
+            onChange={handleTokenContractAddressChange}
+            reset={false}
+            initValue={tokenContractAddress || ""}
+            label="Token Contract Address"
           />
         </div>
       </div>
