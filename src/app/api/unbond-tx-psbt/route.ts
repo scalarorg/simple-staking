@@ -1,9 +1,8 @@
+import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
 import { NextResponse } from "next/server";
+import { UnStaker } from "vault/index";
 
 import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
-
-import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
-import { UnStaker } from "vault/index";
 
 export async function POST(request: Request) {
   try {
@@ -40,10 +39,7 @@ export async function POST(request: Request) {
     } = await unStaker.getUnsignedBurningPsbt(btcReceiverAddress, feeRate, rbf);
 
     return NextResponse.json({
-      status: 200,
-      data: {
-        unsignedUnbondPsbtHex: unsignedPsbt.toHex(),
-      },
+      psbt: unsignedPsbt.toHex(),
     });
   } catch (error) {
     return NextResponse.json({

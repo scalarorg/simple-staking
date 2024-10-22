@@ -30,7 +30,6 @@ import {
   getFinalityProviders,
 } from "./api/getFinalityProviders";
 import { getGlobalParams } from "./api/getGlobalParams";
-import { signPsbtTransaction } from "./common/utils/psbt";
 import { Bonds } from "./components/Bonds/Bonds";
 import { Footer } from "./components/Footer/Footer";
 import { Header } from "./components/Header/Header";
@@ -508,26 +507,13 @@ const Home: React.FC<HomeProps> = () => {
             bonds &&
             paramWithContext?.nextBlockParams.currentVersion &&
             btcWalletNetwork &&
-            finalityProvidersKV && (
+            finalityProvidersKV &&
+            dApp && (
               <Bonds
-                finalityProvidersKV={finalityProvidersKV}
-                bondsAPI={bonds.bonds}
-                bondsLocalStorage={bondsLocalStorage}
-                globalParamsVersion={
-                  paramWithContext.nextBlockParams.currentVersion
-                }
+                protocolContractAddress={dApp?.scAddress}
                 publicKeyNoCoord={publicKeyNoCoord}
-                btcWalletNetwork={btcWalletNetwork}
                 address={address}
-                signPsbtTx={signPsbtTransaction(btcWallet)}
-                pushTx={btcWallet.pushTx}
-                queryMeta={{
-                  next: fetchNextBondsPage,
-                  hasMore: hasNextBondsPage,
-                  isFetchingMore: isFetchingNextBondsPage,
-                }}
-                getNetworkFees={btcWallet.getNetworkFees}
-                signPsbt={btcWallet?.signPsbt}
+                signPsbt={btcWallet.signPsbt}
               />
             )}
           {/* At this point of time is not used */}
