@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
+import { NextResponse } from "next/server";
 import { getUTXOs, Staker, UTXO } from "vault/index";
 
 import { fromBtcUnspentToMempoolUTXO } from "@/app/api/bitcoind";
@@ -8,7 +8,6 @@ import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 import { convertToHexOfChainId } from "@/utils/blockchain";
 
 import { ServerEnv } from "..";
-
 
 export async function POST(request: Request) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -99,9 +98,7 @@ export async function POST(request: Request) {
       rbf,
     );
 
-    console.log("result", result);
-
-    const { psbt: unsignedVaultPsbt, feeEstimate: fee } = result;
+    const { psbt: unsignedVaultPsbt } = result;
 
     const response = {
       status: 200,

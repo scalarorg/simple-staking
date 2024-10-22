@@ -1,227 +1,311 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
 import { ethers } from "ethers";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
-import { useAccount, useChainId, useConnect } from "wagmi";
+import { getPsbtByHex } from "vault/index";
+import { parseUnits } from "viem";
+import { useAccount, useChainId, useConnect, useReadContract } from "wagmi";
 import { z } from "zod";
 
-import protocolContractJSON from "@/abis/protocol.json";
-import sBTCJSON from "@/abis/sbtc.json";
 import { Button } from "@/app/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
+import { ProjectENV } from "@/env";
 import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
-import { useEthersProvider, useEthersSigner } from "@/utils/ethers";
+import { useEthersSigner } from "@/utils/ethers";
 import { UnisatOptions } from "@/utils/wallet/wallet_provider";
+
+import { toast } from "../ui/use-toast";
 
 import { GeneralModal } from "./GeneralModal";
 
-const protocolContractABI = protocolContractJSON;
-const sBTCABI = sBTCJSON.abi;
+const SBTC_ABI = [
+  {
+    type: "function",
+    name: "balanceOf",
+    inputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "approve",
+    inputs: [
+      {
+        internalType: "address",
+        name: "spender",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
+  },
+
+  {
+    type: "function",
+    name: "allowance",
+    inputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+  },
+];
+
+const PROTOCOL_ABI = [
+  {
+    type: "function",
+    name: "unstake",
+    inputs: [
+      {
+        name: "_destinationChain",
+        type: "string",
+        internalType: "string",
+      },
+      {
+        name: "_destinationAddress",
+        type: "string",
+        internalType: "string",
+      },
+      {
+        name: "_amount",
+        type: "uint256",
+        internalType: "uint256",
+      },
+      {
+        name: "_psbtBase64",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+];
 
 interface BurnTokenModalProps {
   open: boolean;
   onClose: (value: boolean) => void;
-  btcAddress: string | undefined;
-  signPsbt:
-    | ((psbt: string, options?: UnisatOptions) => Promise<string>)
-    | undefined;
+  btcAddress: string;
+  signPsbt: (psbt: string, options?: UnisatOptions) => Promise<string>;
   stakingTxHex: string;
   tokenBurnAmount: string;
+  protocolContractAddress: string;
 }
 
 const FormSchema = z.object({
-  vaultTxHex: z.string({
-    required_error: "Please enter your hex vault tx.",
-  }),
-  btcStakerAddress: z.string({
-    required_error: "Please enter your btc staker address.",
-  }),
-  btcReceiverAddress: z.string({
-    required_error: "Please enter your btc receiver address.",
-  }),
-  tokenBurnAmount: z.string({
-    required_error: "Please enter the token burn amount.",
-  }),
+  btcReceiverAddress: z
+    .string({
+      required_error: "Please enter your btc receiver address.",
+    })
+    .min(12, "Invalid BTC address"),
 });
 
 export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   open,
-  onClose,
   btcAddress,
-  signPsbt,
   stakingTxHex,
   tokenBurnAmount,
+  protocolContractAddress,
+  onClose,
+  signPsbt,
 }) => {
-  const account = useAccount();
-  const signer = useEthersSigner();
-  const provider = useEthersProvider();
+  const { address } = useAccount();
 
-  const [protocolContract, setProtocolContract] =
-    useState<ethers.Contract | null>(null);
-  const [sBTCContract, setSBTCContract] = useState<ethers.Contract | null>(
-    null,
+  const signer = useEthersSigner();
+
+  const sBTC = new ethers.Contract(
+    ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS,
+    SBTC_ABI,
+    signer,
+  );
+
+  const protocol = new ethers.Contract(
+    protocolContractAddress,
+    PROTOCOL_ABI,
+    signer,
   );
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      vaultTxHex: "",
-      btcStakerAddress: "",
-      btcReceiverAddress: "",
-      tokenBurnAmount: "",
+      btcReceiverAddress: btcAddress,
     },
   });
 
-  // useEffect(() => {
-  //   if (provider && signer) {
-  //     const protocolContractAddress =
-  //       ProjectENV.NEXT_PUBLIC_PROTOCOL_CONTRACT_ADDRESS;
-  //     const sBTCContractAddress = ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
+  const { data: sbtcBalance } = useReadContract({
+    address: ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS as `0x${string}`,
+    abi: SBTC_ABI,
+    functionName: "balanceOf",
+    args: [address],
+  });
 
-  //     if (!protocolContractAddress || !sBTCContractAddress) {
-  //       throw new Error("Missing contract address");
-  //     }
-  //     // Initialize contracts
-  //     const protocolContract = new ethers.Contract(
-  //       protocolContractAddress,
-  //       protocolContractABI,
-  //       signer,
-  //     );
-  //     setProtocolContract(protocolContract);
-
-  //     const sBTC = new ethers.Contract(sBTCContractAddress, sBTCABI, signer);
-  //     setSBTCContract(sBTC);
-  //   }
-  // }, [provider, signer]);
-
-  useEffect(() => {
-    if (btcAddress) {
-      form.setValue("btcStakerAddress", btcAddress);
-      form.setValue("btcReceiverAddress", btcAddress);
-    }
-    if (stakingTxHex) {
-      form.setValue("vaultTxHex", stakingTxHex);
-    }
-    if (tokenBurnAmount) {
-      form.setValue("tokenBurnAmount", tokenBurnAmount);
-    }
-  }, [btcAddress, stakingTxHex, tokenBurnAmount, form]);
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
+    address: ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS as `0x${string}`,
+    abi: SBTC_ABI,
+    functionName: "allowance",
+    args: [address, protocolContractAddress as `0x${string}`],
+  });
 
   const [status, setStatus] = useState<string>("");
   const [isBurning, setIsBurning] = useState<boolean>(false);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    // try {
-    //   const {
-    //     btcStakerAddress,
-    //     btcReceiverAddress,
-    //     vaultTxHex,
-    //     tokenBurnAmount,
-    //   } = data;
-    //   const protocolContractAddress =
-    //     ProjectENV.NEXT_PUBLIC_PROTOCOL_CONTRACT_ADDRESS;
-    //   const sBTCContractAddress = ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS;
-    //   if (!protocolContractAddress || !sBTCContractAddress) {
-    //     throw new Error("Missing contract address");
-    //   }
-    //   const destinationChain = ProjectENV.NEXT_PUBLIC_BTC_CHAIN_NAME;
-    //   const destinationAddress = ProjectENV.NEXT_PUBLIC_BTC_ADDRESS;
-    //   console.log({ destinationAddress, destinationChain });
-    //   if (!destinationChain || !destinationAddress) {
-    //     throw new Error("Missing destination chain or address");
-    //   }
-    //   const defaultBurnAmount = ProjectENV.NEXT_PUBLIC_BURNING_AMOUNT;
-    //   if (!defaultBurnAmount && !tokenBurnAmount) {
-    //     throw new Error("Missing burn amount");
-    //   }
-    //   const amountToBurn = isNumeric(tokenBurnAmount)
-    //     ? ethers.parseUnits(tokenBurnAmount, 0)
-    //     : ethers.parseUnits(defaultBurnAmount, 18);
-    //   if (sBTCContract === null || protocolContract === null) {
-    //     throw new Error("Contracts not initialized");
-    //   }
-    //   const url = window.location.origin;
-    //   setStatus("Estimating the fee");
-    //   setIsBurning(true);
-    //   // Step 1: staker create unbonding transaction
-    //   const unsignedPsbtResult = await axios.post(`${url}/api/unbond-tx-psbt`, {
-    //     btcStakerAddress,
-    //     btcReceiverAddress,
-    //     vaultTxHex,
-    //   });
-    //   const unsignedUnbondPsbtHex =
-    //     unsignedPsbtResult?.data?.data?.unsignedUnbondPsbtHex;
-    //   if (!unsignedUnbondPsbtHex) {
-    //     throw new Error(
-    //       "Failed to get the unsigned psbt: " + unsignedPsbtResult?.data?.error,
-    //     );
-    //   }
-    //   setStatus("Signing the PSBT");
-    //   // Step 2: Sign the PSBT
-    //   const hexSignedPsbt = await signPsbt!(unsignedUnbondPsbtHex, {
-    //     autoFinalized: false,
-    //     toSignInputs: [
-    //       {
-    //         index: 0,
-    //         address: btcStakerAddress,
-    //         disableTweakSigner: true,
-    //       },
-    //     ],
-    //   });
-    //   if (!hexSignedPsbt) {
-    //     throw new Error("Failed to sign the psbt");
-    //   }
-    //   const signedPsbt = getPsbtByHex(hexSignedPsbt, btcStakerAddress);
-    //   // Step 3: Call the contract to burn the token
-    //   setStatus("Approving the token");
-    //   const txApprove = await sBTCContract.approve(
-    //     protocolContractAddress,
-    //     amountToBurn,
-    //   );
-    //   const response = await txApprove.wait();
-    //   setStatus("Burning the token");
-    //   const txCallBurn = await protocolContract.unstake(
-    //     destinationChain,
-    //     destinationAddress,
-    //     amountToBurn,
-    //     signedPsbt.toBase64(),
-    //   );
-    //   await txCallBurn.wait();
-    //   setStatus("Token burned successfully");
-    // } catch (error) {
-    //   setStatus(
-    //     // @ts-ignore
-    //     "Failed to burn the token: " + error?.message || JSON.stringify(error),
-    //   );
-    //   toast({
-    //     title: "Failed to burn the token: ",
-    //     // @ts-ignore
-    //     description: error?.message || "An error occurred",
-    //   });
-    //   console.error(error);
-    // } finally {
-    //   setIsBurning(false);
-    //   const resetStatusTimeoutMs = 10000;
-    //   setTimeout(() => {
-    //     setStatus("");
-    //   }, resetStatusTimeoutMs);
-    // }
+    try {
+      if (
+        Number(sbtcBalance) <= 0 ||
+        Number(sbtcBalance) < Number(tokenBurnAmount)
+      ) {
+        throw new Error("Insufficient balance");
+      }
+
+      const burnAmount = parseUnits(tokenBurnAmount, 18);
+      if (!burnAmount) {
+        throw new Error("Invalid burn amount");
+      }
+
+      // TODO: get destination chain and address from the payload
+      const destinationChain = "bitcoin-testnet";
+      const mock20bytesAdress = `0x${"0".repeat(40)}`;
+
+      setStatus("Estimating the fee");
+      setIsBurning(true);
+
+      const reponse = await axios.post("/api/unbond-tx-psbt", {
+        btcStakerAddress: btcAddress,
+        btcReceiverAddress: data.btcReceiverAddress,
+        vaultTxHex: stakingTxHex,
+      });
+
+      const unsignedPsbtHex = reponse?.data?.psbt;
+      if (!unsignedPsbtHex) {
+        throw new Error(
+          "Failed to get the unsigned psbt: " + reponse?.data?.error,
+        );
+      }
+      setStatus("Signing the PSBT");
+      // // Step 2: Sign the PSBT
+      const hexSignedPsbt = await signPsbt(unsignedPsbtHex, {
+        autoFinalized: false,
+        toSignInputs: [
+          {
+            index: 0,
+            address: btcAddress,
+            disableTweakSigner: true,
+          },
+        ],
+      });
+      if (!hexSignedPsbt) {
+        throw new Error("Failed to sign the psbt");
+      }
+      const signedPsbt = getPsbtByHex(hexSignedPsbt, btcAddress);
+      // Step 3: Call the contract to burn the token
+      setStatus("Approving the token");
+      setIsBurning(true);
+
+      const txApprove = await sBTC.approve(protocolContractAddress, burnAmount);
+
+      setStatus("Waiting for approval transaction to be mined");
+
+      const response = await txApprove.wait();
+
+      console.log("response", response);
+
+      await refetchAllowance();
+      setStatus("Approval transaction mined");
+
+      console.log({ allowance });
+
+      setStatus("Burning the token");
+      console.log({
+        destinationChain,
+        mock20bytesAdress,
+        burnAmount,
+        signedPsbt: signedPsbt.toBase64(),
+      });
+      const txBurn = await protocol.unstake(
+        destinationChain,
+        mock20bytesAdress,
+        burnAmount,
+        signedPsbt.toBase64(),
+      );
+
+      setStatus("Waiting for burning transaction to be mined");
+
+      await txBurn.wait();
+
+      setStatus("Token unstaked successfully");
+    } catch (error: any) {
+      console.error(error);
+      setStatus(
+        "Failed to burn the token: " + error?.message || JSON.stringify(error),
+      );
+      toast({
+        title: "Failed to burn the token: ",
+        description: error?.message || "An error occurred",
+      });
+    } finally {
+      setIsBurning(false);
+      const resetStatusTimeoutMs = 10000;
+      setTimeout(() => {
+        setStatus("");
+      }, resetStatusTimeoutMs);
+    }
   }
 
   return (
     <GeneralModal open={open} big onClose={onClose}>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-bold">Burn Token</h3>
+        <h3 className="font-bold">Unstaked sBTC</h3>
         <button
           className="btn btn-circle btn-ghost btn-sm"
           onClick={() => onClose(false)}
@@ -229,33 +313,24 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
           <IoMdClose size={24} />
         </button>
       </div>
-      {account.address ? (
+      {address ? (
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4 w-full"
           >
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="btcStakerAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-500">
-                      BTC Staker Address
-                    </FormLabel>
-                    <FormControl>
-                      <Input disabled placeholder="" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="space-y-2">
+              <div className="space-y-2 col-span-2">
+                <FormLabel className="text-gray-500">
+                  BTC Staker Address
+                </FormLabel>
+                <Input disabled value={btcAddress} />
+              </div>
+              <div className="space-y-2 col-span-2">
                 <FormLabel className="text-gray-500">
                   Token Return Address
                 </FormLabel>
-                <Input disabled value={account.address} />
+                <Input disabled value={address} />
               </div>
               <div className="space-y-2">
                 <FormLabel className="text-gray-500">
@@ -267,9 +342,7 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
                 />
               </div>
               <div className="space-y-2">
-                <FormLabel className="text-gray-500">
-                  Token Burn Amount
-                </FormLabel>
+                <FormLabel className="text-gray-500">Unstaked Amount</FormLabel>
                 <Input disabled value={tokenBurnAmount} />
               </div>
             </div>
@@ -280,6 +353,9 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>BTC Receiver Address</FormLabel>
+                  <FormDescription>
+                    The address to receive the staked btc.
+                  </FormDescription>
                   <FormControl>
                     <Input placeholder="" {...field} />
                   </FormControl>
@@ -296,7 +372,7 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
             {!isBurning && (
               <div className="flex justify-end">
                 <Button className="" variant="outline" type="submit">
-                  Burn sBTC
+                  Unstake
                 </Button>
               </div>
             )}

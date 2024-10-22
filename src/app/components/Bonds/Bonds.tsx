@@ -1,18 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { networks } from "bitcoinjs-lib";
 import Link from "next/link";
 import { useState } from "react";
 
 import { getBonds } from "@/app/api/getBonds";
-import { SignPsbtTransaction } from "@/app/common/utils/psbt";
 import { historyContainerStyles } from "@/app/scalar/theme";
-import { QueryMeta } from "@/app/types/api";
-import { Bond as BondInterface } from "@/app/types/bonds";
-import { GlobalParamsVersion } from "@/app/types/globalParams";
 import { ProjectENV } from "@/env";
 import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
 import { getRelativeTime } from "@/utils/tool";
-import { UnisatOptions, WalletProvider } from "@/utils/wallet/wallet_provider";
+import { UnisatOptions } from "@/utils/wallet/wallet_provider";
 
 import { BurnTokenModal } from "../Modals/BurnTokenModal";
 
@@ -26,32 +21,16 @@ type signedPsbtFunctionType =
   | undefined;
 
 interface BondsProps {
-  finalityProvidersKV: Record<string, string>;
-  bondsAPI: BondInterface[];
-  bondsLocalStorage: BondInterface[];
-  globalParamsVersion: GlobalParamsVersion;
   publicKeyNoCoord: string;
-  btcWalletNetwork: networks.Network;
   address: string;
-  signPsbtTx: SignPsbtTransaction;
-  pushTx: WalletProvider["pushTx"];
-  queryMeta: QueryMeta;
-  getNetworkFees: WalletProvider["getNetworkFees"];
   signPsbt: signedPsbtFunctionType;
+  protocolContractAddress: string;
 }
 
 export const Bonds: React.FC<BondsProps> = ({
-  finalityProvidersKV,
-  bondsAPI,
-  bondsLocalStorage,
-  globalParamsVersion,
   publicKeyNoCoord,
-  btcWalletNetwork,
   address,
-  signPsbtTx,
-  pushTx,
-  queryMeta,
-  getNetworkFees,
+  protocolContractAddress,
   signPsbt,
 }) => {
   const [burnTokenModalOpen, setBurnTokenModalOpen] = useState(false);
@@ -170,14 +149,17 @@ export const Bonds: React.FC<BondsProps> = ({
         </div>
       }
 
-      <BurnTokenModal
-        open={burnTokenModalOpen}
-        onClose={setBurnTokenModalOpen}
-        btcAddress={address}
-        signPsbt={signPsbt}
-        stakingTxHex={txHex}
-        tokenBurnAmount={tokenBurnAmount}
-      />
+      {signPsbt && (
+        <BurnTokenModal
+          open={burnTokenModalOpen}
+          onClose={setBurnTokenModalOpen}
+          btcAddress={address}
+          signPsbt={signPsbt}
+          stakingTxHex={txHex}
+          tokenBurnAmount={tokenBurnAmount}
+          protocolContractAddress={protocolContractAddress}
+        />
+      )}
     </div>
   );
 };
