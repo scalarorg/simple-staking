@@ -1,6 +1,5 @@
 import {
   getNetworkConfig,
-  GLOBAL_NETWORK_INSTANCE,
   validateAddress,
 } from "@/config/network.config";
 
@@ -45,7 +44,7 @@ export class UnisatWallet extends WalletProvider {
     this.bitcoinNetworkProvider = this.unisatWallet;
   }
 
-  connectWallet = async (): Promise<this> => {
+  connectWallet = async (network = Network.TESTNET): Promise<this> => {
     const workingVersion = "1.4.5";
 
     const version = await window[unisatProvider].getVersion();
@@ -94,7 +93,7 @@ export class UnisatWallet extends WalletProvider {
 
     const address = result[0];
 
-    validateAddress(GLOBAL_NETWORK_INSTANCE, address);
+    validateAddress(network, address);
 
     const compressedPublicKey =
       await this.bitcoinNetworkProvider.getPublicKey();

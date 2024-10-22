@@ -67,7 +67,7 @@ export abstract class WalletProvider {
    * @returns A promise that resolves to an instance of the wrapper wallet provider in babylon friendly format.
    * @throws An error if the wallet is not installed or if connection fails.
    */
-  abstract connectWallet(): Promise<this>;
+  abstract connectWallet(network?: Network): Promise<this>;
 
   /**
    * Gets the name of the wallet provider.

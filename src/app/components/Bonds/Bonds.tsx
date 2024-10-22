@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { getBonds } from "@/app/api/getBonds";
 import { historyContainerStyles } from "@/app/scalar/theme";
+import { Bond } from "@/app/types/bonds";
 import { ProjectENV } from "@/env";
 import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
 import { getRelativeTime } from "@/utils/tool";
@@ -34,12 +35,10 @@ export const Bonds: React.FC<BondsProps> = ({
   signPsbt,
 }) => {
   const [burnTokenModalOpen, setBurnTokenModalOpen] = useState(false);
-  const [txHex, setTxHex] = useState("");
-  const [tokenBurnAmount, setTokenBurnAmount] = useState("");
+  const [selectedBond, setSelectedBond] = useState<Bond | null>(null);
 
-  const handleModal = (txHex: string, amount: string) => {
-    setTxHex(txHex);
-    setTokenBurnAmount(amount);
+  const handleModal = (bond: Bond) => {
+    setSelectedBond(bond);
     setBurnTokenModalOpen(true);
   };
 
@@ -126,9 +125,7 @@ export const Bonds: React.FC<BondsProps> = ({
                     {!bond.executedAmount && (
                       <button
                         className="btn btn-outline btn-xs inline-flex text-sm font-normal text-primary"
-                        onClick={() =>
-                          handleModal(bond.sourceTxHex, bond.amount)
-                        }
+                        onClick={() => handleModal(bond)}
                       >
                         Unbond
                       </button>
@@ -149,15 +146,16 @@ export const Bonds: React.FC<BondsProps> = ({
         </div>
       }
 
-      {signPsbt && (
+      {signPsbt && selectedBond && (
         <BurnTokenModal
           open={burnTokenModalOpen}
           onClose={setBurnTokenModalOpen}
           btcAddress={address}
           signPsbt={signPsbt}
-          stakingTxHex={txHex}
-          tokenBurnAmount={tokenBurnAmount}
+          stakingTxHex={selectedBond?.sourceTxHex}
+          tokenBurnAmount={selectedBond?.amount}
           protocolContractAddress={protocolContractAddress}
+          destinationChain={selectedBond?.sourceChain}
         />
       )}
     </div>
