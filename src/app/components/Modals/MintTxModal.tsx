@@ -117,8 +117,8 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       destinationChainId: "",
       tokenReceiverAddress: "",
       smartContractAddress: "",
-      stakingAmount: 10000,
-      mintingAmount: 10000,
+      stakingAmount: 100000,
+      mintingAmount: 100000,
       servicePublicKey: "",
       mintFeeRate: "hourFee",
       customFeeRate: undefined,
@@ -298,7 +298,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       onClose(false);
 
       toast({
-        title: "Mint sBTC transaction sent successfully",
+        title: "Stake sBTC transaction successfully",
         description: (
           <div className="mt-2 w-[640px] rounded-md bg-slate-950">
             <p className="text-white">

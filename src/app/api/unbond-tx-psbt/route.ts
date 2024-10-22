@@ -5,7 +5,6 @@ import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
 import { UnStaker } from "vault/index";
 
-
 export async function POST(request: Request) {
   try {
     if (!process.env.COVENANT_QUORUM) {
@@ -30,9 +29,18 @@ export async function POST(request: Request) {
       quorum,
     );
 
-    let feeRate = (
-      await getFeesRecommended(getBTCNetworkFromAddress(btcStakerAddress))
-    ).fastestFee; // Get this from Mempool API
+    let feeRate = 1;
+    let rate;
+    try {
+      rate = await getFeesRecommended(
+        getBTCNetworkFromAddress(btcStakerAddress),
+      );
+      feeRate = rate.fastestFee;
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Get this from Mempool API
     const rbf = true; // Replace by fee, need to be true if we want to replace the transaction when the fee is low
     const {
       psbt: unsignedPsbt,
