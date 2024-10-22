@@ -5,15 +5,14 @@ import { PiArrowUpRightBold, PiWalletBold } from "react-icons/pi";
 import { useOnClickOutside } from "usehooks-ts";
 
 import { buttonStyles } from "@/app/scalar/theme";
-import {
-  GLOBAL_NETWORK_INSTANCE,
-  getNetworkConfig,
-} from "@/config/network.config";
+import { getNetworkConfig } from "@/config/network.config";
 import { satoshiToBtc } from "@/utils/btcConversions";
 import { maxDecimals } from "@/utils/maxDecimals";
 import { trim } from "@/utils/trim";
+import { Network } from "@/utils/wallet/wallet_provider";
 
 import { Hash } from "../Hash/Hash";
+import { useNetwork } from "../NetworkProvicer";
 
 interface ConnectSmallProps {
   onConnect: () => void;
@@ -39,6 +38,8 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
   useOnClickOutside(ref, handleClickOutside);
 
   const { coinName, networkName } = getNetworkConfig();
+
+  const { network } = useNetwork();
 
   return address ? (
     <div className="relative mr-[-10px] flex text-sm" ref={ref}>
@@ -89,7 +90,7 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
           >
             Disconnect
           </button>
-          {GLOBAL_NETWORK_INSTANCE === "regtest" ? (
+          {network === Network.REGTEST ? (
             <button
               className="btn btn-outline btn-sm"
               onClick={() => {

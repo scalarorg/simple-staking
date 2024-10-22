@@ -51,8 +51,7 @@ function txInfoUrl(txId: string): URL {
   return new URL(mempoolAPI + "tx/" + txId);
 }
 
-export function mempoolWebTxUrl(txId: string): URL {
-  const network = ProjectENV.NEXT_PUBLIC_NETWORK;
+export function mempoolWebTxUrl(txId: string, network = Network.MAINNET): URL {
   const mempool_web_url = ProjectENV.NEXT_PUBLIC_MEMPOOL_WEB;
   const tx_preview_prefix =
     network === Network.MAINNET || network === Network.REGTEST

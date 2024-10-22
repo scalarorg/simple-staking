@@ -3,6 +3,7 @@ export { getCovenantParams } from "./getParams";
 import { z } from "zod";
 
 const ServerEnvSchema = z.object({
+  NETWORK: z.string().min(1).default("testnet"),
   COVENANT_QUORUM: z.string().min(1),
   VERSION: z.string().min(1),
   TAG: z.string().min(1),
@@ -16,6 +17,7 @@ const ServerEnvSchema = z.object({
 });
 
 export const ServerEnv = ServerEnvSchema.parse({
+  NETWORK: process.env.NEXT_PUBLIC_NETWORK,
   COVENANT_QUORUM: process.env.COVENANT_QUORUM,
   VERSION: process.env.VERSION,
   TAG: process.env.TAG,

@@ -6,7 +6,7 @@ let client: Client;
 export const getClient = function () {
   if (!client) {
     client = new Client({
-      network: ProjectENV.NEXT_PUBLIC_NETWORK,
+      network: ServerEnv.NETWORK,
       host: ServerEnv.BITCOIN_NODE_ADDRESS,
       port: ServerEnv.BITCOIN_NODE_PORT,
       wallet: ServerEnv.BITCOIN_WALLET,

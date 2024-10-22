@@ -7,8 +7,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
-import { getPsbtByHex } from "vault/index";
+
 
 import { Button } from "@/app/components/ui/button";
 import {
@@ -27,6 +26,9 @@ import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 import { mempoolWebTxUrl } from "@/utils/mempool_api";
 import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
 
+import { getPsbtByHex } from "vault/index";
+import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
+import { useNetwork } from "../NetworkProvicer";
 
 import { GeneralModal } from "./GeneralModal";
 import { SignTxModal } from "./SignTxModal";
@@ -104,7 +106,6 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   dApp,
   signPsbt,
 }) => {
-  const network = ProjectENV.NEXT_PUBLIC_NETWORK;
   const [signTxModalOpen, setSignTxModalOpen] = useState(false);
   const [isSignConfirm, setIsSignConfirm] = useState<any>(null);
 
@@ -176,6 +177,8 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
 
     fetchFeeRates();
   }, [open, btcAddress]);
+
+  const { network } = useNetwork();
 
   async function signPsbtUsingWallet(
     psbtHex: string,

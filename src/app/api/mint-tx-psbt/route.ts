@@ -1,12 +1,14 @@
-import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
+
 import { NextResponse } from "next/server";
-import { getUTXOs, Staker, UTXO } from "vault/index";
+
 
 import { fromBtcUnspentToMempoolUTXO } from "@/app/api/bitcoind";
 import { getClient } from "@/app/api/broadcast-btc-transaction/client";
 import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 import { convertToHexOfChainId } from "@/utils/blockchain";
 
+import { getUTXOs, Staker, UTXO } from "vault/index";
+import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
 import { ServerEnv } from "..";
 
 export async function POST(request: Request) {

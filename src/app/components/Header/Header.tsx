@@ -1,6 +1,7 @@
 import { ConnectSmall } from "@/app/components/Connect/ConnectSmall";
 import { buttonStyles } from "@/app/scalar/theme";
 
+import { useNetwork } from "../NetworkProvicer";
 import { Logo } from "./Logo";
 
 interface HeaderProps {
@@ -22,6 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenBurnTokenModal,
   onOpenExportPrivateKeyModal,
 }) => {
+  const { network } = useNetwork();
   return (
     <nav>
       {/*<div className="bg-base-300 shadow-sm">*/}
@@ -33,18 +35,31 @@ export const Header: React.FC<HeaderProps> = ({
           {/*    <TestingInfo />*/}
           {/*  </div>*/}
           {/*</div>*/}
-          <div className="flex gap-3 items-center">
-            <button
-              className={`
+
+          <div className="grow flex gap-4 items-center justify-end">
+            {address && (
+              <div className="flex gap-1 items-center text-sm font-semibold">
+                Network:
+                <button
+                  className="h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-orange-600 md:rounded-lg"
+                  // TODO: open popup to select network
+                  // onClick={}
+                  disabled={!address}
+                >
+                  <span className="capitalize">{network}</span>
+                </button>
+                <button
+                  className={`
         btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg 
         ${buttonStyles}
         `}
-              onClick={onOpenMintTxModal}
-              disabled={!address}
-            >
-              <span className="hidden md:flex">Mint Token</span>
-            </button>
-
+                  onClick={onOpenMintTxModal}
+                  disabled={!address}
+                >
+                  <span className="hidden md:flex">Mint Token</span>
+                </button>
+              </div>
+            )}
             <ConnectSmall
               onConnect={onConnect}
               address={address}
@@ -53,6 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
               onExportPrivateKey={onOpenExportPrivateKeyModal}
             />
           </div>
+
           {/*<ThemeToggle />*/}
         </div>
       </div>

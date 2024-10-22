@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import React from "react";
 import { WagmiProvider } from "wagmi";
 
+import NetworkProvicer from "./components/NetworkProvicer";
 import { ErrorProvider } from "./context/Error/ErrorContext";
 import { TermsProvider } from "./context/Terms/TermsContext";
 import { GlobalParamsProvider } from "./context/api/GlobalParamsProvider";
@@ -22,19 +23,21 @@ function Providers({ children }: React.PropsWithChildren) {
     <ThemeProvider defaultTheme="dark" attribute="data-theme">
       <WagmiProvider config={config}>
         <QueryClientProvider client={client}>
-          <TermsProvider>
-            <ErrorProvider>
-              <GlobalParamsProvider>
-                <BtcHeightProvider>
-                  <StakingStatsProvider>
-                    <ReactQueryStreamedHydration>
-                      {children}
-                    </ReactQueryStreamedHydration>
-                  </StakingStatsProvider>
-                </BtcHeightProvider>
-              </GlobalParamsProvider>
-            </ErrorProvider>
-          </TermsProvider>
+          <NetworkProvicer>
+            <TermsProvider>
+              <ErrorProvider>
+                <GlobalParamsProvider>
+                  <BtcHeightProvider>
+                    <StakingStatsProvider>
+                      <ReactQueryStreamedHydration>
+                        {children}
+                      </ReactQueryStreamedHydration>
+                    </StakingStatsProvider>
+                  </BtcHeightProvider>
+                </GlobalParamsProvider>
+              </ErrorProvider>
+            </TermsProvider>
+          </NetworkProvicer>
           <ReactQueryDevtools
             buttonPosition="bottom-left"
             initialIsOpen={false}

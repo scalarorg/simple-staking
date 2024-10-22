@@ -5,7 +5,6 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
-import { getPsbtByHex } from "vault/index";
 import { parseUnits } from "viem";
 import { useAccount, useChainId, useConnect, useReadContract } from "wagmi";
 import { z } from "zod";
@@ -21,11 +20,11 @@ import {
   FormMessage,
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
-import { ProjectENV } from "@/env";
 import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
 import { useEthersSigner } from "@/utils/ethers";
 import { UnisatOptions } from "@/utils/wallet/wallet_provider";
 
+import { getPsbtByHex } from "vault/index";
 import { toast } from "../ui/use-toast";
 
 import { GeneralModal } from "./GeneralModal";
@@ -140,6 +139,7 @@ interface BurnTokenModalProps {
   stakingTxHex: string;
   tokenBurnAmount: string;
   protocolContractAddress: string;
+  destinationChain: string;
 }
 
 const FormSchema = z.object({
@@ -150,12 +150,20 @@ const FormSchema = z.object({
     .min(12, "Invalid BTC address"),
 });
 
+// TODO: Remove me
+
+const NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS =
+  "0x57cEaf8B6F304d84F2fADf1216B2C951F5225D5c";
+
+const MOCK_ZERO_BYTES = `0x${"0".repeat(40)}`;
+
 export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   open,
   btcAddress,
   stakingTxHex,
   tokenBurnAmount,
   protocolContractAddress,
+  destinationChain,
   onClose,
   signPsbt,
 }) => {
@@ -164,7 +172,7 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   const signer = useEthersSigner();
 
   const sBTC = new ethers.Contract(
-    ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS,
+    NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS,
     SBTC_ABI,
     signer,
   );
@@ -183,14 +191,14 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
   });
 
   const { data: sbtcBalance } = useReadContract({
-    address: ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS as `0x${string}`,
+    address: NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS as `0x${string}`,
     abi: SBTC_ABI,
     functionName: "balanceOf",
     args: [address],
   });
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: ProjectENV.NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS as `0x${string}`,
+    address: NEXT_PUBLIC_SBTC_CONTRACT_ADDRESS as `0x${string}`,
     abi: SBTC_ABI,
     functionName: "allowance",
     args: [address, protocolContractAddress as `0x${string}`],
@@ -208,14 +216,12 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
         throw new Error("Insufficient balance");
       }
 
-      const burnAmount = parseUnits(tokenBurnAmount, 18);
+      const burnAmount = parseUnits(tokenBurnAmount, 0);
       if (!burnAmount) {
         throw new Error("Invalid burn amount");
       }
 
       // TODO: get destination chain and address from the payload
-      const destinationChain = "bitcoin-testnet";
-      const mock20bytesAdress = `0x${"0".repeat(40)}`;
 
       setStatus("Estimating the fee");
       setIsBurning(true);
@@ -248,33 +254,33 @@ export const BurnTokenModal: React.FC<BurnTokenModalProps> = ({
         throw new Error("Failed to sign the psbt");
       }
       const signedPsbt = getPsbtByHex(hexSignedPsbt, btcAddress);
-      // Step 3: Call the contract to burn the token
-      setStatus("Approving the token");
-      setIsBurning(true);
 
-      const txApprove = await sBTC.approve(protocolContractAddress, burnAmount);
+      // Step 2.1: Check if the allowance is enough
+      if (Number(allowance) < Number(tokenBurnAmount)) {
+        // Step 3: Call the contract to burn the token
+        setStatus("Approving the token");
+        setIsBurning(true);
 
-      setStatus("Waiting for approval transaction to be mined");
+        const txApprove = await sBTC.approve(
+          protocolContractAddress,
+          burnAmount,
+        );
 
-      const response = await txApprove.wait();
+        setStatus("Waiting for approval transaction to be mined");
 
-      console.log("response", response);
+        const response = await txApprove.wait();
 
-      await refetchAllowance();
-      setStatus("Approval transaction mined");
+        console.log("response", response);
 
-      console.log({ allowance });
+        await refetchAllowance();
+        setStatus("Approval transaction mined");
+      }
 
       setStatus("Burning the token");
-      console.log({
-        destinationChain,
-        mock20bytesAdress,
-        burnAmount,
-        signedPsbt: signedPsbt.toBase64(),
-      });
+
       const txBurn = await protocol.unstake(
         destinationChain,
-        mock20bytesAdress,
+        MOCK_ZERO_BYTES,
         burnAmount,
         signedPsbt.toBase64(),
       );

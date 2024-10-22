@@ -11,7 +11,6 @@ import { deleteDApp, getDApps } from "@/app/api/dApp";
 import earth from "@/app/assets/earth.webp";
 import stone from "@/app/assets/stone.webp";
 import { DApp as DAppInterface } from "@/app/types/dApps";
-import { GLOBAL_NETWORK_INSTANCE } from "@/config/network.config";
 import { getCurrentGlobalParamsVersion } from "@/utils/globalParams";
 import { calculateBondsDiff } from "@/utils/local_storage/bonds/calculateBondsDiff";
 import { getBondsLocalStorageKey } from "@/utils/local_storage/bonds/getBondsLocalStorageKey";
@@ -21,7 +20,6 @@ import {
   isSupportedAddressType,
   toNetwork,
 } from "@/utils/wallet/index";
-import { RegtestWallet } from "@/utils/wallet/providers/regtest_wallet";
 import { Network, WalletProvider } from "@/utils/wallet/wallet_provider";
 
 import { PaginatedBonds, getBonds } from "./api/getBonds";
@@ -40,6 +38,7 @@ import { MintTxModal } from "./components/Modals/MintTxModal";
 import { ShowWalletModal } from "./components/Modals/ShowWalletModal";
 import { TermsModal } from "./components/Modals/Terms/TermsModal";
 import { UpdateDAppModal } from "./components/Modals/UpdateDAppModal";
+import { useNetwork } from "./components/NetworkProvicer";
 import { StakingBond } from "./components/Staking/StakingBond";
 import { Stats } from "./components/Stats/Stats";
 import { Summary } from "./components/Summary/Summary";
@@ -295,12 +294,14 @@ const Home: React.FC<HomeProps> = () => {
     setPrivkey("");
   };
 
+  const { network: globalNetwork } = useNetwork();
+
   const handleConnectBTC = async (walletProvider: WalletProvider) => {
     // close the modal
     setConnectModalOpen(false);
 
     try {
-      await walletProvider.connectWallet();
+      await walletProvider.connectWallet(globalNetwork);
       const address = await walletProvider.getAddress();
       // check if the wallet address type is supported in babylon
       const supported = isSupportedAddressType(address);
@@ -319,10 +320,10 @@ const Home: React.FC<HomeProps> = () => {
       setBTCWalletNetwork(toNetwork(await walletProvider.getNetwork()));
       setAddress(address);
       setPublicKeyNoCoord(publicKeyNoCoord.toString("hex"));
-      if (walletProvider instanceof RegtestWallet) {
-        setPrivkey(await walletProvider.getPrivateKeyWIF());
-        setShowWalletModalOpen(true);
-      }
+      // if (walletProvider instanceof RegtestWallet) {
+      //   setPrivkey(await walletProvider.getPrivateKeyWIF());
+      //   setShowWalletModalOpen(true);
+      // }
     } catch (error: Error | any) {
       if (
         error instanceof WalletError &&
@@ -397,9 +398,11 @@ const Home: React.FC<HomeProps> = () => {
 
   let totalStakedSat = 0;
 
+  const { network } = useNetwork();
+
   return (
     <main
-      className={`overflow-hidden relative h-full min-h-svh z-0 w-full ${GLOBAL_NETWORK_INSTANCE === Network.MAINNET ? "main-app-mainnet" : "main-app-testnet"}`}
+      className={`overflow-hidden relative h-full min-h-svh z-0 w-full ${network === Network.MAINNET ? "main-app-mainnet" : "main-app-testnet"}`}
     >
       {/*BACKGROUND start here*/}
 
