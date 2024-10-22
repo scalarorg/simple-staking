@@ -183,7 +183,7 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
             onChange={handleSmartContractAddressChange}
             reset={false}
             initValue=""
-            label="Minting Smart Contract Address"
+            label="Smart Contract Address"
             placeholder="0x"
           />
         </div>
