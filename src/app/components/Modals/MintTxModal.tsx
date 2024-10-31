@@ -37,6 +37,8 @@ type signedPsbtFunctionType =
     ) => Promise<string>)
   | undefined;
 
+let vaultWasmInstance: any = null;
+
 const FormSchema = z.object({
   sourceChainAddress: z.string({
     required_error: "Please enter your source chain address.",

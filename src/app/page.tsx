@@ -6,12 +6,12 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { deleteDApp, getDApps } from "@/app/api/dApp";
-import earth from "@/app/assets/earth.webp";
 import stone from "@/app/assets/stone.webp";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { getCurrentGlobalParamsVersion } from "@/utils/globalParams";
 import { Network } from "@/utils/wallet/wallet_provider";
 
+import VaultModule, { useVault } from "@/utils/wasm";
 import { PaginatedBonds, getBonds } from "./api/getBonds";
 import {
   PaginatedFinalityProviders,
@@ -269,6 +269,8 @@ const Home: React.FC<HomeProps> = () => {
   let totalStakedSat = 0;
 
   const { network } = useNetwork();
+  const vault = useVault();
+  console.log("valt: ", { vault });
 
   return (
     <main
@@ -276,7 +278,7 @@ const Home: React.FC<HomeProps> = () => {
     >
       <div className={"absolute -z-10 left-[9%] top-[5%]"}>
         <div className="absolute h-full bottom-1/2 left-1/2 -translate-x-1/2 aspect-square rounded-full bg-[radial-gradient(37.54%_37.54%_at_50.07%_47.01%,rgba(3,185,216,0.30)_0%,rgba(36,93,137,0.00)_100%)]" />
-        <Image alt={"stone"} src={stone} />
+        <Image alt={"stone"} src={stone} priority />
         <div
           className={
             "absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-1/2 h-[90%] opacity-[16%] aspect-square rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,#F9B55F_0%,rgba(249,181,95,0.00)_100%)] mix-blend-screen blur-[150px]"
@@ -288,13 +290,13 @@ const Home: React.FC<HomeProps> = () => {
           }
         />
       </div>
-      <Image
+      {/* <Image
         className={
           "absolute -z-10 -right-[9%] top-[70vh] grayscale-[100%] brightness-75"
         }
         alt={"earth"}
         src={earth}
-      />
+      /> */}
       <Header />
       <div className="container mx-auto flex justify-center p-6">
         <div className="container flex flex-col gap-6">
@@ -373,6 +375,11 @@ const Home: React.FC<HomeProps> = () => {
       />
       
       <TermsModal open={isTermsOpen} onClose={closeTerms} /> */}
+      <div className="bg-black-600 h-screen flex items-center justify-center">
+        {/* Add some text to verify the div is rendering */}
+        <p className="text-white">Vault Module Container</p>
+        <VaultModule tag="01020304" version={1} />
+      </div>
     </main>
   );
 };
