@@ -8,7 +8,6 @@ import { IoMdClose } from "react-icons/io";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 
-
 import { Button } from "@/app/components/ui/button";
 import {
   Form,
@@ -21,14 +20,10 @@ import {
 import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/components/ui/use-toast";
 import { DApp as DAppInterface } from "@/app/types/dApps";
-import { ProjectENV } from "@/env";
-import { getBTCNetworkFromAddress } from "@/utils/bitcoin";
 import { mempoolWebTxUrl } from "@/utils/mempool_api";
 import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
 
-import { getPsbtByHex } from "vault/index";
-import { getFeesRecommended } from "bitcoin-flow/utils/mempool";
-import { useNetwork } from "../NetworkProvicer";
+import { useNetwork } from "../../context/NetworkProvicer";
 
 import { GeneralModal } from "./GeneralModal";
 import { SignTxModal } from "./SignTxModal";
@@ -156,27 +151,27 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
     minimumFee: 1,
   });
 
-  useEffect(() => {
-    const fetchFeeRates = async () => {
-      if (open && btcAddress) {
-        try {
-          const fees = await getFeesRecommended(
-            getBTCNetworkFromAddress(btcAddress),
-          );
-          setFeeRates(fees);
-        } catch (error) {
-          console.warn("Error fetching fee rates:", error);
-          setFeeRates({
-            fastestFee: 1,
-            hourFee: 1,
-            minimumFee: 1,
-          });
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const fetchFeeRates = async () => {
+  //     if (open && btcAddress) {
+  //       try {
+  //         const fees = await getFeesRecommended(
+  //           getBTCNetworkFromAddress(btcAddress),
+  //         );
+  //         setFeeRates(fees);
+  //       } catch (error) {
+  //         console.warn("Error fetching fee rates:", error);
+  //         setFeeRates({
+  //           fastestFee: 1,
+  //           hourFee: 1,
+  //           minimumFee: 1,
+  //         });
+  //       }
+  //     }
+  //   };
 
-    fetchFeeRates();
-  }, [open, btcAddress]);
+  //   fetchFeeRates();
+  // }, [open, btcAddress]);
 
   const { network } = useNetwork();
 
@@ -224,9 +219,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
         throw new Error("Unsupported network");
       }
 
-      const url = window.location.origin;
-
-      const unsignedPsbtResult = await axios.post(`${url}/api/mint-tx-psbt`, {
+      const unsignedPsbtResult = await axios.post(`/api/mint-tx-psbt`, {
         sourceChainAddress,
         sourceChainPublicKey,
         destinationChainId,

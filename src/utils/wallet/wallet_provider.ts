@@ -39,6 +39,7 @@ export interface UTXO {
 export enum Network {
   MAINNET = "mainnet",
   TESTNET = "testnet",
+  TESTNET4 = "testnet4",
   REGTEST = "regtest",
   SIGNET = "signet",
 }
@@ -46,6 +47,7 @@ export enum Network {
 export const INTERNAL_NETWORK_NAMES = {
   [Network.MAINNET]: "livenet",
   [Network.TESTNET]: "testnet",
+  [Network.TESTNET4]: "testnet4",
   [Network.SIGNET]: "signet",
   [Network.REGTEST]: "regtest",
 };

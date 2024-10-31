@@ -1,5 +1,7 @@
+"use client";
+
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AiOutlineInfoCircle } from "react-icons/ai";
 import { FaWallet } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
@@ -11,65 +13,70 @@ import { getNetworkConfig } from "@/config/network.config";
 import { BROWSER_INJECTED_WALLET_NAME, walletList } from "@/utils/wallet/list";
 import { WalletProvider } from "@/utils/wallet/wallet_provider";
 
+import { useWalletInfo, useWalletProvider } from "../../context/WalletProvider";
+
 import { GeneralModal } from "./GeneralModal";
 
-interface ConnectModalProps {
-  open: boolean;
-  onClose: (value: boolean) => void;
-  onConnect: (walletProvider: WalletProvider) => void;
-  connectDisabled: boolean;
-}
+// This constant is used to identify the browser wallet
+// And whether or not it should be injected
+const BROWSER = "btcwallet";
 
-export const ConnectModal: React.FC<ConnectModalProps> = ({
-  open,
-  onClose,
-  onConnect,
-  connectDisabled,
-}) => {
+export const ConnectModal: React.FC<{}> = ({}) => {
   const [accepted, setAccepted] = useState(false);
-  const [selectedWallet, setSelectedWallet] = useState<string>("");
-  const [mounted, setMounted] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState<string>("Unisat");
+  const [open, setOpen] = useState(false);
 
   const [injectedWalletProviderName, setInjectedWalletProviderName] =
     useState("Browser");
   const [injectedWalletProviderIcon, setInjectedWalletProviderIcon] =
     useState("");
 
-  // This constant is used to identify the browser wallet
-  // And whether or not it should be injected
-  const BROWSER = "btcwallet";
-
   const { openTerms } = useTerms();
 
-  useEffect(() => {
-    const fetchWalletProviderDetails = async () => {
-      // Check if the browser wallet is injectable
-      if (window[BROWSER]) {
-        // Get the name and icon of the injected wallet
-        const name =
-          window[BROWSER].getWalletProviderName &&
-          (await window[BROWSER].getWalletProviderName());
-        const icon =
-          window[BROWSER].getWalletProviderIcon &&
-          (await window[BROWSER].getWalletProviderIcon());
-        // Set the name and icon of the injected wallet if they exist
-        name && setInjectedWalletProviderName(`${name} (Browser)`);
-        icon && setInjectedWalletProviderIcon(icon);
-      }
-    };
-
-    setMounted(true);
-    fetchWalletProviderDetails();
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
-  const isInjectable = !!window[BROWSER];
   const { networkName } = getNetworkConfig();
 
-  const handleConnect = async () => {
+  const { address } = useWalletInfo();
+
+  const { walletProvider, setWalletProvider, connectWallet } =
+    useWalletProvider();
+
+  const isInjectable = useMemo(() => {
+    return !!window[BROWSER];
+  }, []);
+
+  const isDisabled = useMemo(
+    () => !!address || !accepted || !selectedWallet,
+    [address, accepted, selectedWallet],
+  );
+
+  const fetchWalletProviderDetails = useCallback(async () => {
+    if (!isInjectable) {
+      return;
+    }
+    if (!window[BROWSER]) {
+      return;
+    }
+    // Get the name and icon of the injected wallet
+    const name =
+      window[BROWSER].getWalletProviderName &&
+      (await window[BROWSER].getWalletProviderName());
+    const icon =
+      window[BROWSER].getWalletProviderIcon &&
+      (await window[BROWSER].getWalletProviderIcon());
+    // Set the name and icon of the injected wallet if they exist
+    name && setInjectedWalletProviderName(`${name} (Browser)`);
+    icon && setInjectedWalletProviderIcon(icon);
+  }, [
+    setInjectedWalletProviderName,
+    setInjectedWalletProviderIcon,
+    isInjectable,
+  ]);
+
+  useEffect(() => {
+    fetchWalletProviderDetails();
+  }, [fetchWalletProviderDetails]);
+
+  useEffect(() => {
     if (selectedWallet) {
       let walletInstance: WalletProvider;
 
@@ -89,46 +96,70 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
         }
         walletInstance = new walletProvider();
       }
-
-      onConnect(walletInstance);
+      setWalletProvider(walletInstance);
     }
-  };
+  }, [setWalletProvider, selectedWallet, isInjectable]);
 
-  const buildInjectableWallet = (shouldDisplay: boolean, name: string) => {
-    if (!shouldDisplay) {
-      return null;
+  // useEffect(() => {
+  //   if (walletProvider) {
+  //     let once = false;
+  //     walletProvider.on("accountChanged", () => {
+  //       if (!once) {
+  //         connectWallet();
+  //       }
+  //     });
+  //     return () => {
+  //       once = true;
+  //     };
+  //   }
+  // }, [walletProvider, connectWallet]);
+
+  useEffect(() => {
+    if (!walletProvider) {
+      return;
     }
+    connectWallet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    return (
-      <button
-        key={name}
-        className={`flex cursor-pointer items-center gap-2 rounded-xl border-2 bg-base-100 p-2 transition-all hover:text-primary ${selectedWallet === BROWSER ? "border-primary" : "border-base-100"}`}
-        onClick={() => setSelectedWallet(BROWSER)}
-      >
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border bg-white p-2 text-black">
-          {injectedWalletProviderIcon ? (
-            <Image
-              src={injectedWalletProviderIcon}
-              alt={injectedWalletProviderName}
-              width={26}
-              height={26}
-            />
-          ) : (
-            <FaWallet size={26} />
-          )}
-        </div>
-        <p>{injectedWalletProviderName}</p>
-      </button>
-    );
-  };
+  const renderInjectableWallet = useCallback(
+    (shouldDisplay: boolean, name: string) => {
+      if (!shouldDisplay) {
+        return null;
+      }
+
+      return (
+        <button
+          key={name}
+          className={`flex cursor-pointer items-center gap-2 rounded-xl border-2 bg-base-100 p-2 transition-all hover:text-primary ${selectedWallet === BROWSER ? "border-primary" : "border-base-100"}`}
+          onClick={() => setSelectedWallet(BROWSER)}
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border bg-white p-2 text-black">
+            {injectedWalletProviderIcon ? (
+              <Image
+                src={injectedWalletProviderIcon}
+                alt={injectedWalletProviderName}
+                width={26}
+                height={26}
+              />
+            ) : (
+              <FaWallet size={26} />
+            )}
+          </div>
+          <p>{injectedWalletProviderName}</p>
+        </button>
+      );
+    },
+    [selectedWallet, injectedWalletProviderName, injectedWalletProviderIcon],
+  );
 
   return (
-    <GeneralModal open={open} onClose={onClose}>
+    <GeneralModal open={open} onClose={() => setOpen(false)}>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-bold">Connect wallet</h3>
         <button
           className="btn btn-circle btn-ghost btn-sm"
-          onClick={() => onClose(false)}
+          onClick={() => setOpen(false)}
         >
           <IoMdClose size={24} />
         </button>
@@ -167,7 +198,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
                 supportedNetworks,
               }) => {
                 if (name === BROWSER_INJECTED_WALLET_NAME) {
-                  return buildInjectableWallet(isInjectable, name);
+                  return renderInjectableWallet(isInjectable, name);
                 }
                 const walletAvailable =
                   isQRWallet ||
@@ -218,8 +249,8 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({
         </div>
         <button
           className="btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-lg px-2 text-white"
-          onClick={handleConnect}
-          disabled={connectDisabled || !accepted || !selectedWallet}
+          onClick={connectWallet}
+          disabled={isDisabled}
         >
           <PiWalletBold size={20} />
           Connect to {networkName} network

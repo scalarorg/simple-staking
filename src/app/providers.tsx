@@ -7,9 +7,10 @@ import { ThemeProvider } from "next-themes";
 import React from "react";
 import { WagmiProvider } from "wagmi";
 
-import NetworkProvicer from "./components/NetworkProvicer";
 import { ErrorProvider } from "./context/Error/ErrorContext";
+import NetworkProvicer from "./context/NetworkProvicer";
 import { TermsProvider } from "./context/Terms/TermsContext";
+import WalletProvider from "./context/WalletProvider";
 import { GlobalParamsProvider } from "./context/api/GlobalParamsProvider";
 import { StakingStatsProvider } from "./context/api/StakingStatsProvider";
 import { BtcHeightProvider } from "./context/mempool/BtcHeightProvider";
@@ -24,19 +25,21 @@ function Providers({ children }: React.PropsWithChildren) {
       <WagmiProvider config={config}>
         <QueryClientProvider client={client}>
           <NetworkProvicer>
-            <TermsProvider>
-              <ErrorProvider>
-                <GlobalParamsProvider>
-                  <BtcHeightProvider>
-                    <StakingStatsProvider>
-                      <ReactQueryStreamedHydration>
-                        {children}
-                      </ReactQueryStreamedHydration>
-                    </StakingStatsProvider>
-                  </BtcHeightProvider>
-                </GlobalParamsProvider>
-              </ErrorProvider>
-            </TermsProvider>
+            <ErrorProvider>
+              <WalletProvider>
+                <TermsProvider>
+                  <GlobalParamsProvider>
+                    <BtcHeightProvider>
+                      <StakingStatsProvider>
+                        <ReactQueryStreamedHydration>
+                          {children}
+                        </ReactQueryStreamedHydration>
+                      </StakingStatsProvider>
+                    </BtcHeightProvider>
+                  </GlobalParamsProvider>
+                </TermsProvider>
+              </WalletProvider>
+            </ErrorProvider>
           </NetworkProvicer>
           <ReactQueryDevtools
             buttonPosition="bottom-left"
