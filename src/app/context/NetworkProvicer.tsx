@@ -17,7 +17,7 @@ export const useNetwork = () => {
 };
 
 const NetworkProvider = ({ children }: { children: React.ReactNode }) => {
-  const [network, setNetwork] = useState<Network>(Network.TESTNET);
+  const [network, setNetwork] = useState<Network>(Network.TESTNET4);
 
   return (
     <NetworkProviderContext.Provider

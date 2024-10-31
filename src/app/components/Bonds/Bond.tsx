@@ -124,11 +124,3 @@ export const Bond: React.FC<{
     </div>
   );
 };
-
-// <BurnTokenModal
-//   open={burnTokenModalOpen}
-//   onClose={setBurnTokenModalOpen}
-//   btcAddress={address}
-//   signPsbt={signPsbt}
-//   stakingTxHex={stakingTx.txHex}
-// />

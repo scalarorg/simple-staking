@@ -32,6 +32,7 @@ export class UnisatWallet extends WalletProvider {
   constructor() {
     super();
 
+
     // check whether there is an Unisat Wallet extension
     if (!window[unisatProvider]) {
       throw new Error("Unisat Wallet extension not found");
@@ -42,15 +43,18 @@ export class UnisatWallet extends WalletProvider {
 
     // Unisat uses different providers for different networks
     this.bitcoinNetworkProvider = this.unisatWallet;
+
   }
 
-  connectWallet = async (network = Network.TESTNET): Promise<this> => {
+  connectWallet = async (network = Network.TESTNET4): Promise<this> => {
     const workingVersion = "1.4.5";
 
     const version = await window[unisatProvider].getVersion();
     if (compareVersions(version, workingVersion) < 0) {
       throw new Error("Please update Unisat Wallet to the latest version");
     }
+
+    console.log("this.networkEnv", this.networkEnv);
 
     switch (this.networkEnv) {
       case Network.MAINNET:
@@ -59,6 +63,12 @@ export class UnisatWallet extends WalletProvider {
         );
         break;
       case Network.TESTNET:
+        await this.bitcoinNetworkProvider.switchNetwork(
+          INTERNAL_NETWORK_NAMES.testnet,
+        );
+        break;
+      case Network.TESTNET4:
+        console.log("switching to testnet4");
         await this.bitcoinNetworkProvider.switchNetwork(
           INTERNAL_NETWORK_NAMES.testnet,
         );
@@ -81,6 +91,7 @@ export class UnisatWallet extends WalletProvider {
     //     throw new Error((error as Error)?.message);
     //   }
     // }
+
     let result = null;
     try {
       // this will not throw an error even if user has no network enabled
@@ -98,15 +109,17 @@ export class UnisatWallet extends WalletProvider {
     const compressedPublicKey =
       await this.bitcoinNetworkProvider.getPublicKey();
 
+
     if (compressedPublicKey && address) {
       this.unisatWalletInfo = {
         publicKeyHex: compressedPublicKey,
         address,
       };
+
       return this;
     } else {
       throw new Error("Could not connect to Unisat Wallet");
-    }
+    } 
   };
 
   getWalletProviderName = async (): Promise<string> => {

@@ -33,6 +33,14 @@ const testnetConfig: NetworkConfig = {
   network: Network.TESTNET,
 };
 
+const testnet4Config: NetworkConfig = {
+  coinName: "Testnet BTC",
+  coinSymbol: "tBTC",
+  networkName: "BTC testnet4",
+  mempoolApiUrl: `${ProjectENV.NEXT_PUBLIC_MEMPOOL_API}/testnet4`,
+  network: Network.TESTNET4,
+};
+
 const regtestConfig: NetworkConfig = {
   coinName: "Regtest BTC",
   coinSymbol: "rBTC",
@@ -45,10 +53,11 @@ const config: Record<string, NetworkConfig> = {
   mainnet: mainnetConfig,
   signet: signetConfig,
   testnet: testnetConfig,
+  testnet4: testnet4Config,
   regtest: regtestConfig,
 };
 
-export function getNetworkConfig(network = Network.TESTNET): NetworkConfig {
+export function getNetworkConfig(network = Network.TESTNET4): NetworkConfig {
   switch (network) {
     case Network.MAINNET:
       return config.mainnet;
@@ -56,6 +65,8 @@ export function getNetworkConfig(network = Network.TESTNET): NetworkConfig {
       return config.signet;
     case Network.TESTNET:
       return config.testnet;
+    case Network.TESTNET4:
+      return config.testnet4;
     case Network.REGTEST:
       return config.regtest;
     default:
@@ -69,14 +80,14 @@ export function validateAddress(network: Network, address: string): void {
       "Incorrect address prefix for Mainnet. Expected address to start with 'bc1'.",
     );
   } else if (
-    [Network.SIGNET, Network.TESTNET].includes(network) &&
+    [Network.SIGNET, Network.TESTNET, Network.TESTNET4].includes(network) &&
     !address.startsWith("tb1")
   ) {
     throw new Error(
       "Incorrect address prefix for Testnet / Signet. Expected address to start with 'tb1'.",
     );
   } else if (
-    ![Network.MAINNET, Network.SIGNET, Network.TESTNET].includes(network)
+    ![Network.MAINNET, Network.SIGNET, Network.TESTNET, Network.TESTNET4].includes(network)
   ) {
     throw new Error(
       `Unsupported network: ${network}. Please provide a valid network.`,

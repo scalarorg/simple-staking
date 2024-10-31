@@ -15,6 +15,8 @@ export const toNetwork = (network: Network): networks.Network => {
       return networks.testnet;
     case Network.REGTEST:
       return networks.regtest;
+    case Network.TESTNET4:
+      return networks.testnet
     default:
       throw new Error("Unsupported network");
   }

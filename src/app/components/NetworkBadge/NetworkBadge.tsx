@@ -2,7 +2,7 @@ import Image from "next/image";
 
 import { Network } from "@/utils/wallet/wallet_provider";
 
-import { useNetwork } from "../NetworkProvicer";
+import { useNetwork } from "../../context/NetworkProvicer";
 
 import testnetIcon from "./testnet-icon.png";
 

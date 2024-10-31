@@ -1,40 +1,23 @@
-import { ConnectSmall } from "@/app/components/Connect/ConnectSmall";
 import { buttonStyles } from "@/app/scalar/theme";
 
-import { useNetwork } from "../NetworkProvicer";
+import { useNetwork } from "../../context/NetworkProvicer";
+import { useWalletInfo } from "../../context/WalletProvider";
+import { ConnectSmall } from "../Connect/ConnectSmall";
+
 import { Logo } from "./Logo";
 
 interface HeaderProps {
-  onConnect: () => void;
-  address: string;
-  balanceSat: number;
-  onDisconnect: () => void;
   onOpenMintTxModal: () => void;
-  onOpenBurnTokenModal: () => void;
-  onOpenExportPrivateKeyModal: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  onConnect,
-  address,
-  balanceSat,
-  onDisconnect,
-  onOpenMintTxModal,
-  onOpenBurnTokenModal,
-  onOpenExportPrivateKeyModal,
-}) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenMintTxModal }) => {
   const { network } = useNetwork();
+  const { address } = useWalletInfo();
   return (
     <nav>
-      {/*<div className="bg-base-300 shadow-sm">*/}
       <div>
         <div className="container mx-auto flex w-full items-center justify-between gap-4 p-6">
           <Logo />
-          {/*<div className="flex flex-1">*/}
-          {/*  <div className="hidden flex-1 xl:flex">*/}
-          {/*    <TestingInfo />*/}
-          {/*  </div>*/}
-          {/*</div>*/}
 
           <div className="grow flex gap-4 items-center justify-end">
             {address && (
@@ -60,21 +43,10 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               </div>
             )}
-            <ConnectSmall
-              onConnect={onConnect}
-              address={address}
-              balanceSat={balanceSat}
-              onDisconnect={onDisconnect}
-              onExportPrivateKey={onOpenExportPrivateKeyModal}
-            />
+            <ConnectSmall />
           </div>
-
-          {/*<ThemeToggle />*/}
         </div>
       </div>
-      {/*<div className="container mx-auto flex w-full items-center p-6 pb-0 xl:hidden">*/}
-      {/*  <TestingInfo />*/}
-      {/*</div>*/}
     </nav>
   );
 };

@@ -1,26 +1,16 @@
 "use client";
 
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { networks } from "bitcoinjs-lib";
 import { initBTCCurve } from "btc-staking-ts";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useLocalStorage } from "usehooks-ts";
 
 import { deleteDApp, getDApps } from "@/app/api/dApp";
 import earth from "@/app/assets/earth.webp";
 import stone from "@/app/assets/stone.webp";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { getCurrentGlobalParamsVersion } from "@/utils/globalParams";
-import { calculateBondsDiff } from "@/utils/local_storage/bonds/calculateBondsDiff";
-import { getBondsLocalStorageKey } from "@/utils/local_storage/bonds/getBondsLocalStorageKey";
-import { WalletError, WalletErrorType } from "@/utils/wallet/errors";
-import {
-  getPublicKeyNoCoord,
-  isSupportedAddressType,
-  toNetwork,
-} from "@/utils/wallet/index";
-import { Network, WalletProvider } from "@/utils/wallet/wallet_provider";
+import { Network } from "@/utils/wallet/wallet_provider";
 
 import { PaginatedBonds, getBonds } from "./api/getBonds";
 import {
@@ -28,43 +18,32 @@ import {
   getFinalityProviders,
 } from "./api/getFinalityProviders";
 import { getGlobalParams } from "./api/getGlobalParams";
-import { Bonds } from "./components/Bonds/Bonds";
 import { Footer } from "./components/Footer/Footer";
 import { Header } from "./components/Header/Header";
-import { AddDAppModal } from "./components/Modals/AddDAppModal";
 import { ConnectModal } from "./components/Modals/ConnectModal";
-import { ErrorModal } from "./components/Modals/ErrorModal";
-import { MintTxModal } from "./components/Modals/MintTxModal";
-import { ShowWalletModal } from "./components/Modals/ShowWalletModal";
-import { TermsModal } from "./components/Modals/Terms/TermsModal";
-import { UpdateDAppModal } from "./components/Modals/UpdateDAppModal";
-import { useNetwork } from "./components/NetworkProvicer";
-import { StakingBond } from "./components/Staking/StakingBond";
 import { Stats } from "./components/Stats/Stats";
 import { Summary } from "./components/Summary/Summary";
 import { toast } from "./components/ui/use-toast";
 import { useError } from "./context/Error/ErrorContext";
+import { useNetwork } from "./context/NetworkProvicer";
 import { useTerms } from "./context/Terms/TermsContext";
-import { Bond } from "./types/bonds";
+import { useWalletInfo, useWalletProvider } from "./context/WalletProvider";
 import { ErrorHandlerParam, ErrorState } from "./types/errors";
 
 interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
-  const [btcWallet, setBTCWallet] = useState<WalletProvider>();
-  const [btcWalletBalanceSat, setBTCWalletBalanceSat] = useState(0);
-  const [btcWalletNetwork, setBTCWalletNetwork] = useState<networks.Network>();
-  const [publicKeyNoCoord, setPublicKeyNoCoord] = useState("");
   const [addDAppModalOpen, setAddDAppModalOpen] = useState(false);
   const [updateDAppModalOpen, setUpdateDAppModalOpen] = useState(false);
   const [dApp, setDApp] = useState<DAppInterface>();
 
-  const [address, setAddress] = useState("");
-  const [pubkey, setPubkey] = useState("");
-  const [privkey, setPrivkey] = useState("");
   const { error, isErrorOpen, showError, hideError, retryErrorAction } =
     useError();
   const { isTermsOpen, closeTerms } = useTerms();
+
+  const { walletProvider } = useWalletProvider();
+
+  const { address, xOnlyPubkey, balance } = useWalletInfo();
 
   const {
     data: paramWithContext,
@@ -76,7 +55,7 @@ const Home: React.FC<HomeProps> = () => {
     queryKey: ["global params"],
     queryFn: async () => {
       const [height, versions] = await Promise.all([
-        btcWallet!.getBTCTipHeight(),
+        walletProvider!.getBTCTipHeight(),
         getGlobalParams(),
       ]);
       return {
@@ -88,7 +67,7 @@ const Home: React.FC<HomeProps> = () => {
     },
     refetchInterval: 60000, // 1 minute
     // Should be enabled only when the wallet is connected
-    enabled: !!btcWallet,
+    enabled: !!walletProvider,
     retry: (failureCount, error) => {
       return !isErrorOpen && failureCount <= 3;
     },
@@ -145,22 +124,19 @@ const Home: React.FC<HomeProps> = () => {
 
   const {
     data: bonds,
-    fetchNextPage: fetchNextBondsPage,
-    hasNextPage: hasNextBondsPage,
-    isFetchingNextPage: isFetchingNextBondsPage,
     error: bondsError,
     isError: hasBondsError,
     refetch: refetchBondData,
   } = useInfiniteQuery({
-    queryKey: ["bonds", address, publicKeyNoCoord],
-    queryFn: ({ pageParam = "" }) => getBonds(pageParam, publicKeyNoCoord),
+    queryKey: ["bonds", address, xOnlyPubkey],
+    queryFn: ({ pageParam = "" }) => getBonds(pageParam, xOnlyPubkey),
     getNextPageParam: (lastPage) =>
       lastPage?.pagination?.next_key !== ""
         ? lastPage?.pagination?.next_key
         : null,
     initialPageParam: "",
     refetchInterval: 60000, // 1 minute
-    enabled: !!(btcWallet && publicKeyNoCoord && address),
+    enabled: !!(walletProvider && xOnlyPubkey && address),
     select: (data) => {
       const flattenedData = data.pages.reduce<PaginatedBonds>(
         (acc, page) => {
@@ -235,14 +211,6 @@ const Home: React.FC<HomeProps> = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Local storage state for bonds
-  const bondsLocalStorageKey = getBondsLocalStorageKey(publicKeyNoCoord);
-
-  const [bondsLocalStorage, setBondsLocalStorage] = useLocalStorage<Bond[]>(
-    bondsLocalStorageKey,
-    [],
-  );
-
   const [connectModalOpen, setConnectModalOpen] = useState(false);
   const [ShowWalletModalOpen, setShowWalletModalOpen] = useState(false);
 
@@ -284,64 +252,6 @@ const Home: React.FC<HomeProps> = () => {
     setUpdateDAppModalOpen(true);
   };
 
-  const handleDisconnectBTC = () => {
-    setBTCWallet(undefined);
-    setBTCWalletBalanceSat(0);
-    setBTCWalletNetwork(undefined);
-    setPublicKeyNoCoord("");
-    setAddress("");
-    setPubkey("");
-    setPrivkey("");
-  };
-
-  const { network: globalNetwork } = useNetwork();
-
-  const handleConnectBTC = async (walletProvider: WalletProvider) => {
-    // close the modal
-    setConnectModalOpen(false);
-
-    try {
-      await walletProvider.connectWallet(globalNetwork);
-      const address = await walletProvider.getAddress();
-      // check if the wallet address type is supported in babylon
-      const supported = isSupportedAddressType(address);
-      if (!supported) {
-        throw new Error(
-          "Invalid address type. Please use a Native SegWit or Taproot",
-        );
-      }
-
-      const balanceSat = await walletProvider.getBalance();
-      const pubkeyHex = await walletProvider.getPublicKeyHex();
-      setPubkey(pubkeyHex);
-      const publicKeyNoCoord = getPublicKeyNoCoord(pubkeyHex);
-      setBTCWallet(walletProvider);
-      setBTCWalletBalanceSat(balanceSat);
-      setBTCWalletNetwork(toNetwork(await walletProvider.getNetwork()));
-      setAddress(address);
-      setPublicKeyNoCoord(publicKeyNoCoord.toString("hex"));
-      // if (walletProvider instanceof RegtestWallet) {
-      //   setPrivkey(await walletProvider.getPrivateKeyWIF());
-      //   setShowWalletModalOpen(true);
-      // }
-    } catch (error: Error | any) {
-      if (
-        error instanceof WalletError &&
-        error.getType() === WalletErrorType.ConnectionCancelled
-      ) {
-        // User cancelled the connection, hence do nothing
-        return;
-      }
-      showError({
-        error: {
-          message: error.message,
-          errorState: ErrorState.WALLET,
-          errorTime: new Date(),
-        },
-        retryAction: () => handleConnectBTC(walletProvider),
-      });
-    }
-  };
   const handleDelete = async (id: string) => {
     await deleteDApp(id);
     refetchDApps();
@@ -354,47 +264,6 @@ const Home: React.FC<HomeProps> = () => {
     setUpdateDAppModalOpen(value);
     refetchDApps();
   };
-  // Subscribe to account changes
-  useEffect(() => {
-    if (btcWallet) {
-      let once = false;
-      btcWallet.on("accountChanged", () => {
-        if (!once) {
-          handleConnectBTC(btcWallet);
-        }
-      });
-      return () => {
-        once = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [btcWallet]);
-
-  // Clean up the local storage bonds
-  useEffect(() => {
-    if (!bonds?.bonds) {
-      return;
-    }
-
-    const updateBondsLocalStorage = async () => {
-      const { areBondsDifferent, bonds: newBonds } = await calculateBondsDiff(
-        bonds.bonds,
-        bondsLocalStorage,
-      );
-      if (areBondsDifferent) {
-        setBondsLocalStorage(newBonds);
-      }
-    };
-
-    updateBondsLocalStorage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bonds, setBondsLocalStorage, bondsLocalStorage]);
-
-  // Finality providers key-value map { pk: moniker }
-  const finalityProvidersKV = finalityProviders?.finalityProviders.reduce(
-    (acc, fp) => ({ ...acc, [fp?.btcPk]: fp?.description?.moniker }),
-    {},
-  );
 
   let totalStakedSat = 0;
 
@@ -404,30 +273,20 @@ const Home: React.FC<HomeProps> = () => {
     <main
       className={`overflow-hidden relative h-full min-h-svh z-0 w-full ${network === Network.MAINNET ? "main-app-mainnet" : "main-app-testnet"}`}
     >
-      {/*BACKGROUND start here*/}
-
-      {/*Left start*/}
       <div className={"absolute -z-10 left-[9%] top-[5%]"}>
         <div className="absolute h-full bottom-1/2 left-1/2 -translate-x-1/2 aspect-square rounded-full bg-[radial-gradient(37.54%_37.54%_at_50.07%_47.01%,rgba(3,185,216,0.30)_0%,rgba(36,93,137,0.00)_100%)]" />
         <Image alt={"stone"} src={stone} />
-
-        {/*Radiants*/}
-        {/*in the middle*/}
         <div
           className={
             "absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-1/2 h-[90%] opacity-[16%] aspect-square rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,#F9B55F_0%,rgba(249,181,95,0.00)_100%)] mix-blend-screen blur-[150px]"
           }
         />
-        {/*on the left*/}
         <div
           className={
             "absolute rounded-full h-[200%] aspect-square bg-[radial-gradient(50%_50%_at_50%_50%,#D9D9D9_0%,rgba(217,217,217,0.00)_100%)] top-1/2 -translate-y-1/2 right-1/2 opacity-[30%] mix-blend-hard-light blur-[100px]"
           }
         />
       </div>
-      {/*Left end*/}
-
-      {/*Right start*/}
       <Image
         className={
           "absolute -z-10 -right-[9%] top-[70vh] grayscale-[100%] brightness-75"
@@ -435,19 +294,7 @@ const Home: React.FC<HomeProps> = () => {
         alt={"earth"}
         src={earth}
       />
-      {/*Right end*/}
-
-      {/*BACKGROUND end here*/}
-      {/*<NetworkBadge />*/}
-      <Header
-        onOpenBurnTokenModal={handleBurnTokenModal}
-        onOpenMintTxModal={handleMintTxModal}
-        onConnect={handleConnectModal}
-        onDisconnect={handleDisconnectBTC}
-        address={address}
-        balanceSat={btcWalletBalanceSat}
-        onOpenExportPrivateKeyModal={handleShowWalletModal}
-      />
+      <Header onOpenMintTxModal={handleMintTxModal} />
       <div className="container mx-auto flex justify-center p-6">
         <div className="container flex flex-col gap-6">
           <div
@@ -459,18 +306,6 @@ const Home: React.FC<HomeProps> = () => {
               <h1 className={"text-3xl md:text-[34px] font-medium"}>
                 BTC Staking
               </h1>
-              {/* <p>
-                Select a finality provider or{" "}
-                <a
-                  href="https://github.com/babylonchain/networks/tree/main/bbn-test-4/finality-providers"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="sublink text-primary hover:underline"
-                >
-                  create your own
-                </a>
-                .
-              </p> */}
             </div>
             <Stats />
           </div>
@@ -478,10 +313,10 @@ const Home: React.FC<HomeProps> = () => {
             <Summary
               address={address}
               totalStakedSat={totalStakedSat}
-              balanceSat={btcWalletBalanceSat}
+              balanceSat={balance}
             />
           )}
-          <StakingBond
+          {/* <StakingBond
             btcHeight={paramWithContext?.currentHeight}
             finalityProviders={finalityProviders?.finalityProviders}
             dApps={dApps?.dApps}
@@ -505,8 +340,8 @@ const Home: React.FC<HomeProps> = () => {
             address={address}
             publicKeyNoCoord={publicKeyNoCoord}
             setBondsLocalStorage={setBondsLocalStorage}
-          />
-          {btcWallet &&
+          /> */}
+          {/* {btcWallet &&
             bonds &&
             paramWithContext?.nextBlockParams.currentVersion &&
             btcWalletNetwork &&
@@ -518,8 +353,7 @@ const Home: React.FC<HomeProps> = () => {
                 address={address}
                 signPsbt={btcWallet.signPsbt}
               />
-            )}
-          {/* At this point of time is not used */}
+            )} */}
           {/* <StakersFinalityProviders
             finalityProviders={finalityProvidersData}
             totalActiveTVLSat={stakingStats?.activeTVL}
@@ -528,9 +362,8 @@ const Home: React.FC<HomeProps> = () => {
         </div>
       </div>
 
-      {/*<FAQ />*/}
       <Footer />
-      <MintTxModal
+      {/* <MintTxModal
         btcWalletNetwork={btcWalletNetwork}
         open={mintTxModalOpen}
         onClose={setMintTxModalOpen}
@@ -538,14 +371,9 @@ const Home: React.FC<HomeProps> = () => {
         btcPublicKey={pubkey}
         dApp={dApp}
         signPsbt={btcWallet?.signPsbt}
-      />
-      <ConnectModal
-        open={connectModalOpen}
-        onClose={setConnectModalOpen}
-        onConnect={handleConnectBTC}
-        connectDisabled={!!address}
-      />
-      <ShowWalletModal
+      /> */}
+      <ConnectModal />
+      {/* <ShowWalletModal
         open={ShowWalletModalOpen}
         onClose={setShowWalletModalOpen}
         address={address}
@@ -566,7 +394,7 @@ const Home: React.FC<HomeProps> = () => {
         onClose={hideError}
         onRetry={retryErrorAction}
       />
-      <TermsModal open={isTermsOpen} onClose={closeTerms} />
+      <TermsModal open={isTermsOpen} onClose={closeTerms} /> */}
     </main>
   );
 };

@@ -146,7 +146,7 @@ export const Bonds: React.FC<BondsProps> = ({
         </div>
       }
 
-      {signPsbt && selectedBond && (
+      {/* {signPsbt && selectedBond && (
         <BurnTokenModal
           open={burnTokenModalOpen}
           onClose={setBurnTokenModalOpen}
@@ -157,7 +157,7 @@ export const Bonds: React.FC<BondsProps> = ({
           protocolContractAddress={protocolContractAddress}
           destinationChain={selectedBond?.sourceChain}
         />
-      )}
+      )} */}
     </div>
   );
 };

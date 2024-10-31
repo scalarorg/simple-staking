@@ -9,26 +9,11 @@ import { getNetworkConfig } from "@/config/network.config";
 import { satoshiToBtc } from "@/utils/btcConversions";
 import { maxDecimals } from "@/utils/maxDecimals";
 import { trim } from "@/utils/trim";
-import { Network } from "@/utils/wallet/wallet_provider";
 
+import { useWalletInfo, useWalletProvider } from "../../context/WalletProvider";
 import { Hash } from "../Hash/Hash";
-import { useNetwork } from "../NetworkProvicer";
 
-interface ConnectSmallProps {
-  onConnect: () => void;
-  address: string;
-  balanceSat: number;
-  onDisconnect: () => void;
-  onExportPrivateKey: () => void;
-}
-
-export const ConnectSmall: React.FC<ConnectSmallProps> = ({
-  onConnect,
-  address,
-  balanceSat,
-  onDisconnect,
-  onExportPrivateKey,
-}) => {
+export const ConnectSmall: React.FC = () => {
   const [showMenu, setShowMenu] = useState(false);
   const handleClickOutside = () => {
     setShowMenu(false);
@@ -39,7 +24,9 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
 
   const { coinName, networkName } = getNetworkConfig();
 
-  const { network } = useNetwork();
+  const { address, balance } = useWalletInfo();
+
+  const { disconnectWallet, connectWallet } = useWalletProvider();
 
   return address ? (
     <div className="relative mr-[-10px] flex text-sm" ref={ref}>
@@ -52,7 +39,7 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
             <FaBitcoin className="text-primary" />
             <p>
               <strong>
-                {maxDecimals(satoshiToBtc(balanceSat), 8) || 0} {coinName}
+                {maxDecimals(satoshiToBtc(balance), 8) || 0} {coinName}
               </strong>
             </p>
           </div>
@@ -85,12 +72,12 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
             className="btn btn-outline btn-sm"
             onClick={() => {
               setShowMenu(false);
-              onDisconnect();
+              disconnectWallet();
             }}
           >
             Disconnect
           </button>
-          {network === Network.REGTEST ? (
+          {/* {network === Network.REGTEST ? (
             <button
               className="btn btn-outline btn-sm"
               onClick={() => {
@@ -99,7 +86,7 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
             >
               Export Private Key
             </button>
-          ) : null}
+          ) : null} */}
         </div>
       )}
     </div>
@@ -109,7 +96,7 @@ export const ConnectSmall: React.FC<ConnectSmallProps> = ({
         btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg 
         ${buttonStyles}
         `}
-      onClick={onConnect}
+      onClick={connectWallet}
       disabled={!!address}
     >
       <PiWalletBold size={20} className="flex md:hidden" />
