@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, memo, useContext, useState } from "react";
 
 import { Network } from "@/utils/wallet/wallet_provider";

@@ -20,7 +20,7 @@ import {
 import { getGlobalParams } from "./api/getGlobalParams";
 import { Footer } from "./components/Footer/Footer";
 import { Header } from "./components/Header/Header";
-import { ConnectModal } from "./components/Modals/ConnectModal";
+import { StakingBond } from "./components/Staking/StakingBond";
 import { Stats } from "./components/Stats/Stats";
 import { Summary } from "./components/Summary/Summary";
 import { toast } from "./components/ui/use-toast";
@@ -28,6 +28,7 @@ import { useError } from "./context/Error/ErrorContext";
 import { useNetwork } from "./context/NetworkProvicer";
 import { useTerms } from "./context/Terms/TermsContext";
 import { useWalletInfo, useWalletProvider } from "./context/WalletProvider";
+import { ModalLayout } from "./layout/ModalLayout";
 import { ErrorHandlerParam, ErrorState } from "./types/errors";
 
 interface HomeProps {}
@@ -294,7 +295,7 @@ const Home: React.FC<HomeProps> = () => {
         alt={"earth"}
         src={earth}
       />
-      <Header onOpenMintTxModal={handleMintTxModal} />
+      <Header />
       <div className="container mx-auto flex justify-center p-6">
         <div className="container flex flex-col gap-6">
           <div
@@ -316,31 +317,23 @@ const Home: React.FC<HomeProps> = () => {
               balanceSat={balance}
             />
           )}
-          {/* <StakingBond
+          <StakingBond
             btcHeight={paramWithContext?.currentHeight}
             finalityProviders={finalityProviders?.finalityProviders}
             dApps={dApps?.dApps}
             isLoadingDApps={isLoadingCurrentDApps}
-            isWalletConnected={!!btcWallet}
+            isLoading={isLoadingCurrentParams}
             dApp={dApp}
-            setDApp={setDApp}
-            onConnect={handleConnectModal}
-            onAdd={handleAddDAppModal}
-            onUpdate={handleUpdateDAppModal}
-            onDelete={handleDelete}
+            onSelectDApp={(dApp) => setDApp(dApp)}
             finalityProvidersFetchNext={fetchNextFinalityProvidersPage}
             finalityProvidersHasNext={hasNextFinalityProvidersPage}
             finalityProvidersIsFetchingMore={
               isFetchingNextFinalityProvidersPage
             }
-            isLoading={isLoadingCurrentParams}
-            btcWallet={btcWallet}
-            btcWalletBalanceSat={btcWalletBalanceSat}
-            btcWalletNetwork={btcWalletNetwork}
-            address={address}
-            publicKeyNoCoord={publicKeyNoCoord}
-            setBondsLocalStorage={setBondsLocalStorage}
-          /> */}
+            // onAdd={handleAddDAppModal}
+            // onUpdate={handleUpdateDAppModal}
+            // onDelete={handleDelete}
+          />
           {/* {btcWallet &&
             bonds &&
             paramWithContext?.nextBlockParams.currentVersion &&
@@ -363,16 +356,8 @@ const Home: React.FC<HomeProps> = () => {
       </div>
 
       <Footer />
-      {/* <MintTxModal
-        btcWalletNetwork={btcWalletNetwork}
-        open={mintTxModalOpen}
-        onClose={setMintTxModalOpen}
-        btcAddress={address}
-        btcPublicKey={pubkey}
-        dApp={dApp}
-        signPsbt={btcWallet?.signPsbt}
-      /> */}
-      <ConnectModal />
+      <ModalLayout dApp={dApp} />
+
       {/* <ShowWalletModal
         open={ShowWalletModalOpen}
         onClose={setShowWalletModalOpen}
@@ -386,14 +371,7 @@ const Home: React.FC<HomeProps> = () => {
         onClose={handleUpdateModal}
         dApp={dApp}
       />
-      <ErrorModal
-        open={isErrorOpen}
-        errorMessage={error.message}
-        errorState={error.errorState}
-        errorTime={error.errorTime}
-        onClose={hideError}
-        onRetry={retryErrorAction}
-      />
+      
       <TermsModal open={isTermsOpen} onClose={closeTerms} /> */}
     </main>
   );

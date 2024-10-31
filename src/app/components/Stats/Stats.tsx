@@ -235,7 +235,9 @@ export const Stats: React.FC = () => {
                     {isLoading ? (
                       <span className="loading loading-spinner text-primary" />
                     ) : (
-                      <p className={statsItemValueStyles}>{subSection.value}</p>
+                      <span className={statsItemValueStyles}>
+                        {subSection.value}
+                      </span>
                     )}
                   </p>
                 </div>

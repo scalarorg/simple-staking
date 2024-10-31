@@ -1,18 +1,16 @@
 import { buttonStyles } from "@/app/scalar/theme";
+import { useMintTxModal } from "@/app/stores/modal";
 
 import { useNetwork } from "../../context/NetworkProvicer";
 import { useWalletInfo } from "../../context/WalletProvider";
-import { ConnectSmall } from "../Connect/ConnectSmall";
+import { ConnectButton } from "../Connect/ConnectButton";
 
 import { Logo } from "./Logo";
 
-interface HeaderProps {
-  onOpenMintTxModal: () => void;
-}
-
-export const Header: React.FC<HeaderProps> = ({ onOpenMintTxModal }) => {
+export const Header: React.FC = () => {
   const { network } = useNetwork();
   const { address } = useWalletInfo();
+  const { open } = useMintTxModal();
   return (
     <nav>
       <div>
@@ -32,18 +30,15 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMintTxModal }) => {
                   <span className="capitalize">{network}</span>
                 </button>
                 <button
-                  className={`
-        btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg 
-        ${buttonStyles}
-        `}
-                  onClick={onOpenMintTxModal}
+                  className={`btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg ${buttonStyles}`}
+                  onClick={open}
                   disabled={!address}
                 >
-                  <span className="hidden md:flex">Mint Token</span>
+                  Mint Token
                 </button>
               </div>
             )}
-            <ConnectSmall />
+            <ConnectButton />
           </div>
         </div>
       </div>

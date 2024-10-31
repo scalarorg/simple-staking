@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { networks } from "bitcoinjs-lib";
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
-import { FaPenToSquare, FaTrash } from "react-icons/fa6";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Tooltip } from "react-tooltip";
 import { useLocalStorage } from "usehooks-ts";
 
@@ -10,8 +8,8 @@ import { LoadingView } from "@/app/components/Loading/Loading";
 import { useGlobalParams } from "@/app/context/api/GlobalParamsProvider";
 import { useStakingStats } from "@/app/context/api/StakingStatsProvider";
 import { useError } from "@/app/context/Error/ErrorContext";
+import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { fpTableStyles, stakingStyles } from "@/app/scalar/theme";
-import { Bond } from "@/app/types/bonds";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { ErrorHandlerParam, ErrorState } from "@/app/types/errors";
 import { FinalityProvider as FinalityProviderInterface } from "@/app/types/finalityProviders";
@@ -23,9 +21,7 @@ import {
   ParamsWithContext,
 } from "@/utils/globalParams";
 import { isStakingSignReady } from "@/utils/isStakingSignReady";
-import { WalletProvider } from "@/utils/wallet/wallet_provider";
 
-import { AddDAppButton } from "../Button/AddDAppButton";
 import { FeedbackModal } from "../Modals/FeedbackModal";
 import { PreviewModal } from "../Modals/PreviewModal";
 
@@ -49,48 +45,23 @@ interface StakingProps {
   btcHeight: number | undefined;
   finalityProviders: FinalityProviderInterface[] | undefined;
   dApps: DAppInterface[] | undefined;
-  isWalletConnected: boolean;
   isLoading: boolean;
   isLoadingDApps: boolean;
   dApp: DAppInterface | undefined;
-  setDApp: Dispatch<SetStateAction<DAppInterface | undefined>>;
-  onConnect: () => void;
-  onAdd: () => void;
-  onUpdate: () => void;
-  onDelete: (id: string) => void;
+  onSelectDApp: (dApp?: DAppInterface) => void;
   finalityProvidersFetchNext: () => void;
   finalityProvidersHasNext: boolean;
   finalityProvidersIsFetchingMore: boolean;
-  btcWallet: WalletProvider | undefined;
-  btcWalletBalanceSat: number;
-  btcWalletNetwork: networks.Network | undefined;
-  address: string | undefined;
-  publicKeyNoCoord: string;
-  setBondsLocalStorage: Dispatch<SetStateAction<Bond[]>>;
 }
 
 export const StakingBond: React.FC<StakingProps> = ({
   btcHeight,
   finalityProviders,
   dApps,
-  isWalletConnected,
   isLoadingDApps,
   dApp,
-  setDApp,
-  onConnect,
-  onAdd,
-  onUpdate,
-  onDelete,
-  finalityProvidersFetchNext,
-  finalityProvidersHasNext,
-  finalityProvidersIsFetchingMore,
+  onSelectDApp,
   isLoading,
-  btcWallet,
-  btcWalletNetwork,
-  address,
-  publicKeyNoCoord,
-  setBondsLocalStorage,
-  btcWalletBalanceSat,
 }) => {
   // Staking form state
   const [stakingAmountSat, setStakingAmountSat] = useState(0);
@@ -119,6 +90,9 @@ export const StakingBond: React.FC<StakingProps> = ({
     approchingCapRange: false,
   });
 
+  const { address, xOnlyPubkey, balance } = useWalletInfo();
+  const { walletProvider, btcNetwork, connectWallet } = useWalletProvider();
+
   // Fetch all UTXOs
   const {
     data: availableUTXOs,
@@ -128,11 +102,11 @@ export const StakingBond: React.FC<StakingProps> = ({
   } = useQuery({
     queryKey: ["available UTXOs", address],
     queryFn: async () => {
-      if (btcWallet?.getUtxos && address) {
-        return await btcWallet.getUtxos(address);
+      if (walletProvider?.getUtxos && address) {
+        return await walletProvider.getUtxos(address);
       }
     },
-    enabled: !!(btcWallet?.getUtxos && address),
+    enabled: !!(walletProvider?.getUtxos && address),
     refetchInterval: 60000 * 5, // 5 minutes
     retry: (failureCount) => {
       return !isErrorOpen && failureCount <= 3;
@@ -233,15 +207,24 @@ export const StakingBond: React.FC<StakingProps> = ({
     showError,
   ]);
 
-  const handleResetState = () => {
+  const handleResetState = useCallback(() => {
     setFinalityProvider(undefined);
-    setDApp(undefined);
+    onSelectDApp(undefined);
     setStakingAmountSat(0);
     setStakingTimeBlocks(0);
     setSelectedFeeRate(0);
     setPreviewModalOpen(false);
     setResetFormInputs(!resetFormInputs);
-  };
+  }, [
+    setFinalityProvider,
+    onSelectDApp,
+    setStakingAmountSat,
+    setStakingTimeBlocks,
+    setSelectedFeeRate,
+    setPreviewModalOpen,
+    setResetFormInputs,
+    resetFormInputs,
+  ]);
 
   const { minFeeRate, defaultFeeRate } = getFeeRateFromMempool();
 
@@ -251,9 +234,8 @@ export const StakingBond: React.FC<StakingProps> = ({
   const handleSign = async () => {
     try {
       // Initial validation
-      if (!btcWallet) throw new Error("Wallet is not connected");
+      if (!walletProvider) throw new Error("Wallet is not connected");
       if (!address) throw new Error("Address is not set");
-      if (!btcWalletNetwork) throw new Error("Wallet network is not connected");
       if (!finalityProvider)
         throw new Error("Finality provider is not selected");
       if (!dApp) throw new Error("DApp is not selected");
@@ -262,24 +244,24 @@ export const StakingBond: React.FC<StakingProps> = ({
       if (!feeRate) throw new Error("Fee rates not loaded");
       if (!availableUTXOs || availableUTXOs.length === 0)
         throw new Error("No available balance");
+      if (!btcNetwork) throw new Error("Network is not connected");
 
       const { currentVersion: globalParamsVersion } = paramWithCtx;
       // Sign the staking transaction
       const { stakingTxHex, stakingTerm } = await signStakingTx(
-        btcWallet,
+        walletProvider,
         globalParamsVersion,
         stakingAmountSat,
         stakingTimeBlocks,
         finalityProvider.btcPk,
-        btcWalletNetwork,
+        btcNetwork,
         address,
-        publicKeyNoCoord,
+        xOnlyPubkey,
         feeRate,
         availableUTXOs,
       );
       // UI
       handleFeedbackModal("success");
-      handleLocalStorageBonds(stakingTxHex, stakingTerm);
       handleResetState();
     } catch (error: Error | any) {
       showError({
@@ -293,30 +275,12 @@ export const StakingBond: React.FC<StakingProps> = ({
     }
   };
 
-  // Save the bond to local storage
-  const handleLocalStorageBonds = (
-    signedTxHex: string,
-    stakingTerm: number,
-  ) => {
-    // setBondsLocalStorage((bonds) => [
-    //   toLocalStorageBond(
-    //     Transaction.fromHex(signedTxHex).getId(),
-    //     publicKeyNoCoord,
-    //     finalityProvider!.btcPk,
-    //     stakingAmountSat,
-    //     signedTxHex,
-    //     stakingTerm,
-    //   ),
-    //   ...bonds,
-    // ]);
-  };
-
   // Memoize the staking fee calculation
   const stakingFeeSat = useMemo(() => {
     if (
-      btcWalletNetwork &&
+      btcNetwork &&
       address &&
-      publicKeyNoCoord &&
+      xOnlyPubkey &&
       stakingAmountSat &&
       finalityProvider &&
       paramWithCtx?.currentVersion &&
@@ -334,9 +298,9 @@ export const StakingBond: React.FC<StakingProps> = ({
           stakingAmountSat,
           stakingTimeBlocks,
           finalityProvider.btcPk,
-          btcWalletNetwork,
+          btcNetwork,
           address,
-          publicKeyNoCoord,
+          xOnlyPubkey,
           memoizedFeeRate,
           availableUTXOs,
         );
@@ -358,9 +322,9 @@ export const StakingBond: React.FC<StakingProps> = ({
       return 0;
     }
   }, [
-    btcWalletNetwork,
+    btcNetwork,
     address,
-    publicKeyNoCoord,
+    xOnlyPubkey,
     stakingAmountSat,
     stakingTimeBlocks,
     finalityProvider,
@@ -385,7 +349,7 @@ export const StakingBond: React.FC<StakingProps> = ({
         throw new Error("Finality provider not found");
       }
 
-      if (found.btcPk === publicKeyNoCoord) {
+      if (found.btcPk === xOnlyPubkey) {
         throw new Error(
           "Cannot select a finality provider with the same public key as the wallet",
         );
@@ -405,7 +369,7 @@ export const StakingBond: React.FC<StakingProps> = ({
     setFinalityProvider(found);
   };
 
-  const HandleChooseDApp = (id: string) => {
+  const handleChooseDApp = (id: string) => {
     let found: DAppInterface | undefined;
     try {
       if (!dApps) {
@@ -423,12 +387,12 @@ export const StakingBond: React.FC<StakingProps> = ({
           errorState: ErrorState.STAKING,
           errorTime: new Date(),
         },
-        retryAction: () => HandleChooseDApp(id),
+        retryAction: () => handleChooseDApp(id),
       });
       return;
     }
 
-    setDApp(found);
+    onSelectDApp(found);
   };
 
   const handleStakingAmountSatChange = (inputAmountSat: number) => {
@@ -452,11 +416,11 @@ export const StakingBond: React.FC<StakingProps> = ({
     }
   };
 
-  const handleDelete = () => {
-    if (dApp) {
-      onDelete(dApp.id);
-    }
-  };
+  // const handleDelete = () => {
+  //   if (dApp) {
+  //     onDelete(dApp.id);
+  //   }
+  // };
 
   const handlePreviewModalClose = (isOpen: boolean) => {
     setPreviewModalOpen(isOpen);
@@ -521,8 +485,8 @@ export const StakingBond: React.FC<StakingProps> = ({
   const renderStakingForm = () => {
     // States of the staking form:
     // 1. Wallet is not connected
-    if (!isWalletConnected) {
-      return <WalletNotConnected onConnect={onConnect} />;
+    if (!walletProvider) {
+      return <WalletNotConnected onConnect={connectWallet} />;
     }
     // 2. Wallet is connected but we are still loading the staking params
     else if (isLoading) {
@@ -604,7 +568,7 @@ export const StakingBond: React.FC<StakingProps> = ({
               <StakingAmount
                 minStakingAmountSat={minStakingAmountSat}
                 maxStakingAmountSat={maxStakingAmountSat}
-                btcWalletBalanceSat={btcWalletBalanceSat}
+                btcWalletBalanceSat={balance}
                 onStakingAmountSatChange={handleStakingAmountSatChange}
                 reset={resetFormInputs}
               />
@@ -689,7 +653,7 @@ export const StakingBond: React.FC<StakingProps> = ({
         </div>
       </div> */}
       {/*<h3 className="mb-4 font-bold">Staking</h3>*/}
-      <div className="flex flex-col gap-4 lg:flex-row">
+      {/* <div className="flex flex-col gap-4 lg:flex-row">
         <div className="flex flex-1 flex-row gap-4 lg:basis-3/5 xl:basis-2/3">
           <div className="flex flex-1 justify-end items-center gap-2">
             <div className="flex mr-1">
@@ -711,7 +675,7 @@ export const StakingBond: React.FC<StakingProps> = ({
           </div>
         </div>
         <div className="flex flex-1 flex-col gap-4 lg:basis-2/5 xl:basis-1/3"></div>
-      </div>
+      </div> */}
       <div className="flex flex-col gap-4 lg:flex-row">
         <div
           className={`
@@ -723,7 +687,7 @@ export const StakingBond: React.FC<StakingProps> = ({
             isLoading={isLoadingDApps}
             dApps={dApps}
             selectedDApp={dApp}
-            onDAppChange={HandleChooseDApp}
+            onDAppChange={handleChooseDApp}
           />
         </div>
         {/*<div className="divider m-0 lg:divider-horizontal lg:m-0" />*/}

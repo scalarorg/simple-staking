@@ -1,7 +1,7 @@
 import { ProjectENV } from "@/env";
 import { Network } from "@/utils/wallet/wallet_provider";
 
-interface NetworkConfig {
+export interface NetworkConfig {
   coinName: string;
   coinSymbol: string;
   networkName: string;
@@ -87,7 +87,12 @@ export function validateAddress(network: Network, address: string): void {
       "Incorrect address prefix for Testnet / Signet. Expected address to start with 'tb1'.",
     );
   } else if (
-    ![Network.MAINNET, Network.SIGNET, Network.TESTNET, Network.TESTNET4].includes(network)
+    ![
+      Network.MAINNET,
+      Network.SIGNET,
+      Network.TESTNET,
+      Network.TESTNET4,
+    ].includes(network)
   ) {
     throw new Error(
       `Unsupported network: ${network}. Please provide a valid network.`,

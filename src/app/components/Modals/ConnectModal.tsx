@@ -41,6 +41,9 @@ export const ConnectModal: React.FC<{}> = ({}) => {
     useWalletProvider();
 
   const isInjectable = useMemo(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
     return !!window[BROWSER];
   }, []);
 
@@ -100,27 +103,25 @@ export const ConnectModal: React.FC<{}> = ({}) => {
     }
   }, [setWalletProvider, selectedWallet, isInjectable]);
 
-  // useEffect(() => {
-  //   if (walletProvider) {
-  //     let once = false;
-  //     walletProvider.on("accountChanged", () => {
-  //       if (!once) {
-  //         connectWallet();
-  //       }
-  //     });
-  //     return () => {
-  //       once = true;
-  //     };
-  //   }
-  // }, [walletProvider, connectWallet]);
-
   useEffect(() => {
-    if (!walletProvider) {
-      return;
-    }
+    if (!walletProvider) return;
     connectWallet();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [connectWallet, walletProvider]);
+
+  const checkWalletAvailable = (
+    provider: string,
+    isQRWallet: boolean | undefined,
+    name: string,
+  ) => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return (
+      isQRWallet || !!(window as any)[provider] || name === "Regtest Wallet"
+    );
+  };
 
   const renderInjectableWallet = useCallback(
     (shouldDisplay: boolean, name: string) => {
@@ -197,13 +198,17 @@ export const ConnectModal: React.FC<{}> = ({}) => {
                 isQRWallet,
                 supportedNetworks,
               }) => {
+                if (!provider) {
+                  return null;
+                }
                 if (name === BROWSER_INJECTED_WALLET_NAME) {
                   return renderInjectableWallet(isInjectable, name);
                 }
-                const walletAvailable =
-                  isQRWallet ||
-                  !!window[provider as any] ||
-                  name === "Regtest Wallet";
+                const walletAvailable = checkWalletAvailable(
+                  provider,
+                  isQRWallet,
+                  name,
+                );
 
                 // If the wallet is integrated but does not support the current network, do not display it
                 if (
