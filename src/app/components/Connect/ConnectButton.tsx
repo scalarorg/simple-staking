@@ -13,7 +13,7 @@ import { trim } from "@/utils/trim";
 import { useWalletInfo, useWalletProvider } from "../../context/WalletProvider";
 import { Hash } from "../Hash/Hash";
 
-export const ConnectSmall: React.FC = () => {
+export const ConnectButton: React.FC = () => {
   const [showMenu, setShowMenu] = useState(false);
   const handleClickOutside = () => {
     setShowMenu(false);

@@ -2,19 +2,14 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { ReactQueryStreamedHydration } from "@tanstack/react-query-next-experimental";
 import { ThemeProvider } from "next-themes";
 import React from "react";
 import { WagmiProvider } from "wagmi";
 
 import { ErrorProvider } from "./context/Error/ErrorContext";
 import NetworkProvicer from "./context/NetworkProvicer";
-import { TermsProvider } from "./context/Terms/TermsContext";
-import WalletProvider from "./context/WalletProvider";
-import { GlobalParamsProvider } from "./context/api/GlobalParamsProvider";
-import { StakingStatsProvider } from "./context/api/StakingStatsProvider";
-import { BtcHeightProvider } from "./context/mempool/BtcHeightProvider";
 import { getConfig } from "./wagmi";
+import { ClientWrapper } from "./wrapper";
 
 function Providers({ children }: React.PropsWithChildren) {
   const [config] = React.useState(getConfig());
@@ -26,19 +21,7 @@ function Providers({ children }: React.PropsWithChildren) {
         <QueryClientProvider client={client}>
           <NetworkProvicer>
             <ErrorProvider>
-              <WalletProvider>
-                <TermsProvider>
-                  <GlobalParamsProvider>
-                    <BtcHeightProvider>
-                      <StakingStatsProvider>
-                        <ReactQueryStreamedHydration>
-                          {children}
-                        </ReactQueryStreamedHydration>
-                      </StakingStatsProvider>
-                    </BtcHeightProvider>
-                  </GlobalParamsProvider>
-                </TermsProvider>
-              </WalletProvider>
+              <ClientWrapper>{children}</ClientWrapper>
             </ErrorProvider>
           </NetworkProvicer>
           <ReactQueryDevtools

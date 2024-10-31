@@ -1,4 +1,5 @@
-import { networks } from "bitcoinjs-lib";
+"use client";
+
 import { createContext, memo, useCallback, useContext, useState } from "react";
 
 import { isSupportedAddressType, toNetwork } from "@/utils/wallet";
@@ -7,6 +8,8 @@ import { WalletProvider as TWalletProvider } from "@/utils/wallet/wallet_provide
 
 import { ErrorState } from "../types/errors";
 
+import { getNetworkConfig, NetworkConfig } from "@/config/network.config";
+import { networks } from "bitcoinjs-lib";
 import { useError } from "./Error/ErrorContext";
 import { useNetwork } from "./NetworkProvicer";
 
@@ -21,6 +24,7 @@ export const useWalletProvider = () => {
     setWalletProvider: ctx.setWalletProvider,
     connectWallet: ctx.connectWallet,
     disconnectWallet: ctx.disconnectWallet,
+    btcNetwork: ctx.btcNetwork,
   };
 };
 
@@ -47,10 +51,12 @@ const WalletProviderContext = createContext<{
   }) => void;
   walletProvider?: TWalletProvider;
   setWalletProvider: (walletProvider: TWalletProvider) => void;
-  networkConfig?: networks.Network;
-  setNetworkConfig: (networkConfig: networks.Network) => void;
+  networkConfig?: NetworkConfig;
+  setNetworkConfig: (networkConfig: NetworkConfig) => void;
   disconnectWallet: () => void;
   connectWallet: () => void;
+  btcNetwork?: networks.Network;
+  setBtcNetwork: (btcNetwork: networks.Network) => void;
 } | null>(null);
 
 const WalletProvider = ({ children }: { children: React.ReactNode }) => {
@@ -62,7 +68,9 @@ const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   const [walletProvider, setWalletProvider] = useState<TWalletProvider>();
-  const [networkConfig, setNetworkConfig] = useState<networks.Network>();
+  const [networkConfig, setNetworkConfig] = useState<NetworkConfig>();
+  const [btcNetwork, setBtcNetwork] = useState<networks.Network>();
+  // const [mempoolClient, setMempoolClient] = useState<BtcMempool>();
 
   const { network: globalNetwork } = useNetwork();
   const { showError } = useError();
@@ -96,7 +104,11 @@ const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       setWalletProvider(walletProvider);
-      setNetworkConfig(toNetwork(globalNetwork));
+      const btcNetwork = toNetwork(globalNetwork);
+      setBtcNetwork(btcNetwork);
+      const config = getNetworkConfig(globalNetwork);
+      setNetworkConfig(config);
+      // setMempoolClient(new BtcMempool(config.mempoolApiUrl));
     } catch (error: Error | any) {
       if (
         error instanceof WalletError &&
@@ -127,7 +139,7 @@ const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     if (!walletProvider) {
       return;
     }
-    setWalletProvider(undefined);
+    // setWalletProvider(undefined);
     setNetworkConfig(undefined);
     setWalletInfo({
       balance: 0,
@@ -135,7 +147,7 @@ const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       pubkey: "",
       xOnlyPubkey: "",
     });
-  }, [setWalletProvider, setNetworkConfig, walletProvider]);
+  }, [setNetworkConfig, walletProvider]);
 
   return (
     <WalletProviderContext.Provider
@@ -148,6 +160,8 @@ const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         setNetworkConfig,
         disconnectWallet,
         connectWallet,
+        btcNetwork,
+        setBtcNetwork,
       }}
     >
       {children}

@@ -1,7 +1,7 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { networks } from "bitcoinjs-lib";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
@@ -19,14 +19,14 @@ import {
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/components/ui/use-toast";
-import { DApp as DAppInterface } from "@/app/types/dApps";
-import { mempoolWebTxUrl } from "@/utils/mempool_api";
+import { useWalletInfo } from "@/app/context/WalletProvider";
+import { useMintTxModal } from "@/app/stores/modal";
+import { DApp } from "@/app/types/dApps";
 import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
 
 import { useNetwork } from "../../context/NetworkProvicer";
 
 import { GeneralModal } from "./GeneralModal";
-import { SignTxModal } from "./SignTxModal";
 
 type signedPsbtFunctionType =
   | ((psbt: string) => Promise<string>)
@@ -37,25 +37,9 @@ type signedPsbtFunctionType =
     ) => Promise<string>)
   | undefined;
 
-interface SendTxModalProps {
-  open: boolean;
-  onClose: (value: boolean) => void;
-  btcAddress: string | undefined;
-  btcPublicKey: string | undefined;
-  btcWalletNetwork: networks.Network | undefined;
-  signPsbt: signedPsbtFunctionType;
-  dApp?: DAppInterface;
-}
-
 const FormSchema = z.object({
   sourceChainAddress: z.string({
     required_error: "Please enter your source chain address.",
-  }),
-  sourceChainPublicKey: z.string({
-    required_error: "Please enter your source chain public key.",
-  }),
-  destinationChainId: z.string({
-    required_error: "Please select a chain.",
   }),
   tokenReceiverAddress: z
     .string({
@@ -92,24 +76,20 @@ const FormSchema = z.object({
     .optional(),
 });
 
-export const MintTxModal: React.FC<SendTxModalProps> = ({
-  open,
-  onClose,
-  btcAddress,
-  btcPublicKey,
-  btcWalletNetwork,
-  dApp,
-  signPsbt,
-}) => {
-  const [signTxModalOpen, setSignTxModalOpen] = useState(false);
+const MintTxModal: React.FC<{
+  dApp: DApp;
+}> = ({ dApp }) => {
   const [isSignConfirm, setIsSignConfirm] = useState<any>(null);
+
+  const { isOpen, open, close } = useMintTxModal();
+
+  const { address, pubkey } = useWalletInfo();
+  // const { mempoolClient } = useWalletProvider();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       sourceChainAddress: "",
-      sourceChainPublicKey: "",
-      destinationChainId: "",
       tokenReceiverAddress: "",
       smartContractAddress: "",
       stakingAmount: 100000,
@@ -135,43 +115,37 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
     form.setValue("tokenReceiverAddress", account.address?.toString() || "");
   }
 
-  useEffect(() => {
-    if (btcAddress && btcPublicKey && dApp) {
-      form.setValue("sourceChainAddress", btcAddress);
-      form.setValue("sourceChainPublicKey", btcPublicKey);
-      form.setValue("servicePublicKey", dApp.btcPk);
-      form.setValue("smartContractAddress", dApp.scAddress);
-      form.setValue("destinationChainId", dApp.chainId);
-    }
-  }, [btcAddress, btcPublicKey, dApp, form]);
-
   const [feeRates, setFeeRates] = useState({
     fastestFee: 1,
     hourFee: 1,
     minimumFee: 1,
   });
 
-  // useEffect(() => {
-  //   const fetchFeeRates = async () => {
-  //     if (open && btcAddress) {
-  //       try {
-  //         const fees = await getFeesRecommended(
-  //           getBTCNetworkFromAddress(btcAddress),
-  //         );
-  //         setFeeRates(fees);
-  //       } catch (error) {
-  //         console.warn("Error fetching fee rates:", error);
-  //         setFeeRates({
-  //           fastestFee: 1,
-  //           hourFee: 1,
-  //           minimumFee: 1,
-  //         });
-  //       }
-  //     }
-  //   };
+  useEffect(() => {
+    const fetchFeeRates = async () => {
+      if (isOpen && address) {
+        try {
+          // const { fees } = mempoolClient;
+          // const { fastestFee, hourFee, minimumFee } =
+          //   await fees.getFeesRecommended();
+          // setFeeRates({
+          //   fastestFee,
+          //   hourFee,
+          //   minimumFee,
+          // });
+        } catch (error) {
+          console.warn("Error fetching fee rates:", error);
+          setFeeRates({
+            fastestFee: 1,
+            hourFee: 1,
+            minimumFee: 1,
+          });
+        }
+      }
+    };
 
-  //   fetchFeeRates();
-  // }, [open, btcAddress]);
+    fetchFeeRates();
+  }, [open, address]);
 
   const { network } = useNetwork();
 
@@ -190,10 +164,10 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   }
 
   const waitForSignConfirm = () => {
-    setSignTxModalOpen(true);
+    open();
     return new Promise<boolean>((resolve) => {
       const getSignConfirm = (isConfirm: boolean) => {
-        setSignTxModalOpen(false);
+        close();
         resolve(isConfirm);
       };
       setIsSignConfirm(() => getSignConfirm);
@@ -203,10 +177,8 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     const {
       sourceChainAddress,
-      sourceChainPublicKey,
       smartContractAddress,
       tokenReceiverAddress,
-      destinationChainId,
       stakingAmount,
       mintingAmount,
       servicePublicKey,
@@ -215,14 +187,12 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
     } = data;
 
     try {
-      if (!btcWalletNetwork) {
+      if (!network) {
         throw new Error("Unsupported network");
       }
 
       const unsignedPsbtResult = await axios.post(`/api/mint-tx-psbt`, {
         sourceChainAddress,
-        sourceChainPublicKey,
-        destinationChainId,
         smartContractAddress,
         tokenReceiverAddress,
         stakingAmount,
@@ -242,73 +212,52 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
       }
 
       // Simulate signing
-      const hexSignedPsbt = await signPsbtUsingWallet(
-        unsignedVaultPsbtHex,
-        signPsbt,
-        {
-          autoFinalized: true,
-        },
-      );
+      //   const hexSignedPsbt = await signPsbtUsingWallet(
+      //     unsignedVaultPsbtHex,
+      //     walletProvider?.signPsbt,
+      //     {
+      //       autoFinalized: true,
+      //     },
+      //   );
 
-      if (!hexSignedPsbt) {
-        throw new Error("Failed to sign the psbt");
-      }
+      //   if (!hexSignedPsbt) {
+      //     throw new Error("Failed to sign the psbt");
+      //   }
 
-      const signedPsbt = getPsbtByHex(hexSignedPsbt, sourceChainAddress);
+      //   const signedPsbt = getPsbtByHex(hexSignedPsbt, sourceChainAddress);
 
-      // --- Sign with staker
-      const hexTxFromPsbt = signedPsbt.extractTransaction().toHex();
+      //   // --- Sign with staker
+      //   const hexTxFromPsbt = signedPsbt.extractTransaction().toHex();
 
-      // UNISAT have api for user to sign this psbt and finalize it
-      // this demo: https://demo.unisat.io/
-      // It support sign psbt, push psbt or push tx to bitcoin network
+      //   const result = await axios.post(`/api/broadcast-btc-transaction`, {
+      //     hexTxFromPsbt,
+      //   });
 
-      // Test mempool acceptance
-      // const result = await axios.post(`${url}/api/test-transaction`, {
-      //   hexTxFromPsbt,
-      // });
-      // toast({
-      //   title: "Test mempool acceptance",
-      //   description: (
-      //     <pre className="mt-2 w-[640px] rounded-md bg-slate-950 p-4">
-      //       <code className="text-white">
-      //         {JSON.stringify(result.data, null, 2)}
-      //       </code>
-      //     </pre>
-      //   ),
-      // });
+      //   if (result.data.status !== 200) {
+      //     throw new Error(result.data.error);
+      //   }
 
-      // Send to bitcoin network
-      // await utils.node.sendToBitcoinNetwork(ProjectENV.url!, hexTxfromPsbt);
-      const result = await axios.post(`${url}/api/broadcast-btc-transaction`, {
-        hexTxFromPsbt,
-      });
+      //   close();
 
-      if (result.data.status !== 200) {
-        throw new Error(result.data.error);
-      }
-
-      onClose(false);
-
-      toast({
-        title: "Stake sBTC transaction successfully",
-        description: (
-          <div className="mt-2 w-[640px] rounded-md bg-slate-950">
-            <p className="text-white">
-              Txid:{" "}
-              <Link
-                className="text-blue-500 underline"
-                href={mempoolWebTxUrl(result.data.data)}
-                target="_blank"
-                rel="noreferrer noopener nofollow"
-              >
-                {result.data.data.slice(0, 8)}...{result.data.data.slice(-8)}{" "}
-                (click to view)
-              </Link>
-            </p>
-          </div>
-        ),
-      });
+      //   toast({
+      //     title: "Stake sBTC transaction successfully",
+      //     description: (
+      //       <div className="mt-2 w-[640px] rounded-md bg-slate-950">
+      //         <p className="text-white">
+      //           Txid:{" "}
+      //           <Link
+      //             className="text-blue-500 underline"
+      //             href={mempoolWebTxUrl(result.data.data)}
+      //             target="_blank"
+      //             rel="noreferrer noopener nofollow"
+      //           >
+      //             {result.data.data.slice(0, 8)}...{result.data.data.slice(-8)}{" "}
+      //             (click to view)
+      //           </Link>
+      //         </p>
+      //       </div>
+      //     ),
+      //   });
     } catch (error) {
       toast({
         title: "Error",
@@ -320,12 +269,12 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
 
   return (
     <>
-      <GeneralModal open={open} big onClose={onClose}>
+      <GeneralModal open={isOpen} big onClose={close}>
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-bold">Mint Token</h3>
           <button
             className="btn btn-circle btn-ghost btn-sm"
-            onClick={() => onClose(false)}
+            onClick={() => close()}
           >
             <IoMdClose size={24} />
           </button>
@@ -339,11 +288,10 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
               <div className="space-y-4 w-full">
                 <div className="space-y-2 -mt-2">
                   <FormLabel className="text-gray-500">Source chain</FormLabel>
-                  <Input disabled value={"Bitcoin"} />
+                  <Input readOnly value={"Bitcoin"} />
                 </div>
 
                 <FormField
-                  control={form.control}
                   name="sourceChainAddress"
                   render={({ field }) => (
                     <FormItem>
@@ -351,7 +299,12 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                         Source chain address
                       </FormLabel>
                       <FormControl>
-                        <Input disabled placeholder="" {...field} />
+                        <Input
+                          placeholder=""
+                          {...field}
+                          readOnly
+                          value={address}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -370,7 +323,6 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                           step="any"
                           type="number"
                           placeholder=""
-                          // disabled
                           {...field}
                         />
                       </FormControl>
@@ -384,7 +336,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                   <FormLabel className="text-gray-500">
                     Destination chain
                   </FormLabel>
-                  <Input disabled value={dApp?.chainName} />
+                  <Input readOnly value={dApp.chainName} />
                 </div>
 
                 <FormField
@@ -402,8 +354,8 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                 />
 
                 <FormField
-                  control={form.control}
                   name="mintingAmount"
+                  control={form.control}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Minting amount</FormLabel>
@@ -413,8 +365,8 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                           step="any"
                           type="number"
                           placeholder=""
-                          disabled
                           {...field}
+                          readOnly
                         />
                       </FormControl>
                       <FormMessage />
@@ -523,15 +475,19 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
             />
             <div className="space-y-2 py-3">
               <h3 className="text-base font-medium">dApp infomation</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-4">
                 <FormField
-                  control={form.control}
                   name="servicePublicKey"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>BTC Service Pubkey</FormLabel>
                       <FormControl>
-                        <Input disabled placeholder="" {...field} />
+                        <Input
+                          placeholder=""
+                          {...field}
+                          readOnly
+                          value={dApp.btcPk}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -539,13 +495,17 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
                 />
 
                 <FormField
-                  control={form.control}
                   name="smartContractAddress"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Smart contract address</FormLabel>
                       <FormControl>
-                        <Input disabled placeholder="" {...field} />
+                        <Input
+                          placeholder=""
+                          {...field}
+                          readOnly
+                          value={dApp.scAddress}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -561,7 +521,7 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
           </form>
         </Form>
       </GeneralModal>
-      <SignTxModal
+      {/* <SignTxModal
         open={signTxModalOpen}
         onClose={setSignTxModalOpen}
         onSign={isSignConfirm}
@@ -569,7 +529,9 @@ export const MintTxModal: React.FC<SendTxModalProps> = ({
         stakingAmount={form.getValues("stakingAmount")}
         tokenReceiveAddress={form.getValues("tokenReceiverAddress")}
         tokenAmount={form.getValues("mintingAmount")}
-      />
+      /> */}
     </>
   );
 };
+
+export default MintTxModal;
