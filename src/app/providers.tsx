@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "next-themes";
 import React from "react";
 import { WagmiProvider } from "wagmi";
+import * as secp256k1 from "tiny-secp256k1";
 
 import { ErrorProvider } from "./context/Error/ErrorContext";
 import NetworkProvicer from "./context/NetworkProvicer";

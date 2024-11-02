@@ -1,15 +1,16 @@
 "use client";
 
+import { BtcMempool } from "@scalar-lab/bitcoin-vault";
+import { networks } from "bitcoinjs-lib";
 import { createContext, memo, useCallback, useContext, useState } from "react";
 
+import { NetworkConfig, getNetworkConfig } from "@/config/network.config";
 import { isSupportedAddressType, toNetwork } from "@/utils/wallet";
 import { WalletError, WalletErrorType } from "@/utils/wallet/errors";
 import { WalletProvider as TWalletProvider } from "@/utils/wallet/wallet_provider";
 
 import { ErrorState } from "../types/errors";
 
-import { getNetworkConfig, NetworkConfig } from "@/config/network.config";
-import { networks } from "bitcoinjs-lib";
 import { useError } from "./Error/ErrorContext";
 import { useNetwork } from "./NetworkProvicer";
 
@@ -25,6 +26,7 @@ export const useWalletProvider = () => {
     connectWallet: ctx.connectWallet,
     disconnectWallet: ctx.disconnectWallet,
     btcNetwork: ctx.btcNetwork,
+    mempoolClient: ctx.mempoolClient,
   };
 };
 
@@ -57,6 +59,7 @@ const WalletProviderContext = createContext<{
   connectWallet: () => void;
   btcNetwork?: networks.Network;
   setBtcNetwork: (btcNetwork: networks.Network) => void;
+  mempoolClient?: BtcMempool;
 } | null>(null);
 
 const WalletProvider = ({ children }: { children: React.ReactNode }) => {
@@ -70,7 +73,7 @@ const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [walletProvider, setWalletProvider] = useState<TWalletProvider>();
   const [networkConfig, setNetworkConfig] = useState<NetworkConfig>();
   const [btcNetwork, setBtcNetwork] = useState<networks.Network>();
-  // const [mempoolClient, setMempoolClient] = useState<BtcMempool>();
+  const [mempoolClient, setMempoolClient] = useState<BtcMempool>();
 
   const { network: globalNetwork } = useNetwork();
   const { showError } = useError();
@@ -108,7 +111,8 @@ const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       setBtcNetwork(btcNetwork);
       const config = getNetworkConfig(globalNetwork);
       setNetworkConfig(config);
-      // setMempoolClient(new BtcMempool(config.mempoolApiUrl));
+      const { BtcMempool } = await import("@scalar-lab/bitcoin-vault");
+      setMempoolClient(new BtcMempool(config.mempoolApiUrl));
     } catch (error: Error | any) {
       if (
         error instanceof WalletError &&
@@ -162,6 +166,7 @@ const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         connectWallet,
         btcNetwork,
         setBtcNetwork,
+        mempoolClient,
       }}
     >
       {children}

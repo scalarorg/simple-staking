@@ -10,8 +10,8 @@ import stone from "@/app/assets/stone.webp";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { getCurrentGlobalParamsVersion } from "@/utils/globalParams";
 import { Network } from "@/utils/wallet/wallet_provider";
+// import VaultModule from "@/utils/wasm";
 
-import VaultModule, { useVault } from "@/utils/wasm";
 import { PaginatedBonds, getBonds } from "./api/getBonds";
 import {
   PaginatedFinalityProviders,
@@ -269,8 +269,6 @@ const Home: React.FC<HomeProps> = () => {
   let totalStakedSat = 0;
 
   const { network } = useNetwork();
-  const vault = useVault();
-  console.log("valt: ", { vault });
 
   return (
     <main
@@ -378,7 +376,6 @@ const Home: React.FC<HomeProps> = () => {
       <div className="bg-black-600 h-screen flex items-center justify-center">
         {/* Add some text to verify the div is rendering */}
         <p className="text-white">Vault Module Container</p>
-        <VaultModule tag="01020304" version={1} />
       </div>
     </main>
   );
