@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
@@ -19,7 +18,8 @@ import {
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/components/ui/use-toast";
-import { useWalletInfo } from "@/app/context/WalletProvider";
+import { useVault } from "@/app/context/VaultContext";
+import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useMintTxModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
 import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
@@ -36,8 +36,6 @@ type signedPsbtFunctionType =
       privateKey?: string,
     ) => Promise<string>)
   | undefined;
-
-let vaultWasmInstance: any = null;
 
 const FormSchema = z.object({
   sourceChainAddress: z.string({
@@ -88,6 +86,10 @@ const MintTxModal: React.FC<{
   const { address, pubkey } = useWalletInfo();
   // const { mempoolClient } = useWalletProvider();
 
+  const { vaultInstance } = useVault();
+
+  const { mempoolClient } = useWalletProvider();
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -107,47 +109,6 @@ const MintTxModal: React.FC<{
     control: form.control,
     name: "stakingAmount",
   });
-
-  useEffect(() => {
-    form.setValue("mintingAmount", watchStakingAmount);
-  }, [watchStakingAmount, form]);
-
-  const account = useAccount();
-  if (account.status === "connected") {
-    form.setValue("tokenReceiverAddress", account.address?.toString() || "");
-  }
-
-  const [feeRates, setFeeRates] = useState({
-    fastestFee: 1,
-    hourFee: 1,
-    minimumFee: 1,
-  });
-
-  useEffect(() => {
-    const fetchFeeRates = async () => {
-      if (isOpen && address) {
-        try {
-          // const { fees } = mempoolClient;
-          // const { fastestFee, hourFee, minimumFee } =
-          //   await fees.getFeesRecommended();
-          // setFeeRates({
-          //   fastestFee,
-          //   hourFee,
-          //   minimumFee,
-          // });
-        } catch (error) {
-          console.warn("Error fetching fee rates:", error);
-          setFeeRates({
-            fastestFee: 1,
-            hourFee: 1,
-            minimumFee: 1,
-          });
-        }
-      }
-    };
-
-    fetchFeeRates();
-  }, [open, address]);
 
   const { network } = useNetwork();
 
@@ -176,6 +137,49 @@ const MintTxModal: React.FC<{
     });
   };
 
+  useEffect(() => {
+    form.setValue("mintingAmount", watchStakingAmount);
+  }, [watchStakingAmount, form]);
+
+  const account = useAccount();
+  if (account.status === "connected") {
+    form.setValue("tokenReceiverAddress", account.address?.toString() || "");
+  }
+
+  const [feeRates, setFeeRates] = useState({
+    fastestFee: 1,
+    hourFee: 1,
+    minimumFee: 1,
+  });
+
+  useEffect(() => {
+    const fetchFeeRates = async () => {
+      if (!mempoolClient) return;
+      if (!isOpen || !address) return;
+      try {
+        const { fees } = mempoolClient;
+        const { fastestFee, hourFee, minimumFee } =
+          await fees.getFeesRecommended();
+
+        console.log({ fastestFee, hourFee, minimumFee });
+        setFeeRates({
+          fastestFee,
+          hourFee,
+          minimumFee,
+        });
+      } catch (error) {
+        console.warn("Error fetching fee rates:", error);
+        setFeeRates({
+          fastestFee: 1,
+          hourFee: 1,
+          minimumFee: 1,
+        });
+      }
+    };
+
+    fetchFeeRates();
+  }, [open, address, isOpen, mempoolClient]);
+
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     const {
       sourceChainAddress,
@@ -193,25 +197,25 @@ const MintTxModal: React.FC<{
         throw new Error("Unsupported network");
       }
 
-      const unsignedPsbtResult = await axios.post(`/api/mint-tx-psbt`, {
-        sourceChainAddress,
-        smartContractAddress,
-        tokenReceiverAddress,
-        stakingAmount,
-        mintingAmount,
-        servicePublicKey,
-        mintFeeRate:
-          mintFeeRate === "custom" ? customFeeRate?.toString() : mintFeeRate,
-      });
+      // const unsignedPsbtResult = await axios.post(`/api/mint-tx-psbt`, {
+      //   sourceChainAddress,
+      //   smartContractAddress,
+      //   tokenReceiverAddress,
+      //   stakingAmount,
+      //   mintingAmount,
+      //   servicePublicKey,
+      //   mintFeeRate:
+      //     mintFeeRate === "custom" ? customFeeRate?.toString() : mintFeeRate,
+      // });
 
-      const unsignedVaultPsbtHex =
-        unsignedPsbtResult?.data?.data?.unsignedVaultPsbtHex;
+      // const unsignedVaultPsbtHex =
+      //   unsignedPsbtResult?.data?.data?.unsignedVaultPsbtHex;
 
-      if (!unsignedVaultPsbtHex) {
-        throw new Error(
-          "Failed to get the unsigned psbt: " + unsignedPsbtResult?.data?.error,
-        );
-      }
+      // if (!unsignedVaultPsbtHex) {
+      //   throw new Error(
+      //     "Failed to get the unsigned psbt: " + unsignedPsbtResult?.data?.error,
+      //   );
+      // }
 
       // Simulate signing
       //   const hexSignedPsbt = await signPsbtUsingWallet(
@@ -229,7 +233,7 @@ const MintTxModal: React.FC<{
       //   const signedPsbt = getPsbtByHex(hexSignedPsbt, sourceChainAddress);
 
       //   // --- Sign with staker
-      //   const hexTxFromPsbt = signedPsbt.extractTransaction().toHex();
+      //   const hexTxFuseEffecromPsbt = signedPsbt.extractTransaction().toHex();
 
       //   const result = await axios.post(`/api/broadcast-btc-transaction`, {
       //     hexTxFromPsbt,

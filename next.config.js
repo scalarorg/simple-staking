@@ -32,8 +32,9 @@ const nextConfig = {
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
-      layers: true, // Add this
-      topLevelAwait: true, // Add this
+      layers: true,
+      topLevelAwait: true,
+      syncWebAssembly: true,
     };
 
     config.module.rules.push({
