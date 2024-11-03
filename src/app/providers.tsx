@@ -5,10 +5,10 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "next-themes";
 import React from "react";
 import { WagmiProvider } from "wagmi";
-import * as secp256k1 from "tiny-secp256k1";
 
 import { ErrorProvider } from "./context/Error/ErrorContext";
 import NetworkProvicer from "./context/NetworkProvicer";
+import VaultProvider from "./context/VaultContext";
 import { getConfig } from "./wagmi";
 import { ClientWrapper } from "./wrapper";
 
@@ -20,11 +20,13 @@ function Providers({ children }: React.PropsWithChildren) {
     <ThemeProvider defaultTheme="dark" attribute="data-theme">
       <WagmiProvider config={config}>
         <QueryClientProvider client={client}>
-          <NetworkProvicer>
-            <ErrorProvider>
-              <ClientWrapper>{children}</ClientWrapper>
-            </ErrorProvider>
-          </NetworkProvicer>
+          <ErrorProvider>
+            <VaultProvider>
+              <NetworkProvicer>
+                <ClientWrapper>{children}</ClientWrapper>
+              </NetworkProvicer>
+            </VaultProvider>
+          </ErrorProvider>
           <ReactQueryDevtools
             buttonPosition="bottom-left"
             initialIsOpen={false}
