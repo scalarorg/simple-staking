@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Psbt } from "bitcoinjs-lib";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
@@ -23,20 +24,10 @@ import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useMintTxModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
-import { UnisatOptions } from "@/utils/wallet/wallet_provider";
 
 import { useNetwork } from "../../context/NetworkProvicer";
 
 import { GeneralModal } from "./GeneralModal";
-
-type signedPsbtFunctionType =
-  | ((psbt: string) => Promise<string>)
-  | ((
-      psbt: string,
-      options?: UnisatOptions,
-      privateKey?: string,
-    ) => Promise<string>)
-  | undefined;
 
 const FormSchema = z.object({
   destRecipientAddress: z
@@ -74,31 +65,14 @@ const MintTxModal: React.FC<{
 
   const { isOpen, open, close } = useMintTxModal();
 
-  const [isSignConfirm, setIsSignConfirm] = useState<any>(null);
-
   const { address, pubkey } = useWalletInfo();
 
-  const { mempoolClient, walletProvider, btcNetwork } = useWalletProvider();
+  const { mempoolClient, walletProvider, btcNetwork, networkConfig } =
+    useWalletProvider();
 
   const { network } = useNetwork();
 
   const id = useChainId();
-
-  // TODO: Change minting amount according to exchange rate later when we have the necessary API
-
-  // async function signPsbtUsingWallet(
-  //   psbtHex: string,
-  //   signFunction: signedPsbtFunctionType,
-  //   options?: UnisatOptions | undefined,
-  // ): Promise<string | undefined> {
-  //   if (network === Network.REGTEST) {
-  //     return (await waitForSignConfirm?.())
-  //       ? await signFunction?.(psbtHex, options)
-  //       : undefined;
-  //   } else {
-  //     return await signFunction?.(psbtHex);
-  //   }
-  // }
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     const { destRecipientAddress, stakingAmount, mintFeeRate, customFeeRate } =
@@ -109,7 +83,11 @@ const MintTxModal: React.FC<{
         throw new Error("Unsupported network");
       }
 
-      const addressUtxos = await walletProvider?.getUtxos(
+      if (!walletProvider) {
+        throw new Error("Wallet provider not found");
+      }
+
+      const addressUtxos = await walletProvider.getUtxos(
         address,
         stakingAmount,
       );
@@ -122,8 +100,6 @@ const MintTxModal: React.FC<{
         ...utxo,
         status: {} as any,
       }));
-
-      console.log({ mappedAddressUtxos, btcNetwork });
 
       const selectedFeeRate = (() => {
         switch (mintFeeRate) {
@@ -139,24 +115,6 @@ const MintTxModal: React.FC<{
             return feeRates.fastestFee;
         }
       })();
-
-      console.log({
-        tag: ProjectENV.NEXT_PUBLIC_TAG,
-        version: ProjectENV.NEXT_PUBLIC_VERSION,
-        btcNetwork,
-        address,
-        pubkey,
-        dApp,
-        covenants: {
-          pubkeys: ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
-          quorum: ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
-          haveOnlyCustodial: ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
-        },
-        mappedAddressUtxos,
-        selectedFeeRate,
-      });
-
-      console.log({ destRecipientAddress, dApp });
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
       const btcServicePk = scalarVaultModule.hexToBytes(
@@ -203,55 +161,25 @@ const MintTxModal: React.FC<{
 
       const txHex = finalizedPsbt.extractTransaction().toHex();
 
-      console.log({ txHex });
+      const result = await walletProvider.pushTx(txHex);
 
-      // Simulate signing
-      //   const hexSignedPsbt = await signPsbtUsingWallet(
-      //     unsignedVaultPsbtHex,
-      //     walletProvider?.signPsbt,
-      //     {
-      //       autoFinalized: true,
-      //     },
-      //   );
-
-      //   if (!hexSignedPsbt) {
-      //     throw new Error("Failed to sign the psbt");
-      //   }
-
-      //   const signedPsbt = getPsbtByHex(hexSignedPsbt, sourceChainAddress);
-
-      //   // --- Sign with staker
-      //   const hexTxFuseEffecromPsbt = signedPsbt.extractTransaction().toHex();
-
-      //   const result = await axios.post(`/api/broadcast-btc-transaction`, {
-      //     hexTxFromPsbt,
-      //   });
-
-      //   if (result.data.status !== 200) {
-      //     throw new Error(result.data.error);
-      //   }
-
-      //   close();
-
-      //   toast({
-      //     title: "Stake sBTC transaction successfully",
-      //     description: (
-      //       <div className="mt-2 w-[640px] rounded-md bg-slate-950">
-      //         <p className="text-white">
-      //           Txid:{" "}
-      //           <Link
-      //             className="text-blue-500 underline"
-      //             href={mempoolWebTxUrl(result.data.data)}
-      //             target="_blank"
-      //             rel="noreferrer noopener nofollow"
-      //           >
-      //             {result.data.data.slice(0, 8)}...{result.data.data.slice(-8)}{" "}
-      //             (click to view)
-      //           </Link>
-      //         </p>
-      //       </div>
-      //     ),
-      //   });
+      toast({
+        title: "Stake sBTC transaction successfully",
+        description: (
+          <div className="mt-2 w-[640px] rounded-md bg-slate-950">
+            <p className="text-white">
+              Txid:{" "}
+              <Link
+                className="text-blue-500 underline"
+                href={`${networkConfig?.mempoolApiUrl}/tx/${result}`}
+                target="_blank"
+              >
+                {result.slice(0, 8)}...{result.slice(-8)} (click to view)
+              </Link>
+            </p>
+          </div>
+        ),
+      });
     } catch (error) {
       console.error({ error });
       toast({
@@ -261,17 +189,6 @@ const MintTxModal: React.FC<{
       });
     }
   }
-
-  const waitForSignConfirm = () => {
-    open();
-    return new Promise<boolean>((resolve) => {
-      const getSignConfirm = (isConfirm: boolean) => {
-        close();
-        resolve(isConfirm);
-      };
-      setIsSignConfirm(() => getSignConfirm);
-    });
-  };
 
   const watchStakingAmount = useWatch({
     control: form.control,
