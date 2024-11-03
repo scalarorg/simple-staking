@@ -1,10 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Psbt } from "bitcoinjs-lib";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { z } from "zod";
 
 import { Button } from "@/app/components/ui/button";
@@ -18,11 +19,11 @@ import {
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/components/ui/use-toast";
-import { useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useMintTxModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
-import { Network, UnisatOptions } from "@/utils/wallet/wallet_provider";
+import { ExtendedProjectENV, ProjectENV } from "@/env";
+import { UnisatOptions } from "@/utils/wallet/wallet_provider";
 
 import { useNetwork } from "../../context/NetworkProvicer";
 
@@ -38,17 +39,9 @@ type signedPsbtFunctionType =
   | undefined;
 
 const FormSchema = z.object({
-  sourceChainAddress: z.string({
-    required_error: "Please enter your source chain address.",
-  }),
-  tokenReceiverAddress: z
+  destRecipientAddress: z
     .string({
       required_error: "Please enter your token receiver address.",
-    })
-    .regex(/^0x[a-fA-F0-9]{40}$/, "Please enter a valid Ethereum address."),
-  smartContractAddress: z
-    .string({
-      required_error: "Please enter your smart contract address.",
     })
     .regex(/^0x[a-fA-F0-9]{40}$/, "Please enter a valid Ethereum address."),
   stakingAmount: z.coerce
@@ -58,16 +51,6 @@ const FormSchema = z.object({
     .positive({
       message: "Please enter a positive number.",
     }),
-  mintingAmount: z.coerce
-    .number({
-      required_error: "Please enter the amount.",
-    })
-    .positive({
-      message: "Please enter a positive number.",
-    }),
-  servicePublicKey: z.string({
-    required_error: "Please enter your service public key.",
-  }),
   mintFeeRate: z.string().default("hourFee"),
   customFeeRate: z.coerce
     .number()
@@ -79,143 +62,148 @@ const FormSchema = z.object({
 const MintTxModal: React.FC<{
   dApp: DApp;
 }> = ({ dApp }) => {
-  const [isSignConfirm, setIsSignConfirm] = useState<any>(null);
-
-  const { isOpen, open, close } = useMintTxModal();
-
-  const { address, pubkey } = useWalletInfo();
-  // const { mempoolClient } = useWalletProvider();
-
-  const { vaultInstance } = useVault();
-
-  const { mempoolClient } = useWalletProvider();
-
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      sourceChainAddress: "",
-      tokenReceiverAddress: "",
-      smartContractAddress: "",
+      destRecipientAddress: "",
       stakingAmount: 100000,
-      mintingAmount: 100000,
-      servicePublicKey: "",
       mintFeeRate: "hourFee",
       customFeeRate: undefined,
     },
   });
 
-  // TODO: Change minting amount according to exchange rate later when we have the necessary API
-  const watchStakingAmount = useWatch({
-    control: form.control,
-    name: "stakingAmount",
-  });
+  const { isOpen, open, close } = useMintTxModal();
+
+  const [isSignConfirm, setIsSignConfirm] = useState<any>(null);
+
+  const { address, pubkey } = useWalletInfo();
+
+  const { mempoolClient, walletProvider, btcNetwork } = useWalletProvider();
 
   const { network } = useNetwork();
 
-  async function signPsbtUsingWallet(
-    psbtHex: string,
-    signFunction: signedPsbtFunctionType,
-    options?: UnisatOptions | undefined,
-  ): Promise<string | undefined> {
-    if (network === Network.REGTEST) {
-      return (await waitForSignConfirm?.())
-        ? await signFunction?.(psbtHex, options)
-        : undefined;
-    } else {
-      return await signFunction?.(psbtHex);
-    }
-  }
+  const id = useChainId();
 
-  const waitForSignConfirm = () => {
-    open();
-    return new Promise<boolean>((resolve) => {
-      const getSignConfirm = (isConfirm: boolean) => {
-        close();
-        resolve(isConfirm);
-      };
-      setIsSignConfirm(() => getSignConfirm);
-    });
-  };
+  // TODO: Change minting amount according to exchange rate later when we have the necessary API
 
-  useEffect(() => {
-    form.setValue("mintingAmount", watchStakingAmount);
-  }, [watchStakingAmount, form]);
-
-  const account = useAccount();
-  if (account.status === "connected") {
-    form.setValue("tokenReceiverAddress", account.address?.toString() || "");
-  }
-
-  const [feeRates, setFeeRates] = useState({
-    fastestFee: 1,
-    hourFee: 1,
-    minimumFee: 1,
-  });
-
-  useEffect(() => {
-    const fetchFeeRates = async () => {
-      if (!mempoolClient) return;
-      if (!isOpen || !address) return;
-      try {
-        const { fees } = mempoolClient;
-        const { fastestFee, hourFee, minimumFee } =
-          await fees.getFeesRecommended();
-
-        console.log({ fastestFee, hourFee, minimumFee });
-        setFeeRates({
-          fastestFee,
-          hourFee,
-          minimumFee,
-        });
-      } catch (error) {
-        console.warn("Error fetching fee rates:", error);
-        setFeeRates({
-          fastestFee: 1,
-          hourFee: 1,
-          minimumFee: 1,
-        });
-      }
-    };
-
-    fetchFeeRates();
-  }, [open, address, isOpen, mempoolClient]);
+  // async function signPsbtUsingWallet(
+  //   psbtHex: string,
+  //   signFunction: signedPsbtFunctionType,
+  //   options?: UnisatOptions | undefined,
+  // ): Promise<string | undefined> {
+  //   if (network === Network.REGTEST) {
+  //     return (await waitForSignConfirm?.())
+  //       ? await signFunction?.(psbtHex, options)
+  //       : undefined;
+  //   } else {
+  //     return await signFunction?.(psbtHex);
+  //   }
+  // }
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    const {
-      sourceChainAddress,
-      smartContractAddress,
-      tokenReceiverAddress,
-      stakingAmount,
-      mintingAmount,
-      servicePublicKey,
-      mintFeeRate,
-      customFeeRate,
-    } = data;
+    const { destRecipientAddress, stakingAmount, mintFeeRate, customFeeRate } =
+      data;
 
     try {
-      if (!network) {
+      if (!btcNetwork) {
         throw new Error("Unsupported network");
       }
 
-      // const unsignedPsbtResult = await axios.post(`/api/mint-tx-psbt`, {
-      //   sourceChainAddress,
-      //   smartContractAddress,
-      //   tokenReceiverAddress,
-      //   stakingAmount,
-      //   mintingAmount,
-      //   servicePublicKey,
-      //   mintFeeRate:
-      //     mintFeeRate === "custom" ? customFeeRate?.toString() : mintFeeRate,
-      // });
+      const addressUtxos = await walletProvider?.getUtxos(
+        address,
+        stakingAmount,
+      );
 
-      // const unsignedVaultPsbtHex =
-      //   unsignedPsbtResult?.data?.data?.unsignedVaultPsbtHex;
+      if (!addressUtxos) {
+        throw new Error("Failed to get utxos");
+      }
 
-      // if (!unsignedVaultPsbtHex) {
-      //   throw new Error(
-      //     "Failed to get the unsigned psbt: " + unsignedPsbtResult?.data?.error,
-      //   );
-      // }
+      const mappedAddressUtxos = addressUtxos.map((utxo) => ({
+        ...utxo,
+        status: {} as any,
+      }));
+
+      console.log({ mappedAddressUtxos, btcNetwork });
+
+      const selectedFeeRate = (() => {
+        switch (mintFeeRate) {
+          case "fastestFee":
+            return feeRates.fastestFee;
+          case "hourFee":
+            return feeRates.hourFee;
+          case "minimumFee":
+            return feeRates.minimumFee;
+          case "custom":
+            return customFeeRate ?? feeRates.fastestFee;
+          default:
+            return feeRates.fastestFee;
+        }
+      })();
+
+      console.log({
+        tag: ProjectENV.NEXT_PUBLIC_TAG,
+        version: ProjectENV.NEXT_PUBLIC_VERSION,
+        btcNetwork,
+        address,
+        pubkey,
+        dApp,
+        covenants: {
+          pubkeys: ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
+          quorum: ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
+          haveOnlyCustodial: ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
+        },
+        mappedAddressUtxos,
+        selectedFeeRate,
+      });
+
+      console.log({ destRecipientAddress, dApp });
+
+      const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
+      const btcServicePk = scalarVaultModule.hexToBytes(
+        dApp.btcPk.replace("0x", ""),
+      );
+
+      const destAddress = scalarVaultModule.hexToBytes(
+        destRecipientAddress.replace("0x", ""),
+      );
+      const smartContractAddress = scalarVaultModule.hexToBytes(
+        dApp.scAddress.replace("0x", ""),
+      );
+
+      const { psbt: unsignedVaultPsbt, fee: estimatedFee } =
+        globalThis.scalarVaultModule.buildUnsignedStakingPsbt(
+          ProjectENV.NEXT_PUBLIC_TAG,
+          ProjectENV.NEXT_PUBLIC_VERSION,
+          btcNetwork,
+          address,
+          btcUserPk,
+          btcServicePk,
+          ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
+          ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
+          ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
+          BigInt(id),
+          smartContractAddress,
+          destAddress,
+          mappedAddressUtxos,
+          selectedFeeRate,
+          BigInt(stakingAmount),
+        );
+
+      const hexPsbt = unsignedVaultPsbt.toHex();
+
+      const signedPsbt = await walletProvider?.signPsbt(hexPsbt, {
+        autoFinalized: true,
+      });
+
+      if (!signedPsbt) {
+        throw new Error("Failed to sign the psbt");
+      }
+
+      const finalizedPsbt = Psbt.fromHex(signedPsbt);
+
+      const txHex = finalizedPsbt.extractTransaction().toHex();
+
+      console.log({ txHex });
 
       // Simulate signing
       //   const hexSignedPsbt = await signPsbtUsingWallet(
@@ -265,6 +253,7 @@ const MintTxModal: React.FC<{
       //     ),
       //   });
     } catch (error) {
+      console.error({ error });
       toast({
         title: "Error",
         // @ts-ignore
@@ -272,6 +261,60 @@ const MintTxModal: React.FC<{
       });
     }
   }
+
+  const waitForSignConfirm = () => {
+    open();
+    return new Promise<boolean>((resolve) => {
+      const getSignConfirm = (isConfirm: boolean) => {
+        close();
+        resolve(isConfirm);
+      };
+      setIsSignConfirm(() => getSignConfirm);
+    });
+  };
+
+  const watchStakingAmount = useWatch({
+    control: form.control,
+    name: "stakingAmount",
+  });
+
+  const account = useAccount();
+  if (account.status === "connected") {
+    form.setValue("destRecipientAddress", account.address?.toString() || "");
+  }
+
+  const [feeRates, setFeeRates] = useState({
+    fastestFee: 1,
+    hourFee: 1,
+    minimumFee: 1,
+  });
+
+  useEffect(() => {
+    const fetchFeeRates = async () => {
+      if (!mempoolClient) return;
+      if (!isOpen || !address) return;
+      try {
+        const { fees } = mempoolClient;
+        const { fastestFee, hourFee, minimumFee } =
+          await fees.getFeesRecommended();
+
+        setFeeRates({
+          fastestFee,
+          hourFee,
+          minimumFee,
+        });
+      } catch (error) {
+        console.warn("Error fetching fee rates:", error);
+        setFeeRates({
+          fastestFee: 1,
+          hourFee: 1,
+          minimumFee: 1,
+        });
+      }
+    };
+
+    fetchFeeRates();
+  }, [open, address, isOpen, mempoolClient]);
 
   return (
     <>
@@ -297,25 +340,14 @@ const MintTxModal: React.FC<{
                   <Input readOnly value={"Bitcoin"} />
                 </div>
 
-                <FormField
-                  name="sourceChainAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-500">
-                        Source chain address
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder=""
-                          {...field}
-                          readOnly
-                          value={address}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                  <FormLabel className="text-gray-500">
+                    Source chain address
+                  </FormLabel>
+                  <FormControl>
+                    <Input readOnly value={address} />
+                  </FormControl>
+                </div>
 
                 <FormField
                   control={form.control}
@@ -347,7 +379,7 @@ const MintTxModal: React.FC<{
 
                 <FormField
                   control={form.control}
-                  name="tokenReceiverAddress"
+                  name="destRecipientAddress"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Token receiver address</FormLabel>
@@ -358,27 +390,16 @@ const MintTxModal: React.FC<{
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  name="mintingAmount"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Minting amount</FormLabel>
-                      <FormControl>
-                        <Input
-                          inputMode="numeric"
-                          step="any"
-                          type="number"
-                          placeholder=""
-                          {...field}
-                          readOnly
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                  <FormLabel>Minting amount</FormLabel>
+                  <Input
+                    inputMode="numeric"
+                    type="number"
+                    placeholder=""
+                    readOnly
+                    value={watchStakingAmount}
+                  />
+                </div>
               </div>
             </div>
             <FormField
@@ -482,41 +503,14 @@ const MintTxModal: React.FC<{
             <div className="space-y-2 py-3">
               <h3 className="text-base font-medium">dApp infomation</h3>
               <div className="flex flex-col gap-4">
-                <FormField
-                  name="servicePublicKey"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>BTC Service Pubkey</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder=""
-                          {...field}
-                          readOnly
-                          value={dApp.btcPk}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  name="smartContractAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Smart contract address</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder=""
-                          {...field}
-                          readOnly
-                          value={dApp.scAddress}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                  <FormLabel>BTC Service Pubkey</FormLabel>
+                  <Input readOnly value={dApp.btcPk} />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Smart contract address</FormLabel>
+                  <Input readOnly value={dApp.scAddress} />
+                </div>
               </div>
             </div>
             <div className="flex justify-end">
@@ -541,3 +535,7 @@ const MintTxModal: React.FC<{
 };
 
 export default MintTxModal;
+
+// {
+//   "txHex": ""
+// }

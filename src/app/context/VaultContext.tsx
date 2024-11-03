@@ -1,48 +1,53 @@
 "use client";
 
-import { VaultWasm } from "@scalar-lab/bitcoin-wasm";
-import { createContext, memo, useContext, useEffect, useState } from "react";
-import dynamic from "next/dynamic";
+import { memo, useCallback, useEffect, useState } from "react";
 
-import { VAULT_TAG, VAULT_VERSION } from "@/config/vault";
+import { ProjectENV } from "@/env";
 
-const bitcoinVault = import("@scalar-lab/bitcoin-vault");
+declare global {
+  namespace globalThis {
+    var scalarVaultModule: TVaultModule;
+  }
+}
 
-export const VaultContext = createContext<{
-  vaultInstance: VaultWasm | null;
-} | null>(null);
+let vault: ReturnType<TVaultModule["createVaultWasm"]> | null = null;
 
 export const useVault = () => {
-  const vault = useContext(VaultContext);
+  if (!globalThis.scalarVaultModule) {
+    throw new Error("Vault module not found");
+  }
   if (!vault) {
-    throw new Error("useVault must be used within a VaultProvider");
+    vault = globalThis.scalarVaultModule.createVaultWasm(
+      ProjectENV.NEXT_PUBLIC_TAG,
+      ProjectENV.NEXT_PUBLIC_VERSION,
+    );
   }
   return vault;
 };
 
+const isClientSide = typeof window !== "undefined";
+
 const VaultProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [vaultInstance, setVaultInstance] = useState<VaultWasm | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const init = useCallback(async () => {
+    setLoading(true);
+    if (isClientSide && !globalThis.scalarVaultModule) {
+      const vaultModule: TVaultModule = await import(
+        "@scalar-lab/bitcoin-vault"
+      );
+      globalThis.scalarVaultModule = vaultModule;
+    }
+    setLoading(false);
+  }, [setLoading]);
 
   useEffect(() => {
-    bitcoinVault
-      .then((m) => m.createVaultWasm(VAULT_TAG, VAULT_VERSION))
-      .then(setVaultInstance);
-  }, []);
+    init();
+  }, [init]);
 
-  return (
-    <VaultContext.Provider value={{ vaultInstance }}>
-      {children}
-    </VaultContext.Provider>
-  );
+  return <>{loading ? <div>Loading...</div> : children}</>;
 };
 
-const VaultProviderMemo = memo(VaultProvider);
-
-const VaultProviderDynamic = dynamic(() => Promise.resolve(VaultProviderMemo), {
-  ssr: false,
-  loading: () => <div>Loading Vault...</div>,
-});
-
-export default VaultProviderDynamic;
+export default memo(VaultProvider);

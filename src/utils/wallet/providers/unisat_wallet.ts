@@ -1,7 +1,4 @@
-import {
-  getNetworkConfig,
-  validateAddress,
-} from "@/config/network.config";
+import { getNetworkConfig, validateAddress } from "@/config/network.config";
 
 import {
   getAddressBalance,
@@ -14,8 +11,8 @@ import {
   Fees,
   INTERNAL_NETWORK_NAMES,
   Network,
-  UnisatOptions,
   UTXO,
+  UnisatOptions,
   WalletInfo,
   WalletProvider,
 } from "../wallet_provider";
@@ -32,7 +29,6 @@ export class UnisatWallet extends WalletProvider {
   constructor() {
     super();
 
-
     // check whether there is an Unisat Wallet extension
     if (!window[unisatProvider]) {
       throw new Error("Unisat Wallet extension not found");
@@ -43,7 +39,6 @@ export class UnisatWallet extends WalletProvider {
 
     // Unisat uses different providers for different networks
     this.bitcoinNetworkProvider = this.unisatWallet;
-
   }
 
   connectWallet = async (network = Network.TESTNET4): Promise<this> => {
@@ -68,7 +63,6 @@ export class UnisatWallet extends WalletProvider {
         );
         break;
       case Network.TESTNET4:
-        console.log("switching to testnet4");
         await this.bitcoinNetworkProvider.switchNetwork(
           INTERNAL_NETWORK_NAMES.testnet,
         );
@@ -109,7 +103,6 @@ export class UnisatWallet extends WalletProvider {
     const compressedPublicKey =
       await this.bitcoinNetworkProvider.getPublicKey();
 
-
     if (compressedPublicKey && address) {
       this.unisatWalletInfo = {
         publicKeyHex: compressedPublicKey,
@@ -119,7 +112,7 @@ export class UnisatWallet extends WalletProvider {
       return this;
     } else {
       throw new Error("Could not connect to Unisat Wallet");
-    } 
+    }
   };
 
   getWalletProviderName = async (): Promise<string> => {
