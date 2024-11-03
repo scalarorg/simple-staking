@@ -25,8 +25,6 @@ import { useMintTxModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
 
-import { useNetwork } from "../../context/NetworkProvicer";
-
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -69,8 +67,6 @@ const MintTxModal: React.FC<{
 
   const { mempoolClient, walletProvider, btcNetwork, networkConfig } =
     useWalletProvider();
-
-  const { network } = useNetwork();
 
   const id = useChainId();
 
@@ -438,21 +434,8 @@ const MintTxModal: React.FC<{
           </form>
         </Form>
       </GeneralModal>
-      {/* <SignTxModal
-        open={signTxModalOpen}
-        onClose={setSignTxModalOpen}
-        onSign={isSignConfirm}
-        stakerAddress={form.getValues("sourceChainAddress")}
-        stakingAmount={form.getValues("stakingAmount")}
-        tokenReceiveAddress={form.getValues("tokenReceiverAddress")}
-        tokenAmount={form.getValues("mintingAmount")}
-      /> */}
     </>
   );
 };
 
 export default MintTxModal;
-
-// {
-//   "txHex": ""
-// }
