@@ -7,16 +7,12 @@ import { maxDecimals } from "@/utils/maxDecimals";
 import { validateDecimalPoints } from "./validation/validation";
 
 interface StakingAmountProps {
-  minStakingAmountSat: number;
-  maxStakingAmountSat: number;
   btcWalletBalanceSat: number;
   onStakingAmountSatChange: (inputAmountSat: number) => void;
   reset: boolean;
 }
 
 export const StakingAmount: React.FC<StakingAmountProps> = ({
-  minStakingAmountSat,
-  maxStakingAmountSat,
   btcWalletBalanceSat,
   onStakingAmountSatChange,
   reset,
@@ -74,14 +70,6 @@ export const StakingAmount: React.FC<StakingAmountProps> = ({
         message: `${errorLabel} must be greater than 0.`,
       },
       {
-        valid: satoshis >= minStakingAmountSat,
-        message: `${errorLabel} must be at least ${satoshiToBtc(minStakingAmountSat)} ${coinName}.`,
-      },
-      {
-        valid: satoshis <= maxStakingAmountSat,
-        message: `${errorLabel} must be no more than ${satoshiToBtc(maxStakingAmountSat)} ${coinName}.`,
-      },
-      {
         valid: satoshis <= btcWalletBalanceSat,
         message: `${errorLabel} must be no more than ${satoshiToBtc(btcWalletBalanceSat)} wallet balance.`,
       },
@@ -104,15 +92,11 @@ export const StakingAmount: React.FC<StakingAmountProps> = ({
     }
   };
 
-  const minStakeAmount = maxDecimals(satoshiToBtc(minStakingAmountSat), 8);
-  const maxStakeAmount = maxDecimals(satoshiToBtc(maxStakingAmountSat), 8);
   return (
     <label className="form-control w-full flex-1">
       <div className="label pt-0">
         <span className="label-text-alt text-base">Amount</span>
-        <span className="label-text-alt opacity-50">
-          min/max: {minStakeAmount}/{maxStakeAmount} {coinName}
-        </span>
+        <span className="label-text-alt opacity-50">{coinName}</span>
       </div>
       <input
         type="string"

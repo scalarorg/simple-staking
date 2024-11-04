@@ -1,7 +1,6 @@
 import { IoMdClose } from "react-icons/io";
 
 import { getNetworkConfig } from "@/config/network.config";
-import { blocksToDisplayTime } from "@/utils/blocksToDisplayTime";
 import { satoshiToBtc } from "@/utils/btcConversions";
 import { maxDecimals } from "@/utils/maxDecimals";
 
@@ -10,24 +9,14 @@ import { GeneralModal } from "./GeneralModal";
 interface PreviewModalProps {
   open: boolean;
   onClose: (value: boolean) => void;
-  onSign: () => void;
-  finalityProvider: string | undefined;
   stakingAmountSat: number;
-  stakingTimeBlocks: number;
-  stakingFeeSat: number;
   feeRate: number;
-  unbondingTimeBlocks: number;
 }
 
 export const PreviewModal: React.FC<PreviewModalProps> = ({
   open,
   onClose,
-  finalityProvider,
   stakingAmountSat,
-  stakingTimeBlocks,
-  unbondingTimeBlocks,
-  onSign,
-  stakingFeeSat,
   feeRate,
 }) => {
   const cardStyles =
@@ -49,12 +38,6 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
       <div className="flex flex-col gap-4 text-sm">
         <div className="flex flex-col gap-4 md:flex-row">
           <div className={`${cardStyles} flex-1`}>
-            <p className="text-xs dark:text-neutral-content">
-              Finality Provider
-            </p>
-            <p>{finalityProvider || "-"}</p>
-          </div>
-          <div className={`${cardStyles} flex-1`}>
             <p className="text-xs dark:text-neutral-content">Stake Amount</p>
             <p>{`${maxDecimals(satoshiToBtc(stakingAmountSat), 8)} ${coinName}`}</p>
           </div>
@@ -66,26 +49,16 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           </div>
           <div className={`${cardStyles} flex-1`}>
             <p className="text-xs dark:text-neutral-content">Transaction fee</p>
-            <p>{`${maxDecimals(satoshiToBtc(stakingFeeSat), 8)} ${coinName}`}</p>
+            {/* <p>{`${maxDecimals(satoshiToBtc(stakingFeeSat), 8)} ${coinName}`}</p> */}
           </div>
         </div>
         <div className="flex flex-col gap-4 md:flex-row">
           <div className={`${cardStyles} basis-1/5`}>
             <p className="text-xs dark:text-neutral-content">Term</p>
-            <p>
-              {stakingTimeBlocks ? blocksToDisplayTime(stakingTimeBlocks) : "-"}
-            </p>
           </div>
           <div className={`${cardStyles} basis-4/5`}>
             <p className="text-xs dark:text-neutral-content">
               On-demand unbonding
-            </p>
-            <p>
-              Enabled (
-              {unbondingTimeBlocks
-                ? blocksToDisplayTime(unbondingTimeBlocks)
-                : "-"}{" "}
-              unbonding time)
             </p>
           </div>
         </div>
@@ -107,9 +80,6 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
             }}
           >
             Cancel
-          </button>
-          <button className="btn-primary btn flex-1" onClick={onSign}>
-            Stake
           </button>
         </div>
       </div>

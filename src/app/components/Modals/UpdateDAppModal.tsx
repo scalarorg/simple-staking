@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
 import { updateDApp } from "@/app/api/dApp";
-import { DApp as DAppInterface } from "@/app/types/dApps";
+import { useDAppModal } from "@/app/stores/modal";
+import { DApp } from "@/app/types/dApps";
 import { getConfig } from "@/app/wagmi";
 
 import { BtcAddress } from "../Staking/Form/BtcAddress";
@@ -12,129 +13,106 @@ import { InputField } from "../Staking/Form/InputField";
 
 import { GeneralModal } from "./GeneralModal";
 
-interface UpdateDAppModalProps {
-  open: boolean;
-  onClose: (value: boolean) => void;
-  dApp: DAppInterface | undefined;
-}
+export const UpdateDAppModal: React.FC<{}> = ({}) => {
+  const { dApp, isOpen, close } = useDAppModal();
+  const [updatedDApp, setUpdatedDApp] = useState<DApp | undefined>(dApp);
 
-export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
-  open,
-  onClose,
-  dApp,
-}) => {
-  const [chainName, setChainName] = useState(dApp?.chainName);
-  const [chainId, setChainId] = useState(dApp?.chainId || "");
-  const [chainEndpoint, setChainEndpoint] = useState(dApp?.chainEndpoint || "");
-  const [dappBtcSignerEndpoint, setDappBtcSignerEndpoint] = useState(
-    dApp?.dappBtcSignerEndpoint || "",
-  );
-  const [accessToken, setAccessToken] = useState(dApp?.accessToken || "");
-  const [btcAddress, setBtcAddress] = useState(dApp?.btcAddress);
-  const [btcPubKey, setBtcPubKey] = useState(dApp?.btcPk);
-  const [scAddress, setScAddress] = useState(dApp?.scAddress);
-  const [id, setId] = useState(dApp?.id);
   const [isCustomChain, setIsCustomChain] = useState(false);
-  const [tokenContractAddress, setTokenContractAddress] = useState(
-    dApp?.tokenContractAddress || "",
-  );
-
   const config = getConfig();
   const chains = config.chains;
 
-  // setIsCustomChain(
-  //   chains.find((chain) => {
-  //     chain.name === chainName;
-  //   })
-  //     ? false
-  //     : true,
-  // );
+  // const handleChainNameChange = (input: string) => {
+  //   setChainName(input);
+  //   // Find the selected chain based on the name
+  //   const selectedChain = chains.find((chain) => chain.name === input);
+  //   if (selectedChain) {
+  //     // Update chainId and chainEndpoint based on the selected chain
+  //     setChainId(selectedChain.id.toString());
+  //     setChainEndpoint(selectedChain.rpcUrls.default.http[0]);
+  //   } else if (!isCustomChain) {
+  //     // If no matching chain is found, reset the values
+  //     setChainId("");
+  //     setChainEndpoint("");
+  //   }
+  // };
+  // const handleBtcAddressChange = (input: string) => {
+  //   setBtcAddress(input);
+  // };
+  // const handleBtcPubKeyChange = (input: string) => {
+  //   setBtcPubKey(input);
+  // };
 
-  useEffect(() => {
-    setChainName(dApp?.chainName);
-    setChainId(dApp?.chainId || "");
-    setChainEndpoint(dApp?.chainEndpoint || "");
-    setDappBtcSignerEndpoint(dApp?.dappBtcSignerEndpoint || "");
-    setAccessToken(dApp?.accessToken || "");
-    setBtcAddress(dApp?.btcAddress);
-    setBtcPubKey(dApp?.btcPk);
-    setId(dApp?.id);
-    setScAddress(dApp?.scAddress);
-    setTokenContractAddress(dApp?.tokenContractAddress || "");
-  }, [dApp]);
+  // const handleSmartContractAddressChange = (input: string) => {
+  //   setScAddress(input);
+  // };
 
-  const handleChainNameChange = (input: string) => {
-    setChainName(input);
-    // Find the selected chain based on the name
-    const selectedChain = chains.find((chain) => chain.name === input);
-    if (selectedChain) {
-      // Update chainId and chainEndpoint based on the selected chain
-      setChainId(selectedChain.id.toString());
-      setChainEndpoint(selectedChain.rpcUrls.default.http[0]);
-    } else if (!isCustomChain) {
-      // If no matching chain is found, reset the values
-      setChainId("");
-      setChainEndpoint("");
-    }
-  };
-  const handleBtcAddressChange = (input: string) => {
-    setBtcAddress(input);
-  };
-  const handleBtcPubKeyChange = (input: string) => {
-    setBtcPubKey(input);
+  // const handleTokenContractAddressChange = (input: string) => {
+  //   setTokenContractAddress(input);
+  // };
+
+  const handleChange = (key: keyof DApp, value: string) => {
+    if (!updatedDApp) return;
+    setUpdatedDApp({ ...updatedDApp, [key]: value });
   };
 
-  const handleSmartContractAddressChange = (input: string) => {
-    setScAddress(input);
-  };
+  const [loading, setLoading] = useState(false);
 
-  const handleTokenContractAddressChange = (input: string) => {
-    setTokenContractAddress(input);
-  };
-
-  const handleUpdate = async () => {
+  const handleUpdate = useCallback(async () => {
+    setLoading(true);
     if (
-      !id ||
-      !chainName ||
-      !chainId ||
-      !chainEndpoint ||
-      !dappBtcSignerEndpoint ||
-      !accessToken ||
-      !btcAddress ||
-      !btcPubKey ||
-      !scAddress ||
-      !tokenContractAddress
+      !updatedDApp?.id ||
+      !updatedDApp?.chainName ||
+      !updatedDApp?.chainId ||
+      !updatedDApp?.chainEndpoint ||
+      !updatedDApp?.dappBtcSignerEndpoint ||
+      !updatedDApp?.accessToken ||
+      !updatedDApp?.btcAddress ||
+      !updatedDApp.btcPk ||
+      !updatedDApp.scAddress ||
+      !updatedDApp.tokenContractAddress
     ) {
+      console.log({ updatedDApp });
       console.error("Missing required fields");
+      setLoading(false);
       return;
     }
     await updateDApp(
-      id,
-      chainName,
-      chainId,
-      chainEndpoint,
-      dappBtcSignerEndpoint,
-      accessToken,
-      btcAddress,
-      btcPubKey,
-      scAddress,
-      tokenContractAddress,
+      updatedDApp.id,
+      updatedDApp.chainName,
+      updatedDApp.chainId,
+      updatedDApp.chainEndpoint,
+      updatedDApp.dappBtcSignerEndpoint,
+      updatedDApp.accessToken,
+      updatedDApp.btcAddress,
+      updatedDApp.btcPk,
+      updatedDApp.scAddress,
+      updatedDApp.tokenContractAddress,
     )
       .then(() => {
         console.log("Successfully updated DApp");
-        onClose(false);
+        close();
       })
-      .catch((error) => {
+      .catch((error: any) => {
         console.error(error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-  };
+  }, [updatedDApp, setLoading, close]);
+
+  useEffect(() => {
+    if (!updatedDApp) {
+      setUpdatedDApp(dApp);
+    }
+  }, [dApp, updatedDApp, setUpdatedDApp]);
+
   return (
-    <GeneralModal open={open} onClose={onClose}>
+    <GeneralModal open={isOpen} onClose={close} big>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-bold">Edit DApp information!</h3>
         <button
           className="btn btn-circle btn-ghost btn-sm"
-          onClick={() => onClose(false)}
+          onClick={() => close()}
         >
           <IoMdClose size={24} />
         </button>
@@ -142,9 +120,9 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
       <div className="flex flex-1 flex-col">
         <div className="flex flex-1 flex-col">
           <ChainName
-            onChange={handleChainNameChange}
+            onChange={(value) => handleChange("chainName", value)}
             reset={false}
-            initValue={chainName || ""}
+            initValue={dApp?.chainName || ""}
             chainNames={chains.map((chain) => chain.name)}
             isCustom={isCustomChain}
             setIsCustom={setIsCustomChain}
@@ -152,20 +130,20 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
         </div>
         <div className="flex flex-1 flex-col">
           <InputField
-            onChange={setChainId}
+            onChange={(value) => handleChange("chainId", value)}
             reset={false}
-            initValue={isCustomChain ? "" : chainId}
+            initValue={isCustomChain ? "" : dApp?.chainId || ""}
             label="Chain ID"
             placeholder=""
             generalErrorMessage="Please input a chain ID"
             disabled={!isCustomChain}
           />
         </div>
-        <div className="flex flex-1 flex-col hidden">
+        <div className="flex flex-1 flex-col">
           <InputField
-            onChange={setChainEndpoint}
+            onChange={(value) => handleChange("chainEndpoint", value)}
             reset={false}
-            initValue={isCustomChain ? "" : chainEndpoint}
+            initValue={isCustomChain ? "" : dApp?.chainEndpoint || ""}
             label="Chain endpoint"
             placeholder=""
             generalErrorMessage="Please input a chain endpoint"
@@ -174,9 +152,9 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
         </div>
         <div className="flex flex-1 flex-col">
           <InputField
-            onChange={setDappBtcSignerEndpoint}
+            onChange={(value) => handleChange("dappBtcSignerEndpoint", value)}
             reset={false}
-            initValue={dappBtcSignerEndpoint}
+            initValue={dApp?.dappBtcSignerEndpoint || ""}
             label="DApp Bitcoin Signer API Endpoint"
             placeholder=""
             generalErrorMessage="Please input a DApp Bitcoin Signer API Endpoint"
@@ -185,9 +163,9 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
         </div>
         <div className="flex flex-1 flex-col">
           <InputField
-            onChange={setAccessToken}
+            onChange={(value) => handleChange("accessToken", value)}
             reset={false}
-            initValue={accessToken}
+            initValue={dApp?.accessToken || ""}
             label="DApp Access Token"
             placeholder=""
             generalErrorMessage="Please input a DApp Access Token"
@@ -196,31 +174,31 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
         </div>
         <div className="flex flex-1 flex-col">
           <BtcAddress
-            onChange={handleBtcAddressChange}
+            onChange={(value) => handleChange("btcAddress", value)}
             reset={false}
-            initValue={btcAddress || ""}
+            initValue={dApp?.btcAddress || ""}
           />
         </div>
         <div className="flex flex-1 flex-col">
           <BtcPubKey
-            onChange={handleBtcPubKeyChange}
+            onChange={(value) => handleChange("btcPk", value)}
             reset={false}
-            initValue={btcPubKey || ""}
+            initValue={dApp?.btcPk || ""}
           />
         </div>
         <div className="flex flex-1 flex-col">
           <BtcAddress
-            onChange={handleSmartContractAddressChange}
+            onChange={(value) => handleChange("scAddress", value)}
             reset={false}
-            initValue={scAddress || ""}
+            initValue={dApp?.scAddress || ""}
             label="Smart Contract Address"
           />
         </div>
         <div className="flex flex-1 flex-col">
           <BtcAddress
-            onChange={handleTokenContractAddressChange}
+            onChange={(value) => handleChange("tokenContractAddress", value)}
             reset={false}
-            initValue={tokenContractAddress || ""}
+            initValue={dApp?.tokenContractAddress || ""}
             label="Token Contract Address"
           />
         </div>
@@ -229,8 +207,9 @@ export const UpdateDAppModal: React.FC<UpdateDAppModalProps> = ({
         <button
           className="btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-lg px-5 mb-2 text-white"
           onClick={handleUpdate}
+          disabled={loading}
         >
-          Edit
+          {loading ? "Updating..." : "Edit DApp"}
         </button>
       </div>
     </GeneralModal>

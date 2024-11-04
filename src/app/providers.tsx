@@ -6,9 +6,6 @@ import { ThemeProvider } from "next-themes";
 import React from "react";
 import { WagmiProvider } from "wagmi";
 
-import { ErrorProvider } from "./context/Error/ErrorContext";
-import NetworkProvicer from "./context/NetworkProvicer";
-import VaultProvider from "./context/VaultContext";
 import { getConfig } from "./wagmi";
 import { ClientWrapper } from "./wrapper";
 
@@ -20,13 +17,7 @@ function Providers({ children }: React.PropsWithChildren) {
     <ThemeProvider defaultTheme="dark" attribute="data-theme">
       <WagmiProvider config={config}>
         <QueryClientProvider client={client}>
-          <ErrorProvider>
-            <VaultProvider>
-              <NetworkProvicer>
-                <ClientWrapper>{children}</ClientWrapper>
-              </NetworkProvicer>
-            </VaultProvider>
-          </ErrorProvider>
+          <ClientWrapper>{children}</ClientWrapper>
           <ReactQueryDevtools
             buttonPosition="bottom-left"
             initialIsOpen={false}

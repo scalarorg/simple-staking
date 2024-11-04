@@ -4,6 +4,8 @@ import { memo, useCallback, useEffect, useState } from "react";
 
 import { ProjectENV } from "@/env";
 
+import { LoadingView } from "../components/Loading/Loading";
+
 declare global {
   namespace globalThis {
     var scalarVaultModule: TVaultModule;
@@ -47,7 +49,7 @@ const VaultProvider: React.FC<{ children: React.ReactNode }> = ({
     init();
   }, [init]);
 
-  return <>{loading ? <div>Loading...</div> : children}</>;
+  return <>{loading ? <LoadingView /> : children}</>;
 };
 
 export default memo(VaultProvider);

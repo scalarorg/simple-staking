@@ -23,45 +23,35 @@ export const DApps: React.FC<DAppsProps> = ({
     return <LoadingView />;
   }
 
+  if (!dApps) {
+    return <div>No dApps found</div>;
+  }
+
   return (
     <>
-      {/*<p>*/}
-      {/*  Select a finality provider or{" "}*/}
-      {/*  <a*/}
-      {/*    href="https://github.com/babylonchain/networks/tree/main/bbn-test-4/finality-providers"*/}
-      {/*    target="_blank"*/}
-      {/*    rel="noopener noreferrer"*/}
-      {/*    className="sublink text-primary hover:underline"*/}
-      {/*  >*/}
-      {/*    create your own*/}
-      {/*  </a>*/}
-      {/*  .*/}
-      {/*</p>*/}
-      <div className="hidden gap-2 px-4 lg:grid lg:grid-cols-stakingDAppDesktop">
-        <p>ID</p>
-        <p>Chain Name</p>
-        <p>BTC Address</p>
-        <p>BTC PK</p>
-        <p>State</p>
-      </div>
-      <div
-        id="finality-providers"
-        className="no-scrollbar max-h-[21rem] overflow-y-auto"
-      >
-        <div className="flex flex-col gap-4">
-          {dApps?.map((da) => (
-            <DApp
-              key={da.id}
-              id={da.id}
-              chainName={da.chainName}
-              btcAddress={da.btcAddress}
-              btcPk={da.btcPk}
-              state={da.state}
-              onClick={() => onDAppChange(da.id)}
-              selected={selectedDApp?.id === da.id}
-            />
-          ))}
-        </div>
+      <div className="no-scrollbar max-h-[21rem] overflow-y-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="text-left">
+              <th className="p-4">No</th>
+              <th className="p-4">Chain Name</th>
+              <th className="p-4">BTC Address</th>
+              <th className="p-4">BTC Pubkey</th>
+              <th className="p-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dApps?.map((da, index) => (
+              <DApp
+                index={index}
+                key={da.id}
+                dApp={da}
+                onClick={() => onDAppChange(da.id)}
+                selected={selectedDApp?.id === da.id}
+              />
+            ))}
+          </tbody>
+        </table>
       </div>
     </>
   );

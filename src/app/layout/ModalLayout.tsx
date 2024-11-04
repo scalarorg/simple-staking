@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { ConnectModal } from "../components/Modals/ConnectModal";
 import { ErrorModal } from "../components/Modals/ErrorModal";
 import MintTxModal from "../components/Modals/MintTxModal";
+import { UpdateDAppModal } from "../components/Modals/UpdateDAppModal";
 import { useError } from "../context/Error/ErrorContext";
 import { DApp } from "../types/dApps";
 
@@ -23,6 +24,7 @@ export const ModalLayout: React.FC<{ dApp?: DApp }> = ({ dApp }) => {
         onClose={hideError}
         onRetry={retryErrorAction}
       />
+      <UpdateDAppModal />
     </Suspense>
   );
 };

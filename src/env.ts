@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { hexToBytes } from "viem";
 import { z } from "zod";
 
@@ -9,7 +10,7 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_SCALAR_SCANNER: z.string().min(10),
 
   NEXT_PUBLIC_VERSION: z.number().default(0),
-  NEXT_PUBLIC_TAG: z.string().length(8).default("01020304"),
+  NEXT_PUBLIC_TAG: z.string().length(8),
   NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL: z.boolean().default(false),
   NEXT_PUBLIC_COVENANT_QUORUM: z.number().min(1),
   NEXT_PUBLIC_COVENANT_PUBKEYS: z.array(z.string().min(5)),
@@ -24,6 +25,9 @@ export const ProjectENV = ProjectENVSchema.parse({
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   NEXT_PUBLIC_DEFAULT_DAPP_CHAINS: process.env.NEXT_PUBLIC_DEFAULT_DAPP_CHAINS,
   NEXT_PUBLIC_SCALAR_SCANNER: process.env.NEXT_PUBLIC_SCALAR_SCANNER,
+
+  NEXT_PUBLIC_TAG: process.env.NEXT_PUBLIC_TAG,
+  NEXT_PUBLIC_VERSION: Number(process.env.NEXT_PUBLIC_VERSION),
 
   NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL: Boolean(
     process.env.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,

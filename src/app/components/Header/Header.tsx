@@ -29,13 +29,6 @@ export const Header: React.FC = () => {
                 >
                   <span className="capitalize">{network}</span>
                 </button>
-                <button
-                  className={`btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg ${buttonStyles}`}
-                  onClick={open}
-                  disabled={!address}
-                >
-                  Mint Token
-                </button>
               </div>
             )}
             <ConnectButton />

@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 set -Ex
 
+
 # This method has been inspired by the comment here:
 # https://github.com/vercel/next.js/discussions/17641#discussioncomment-339555
 function apply_path {
@@ -13,6 +14,16 @@ function apply_path {
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_DEFAULT_DAPP_CHAINS#$DEFAULT_DAPP_CHAINS#g"
 
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_SCALAR_SCANNER#$SCALAR_SCANNER#g"
+
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_VERSION#$VERSION#g"
+
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_TAG#$TAG#g"
+
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL#$HAVE_ONLY_CUSTODIAL#g"
+
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_COVENANT_QUORUM#$COVENANT_QUORUM#g"
+
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_COVENANT_PUBKEYS#$COVENANT_PUBKEYS#g"
 }
 
 apply_path
