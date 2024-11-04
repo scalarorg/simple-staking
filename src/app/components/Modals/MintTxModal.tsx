@@ -83,6 +83,10 @@ const MintTxModal: React.FC<{
         throw new Error("Wallet provider not found");
       }
 
+      if (!ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS) {
+        throw new Error("Covenant pubkeys not found");
+      }
+
       const addressUtxos = await walletProvider.getUtxos(
         address,
         stakingAmount,

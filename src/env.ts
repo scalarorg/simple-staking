@@ -10,10 +10,10 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_SCALAR_SCANNER: z.string().min(10),
 
   NEXT_PUBLIC_VERSION: z.number().default(0),
-  NEXT_PUBLIC_TAG: z.string().length(8),
+  NEXT_PUBLIC_TAG: z.string().min(8),
   NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL: z.boolean().default(false),
   NEXT_PUBLIC_COVENANT_QUORUM: z.number().min(1),
-  NEXT_PUBLIC_COVENANT_PUBKEYS: z.array(z.string().min(5)),
+  NEXT_PUBLIC_COVENANT_PUBKEYS: z.array(z.string().min(5)).optional(),
 });
 
 /**
@@ -27,43 +27,50 @@ export const ProjectENV = ProjectENVSchema.parse({
   NEXT_PUBLIC_SCALAR_SCANNER: process.env.NEXT_PUBLIC_SCALAR_SCANNER,
 
   NEXT_PUBLIC_TAG: process.env.NEXT_PUBLIC_TAG,
-  NEXT_PUBLIC_VERSION: Number(process.env.NEXT_PUBLIC_VERSION),
+  NEXT_PUBLIC_VERSION: isNaN(Number(process.env.NEXT_PUBLIC_VERSION))
+    ? 0
+    : Number(process.env.NEXT_PUBLIC_VERSION),
 
   NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL: Boolean(
     process.env.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
   ),
-  NEXT_PUBLIC_COVENANT_QUORUM: Number(process.env.NEXT_PUBLIC_COVENANT_QUORUM),
+  NEXT_PUBLIC_COVENANT_QUORUM: isNaN(
+    Number(process.env.NEXT_PUBLIC_COVENANT_QUORUM),
+  )
+    ? 1
+    : Number(process.env.NEXT_PUBLIC_COVENANT_QUORUM),
   NEXT_PUBLIC_COVENANT_PUBKEYS:
-    process.env.NEXT_PUBLIC_COVENANT_PUBKEYS?.split(","),
+    process.env.NEXT_PUBLIC_COVENANT_PUBKEYS &&
+    process.env.NEXT_PUBLIC_COVENANT_PUBKEYS.split(",").length > 0
+      ? process.env.NEXT_PUBLIC_COVENANT_PUBKEYS.split(",")
+      : undefined,
 });
 
 export const ExtendedProjectENVSchema = z.object({
-  NEXT_PUBLIC_COVENANT_PUBKEYS: z.instanceof(Uint8Array),
+  NEXT_PUBLIC_COVENANT_PUBKEYS: z.instanceof(Uint8Array).optional(),
 });
-
-// const custodialPubkeysBuffer = new Uint8Array(
-//   33 * StaticEnv.CUSTODIAL_NUMBER
-// );
-
-// for (let i = 0; i < StaticEnv.CUSTODIAL_NUMBER; i++) {
-//   custodialPubkeysBuffer.set(hexToBytes(custodialPubkeys[i]), i * 33);
-// }
 
 export const ExtendedProjectENV = ExtendedProjectENVSchema.parse({
   NEXT_PUBLIC_COVENANT_PUBKEYS: (() => {
-    const numberOfCustodialPubkeys =
-      ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS.length;
-    const custodialPubkeysBuffer = new Uint8Array(
-      33 * numberOfCustodialPubkeys,
-    );
+    if (!ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS) return undefined;
 
-    for (let i = 0; i < numberOfCustodialPubkeys; i++) {
-      custodialPubkeysBuffer.set(
-        hexToBytes(`0x${ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS[i]}`),
-        i * 33,
+    try {
+      const numberOfCustodialPubkeys =
+        ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS.length;
+      const custodialPubkeysBuffer = new Uint8Array(
+        33 * numberOfCustodialPubkeys,
       );
-    }
 
-    return custodialPubkeysBuffer;
+      for (let i = 0; i < numberOfCustodialPubkeys; i++) {
+        custodialPubkeysBuffer.set(
+          hexToBytes(`0x${ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS[i]}`),
+          i * 33,
+        );
+      }
+
+      return custodialPubkeysBuffer;
+    } catch (error) {
+      return undefined;
+    }
   })(),
 });
