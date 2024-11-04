@@ -19,7 +19,7 @@ RUN npm install --frozen-lockfile
 COPY chains ./chains
 COPY src ./src
 COPY public ./public
-COPY next.config.mjs .
+COPY next.config.* .
 COPY tsconfig.json .
 COPY tailwind.config.ts .
 COPY postcss.config.js .
