@@ -148,6 +148,8 @@ const MintTxModal: React.FC<{}> = () => {
 
       const hexPsbt = unsignedVaultPsbt.toHex();
 
+      console.log("hexPsbt", hexPsbt);
+
       const signedPsbt = await walletProvider?.signPsbt(hexPsbt, {
         autoFinalized: true,
       });

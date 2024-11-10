@@ -283,13 +283,30 @@ export const UnbondModal: React.FC = () => {
           data.btcReceiverAddress,
           btcNetwork,
         ),
-        value: BigInt(txFromHex.outs[0].value) - BigInt(1_000),
+        value: input.value - BigInt(1_000),
       };
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
 
       const btcProtocolPk = scalarVaultModule.hexToBytes(
         dApp.btcPk.replace("0x", ""),
+      );
+
+      console.log("input", input);
+      console.log("output", output);
+      console.log("btcUserPk", btcUserPk);
+      console.log("btcProtocolPk", btcProtocolPk);
+      console.log(
+        "ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS",
+        ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
+      );
+      console.log(
+        "ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM",
+        ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
+      );
+      console.log(
+        "ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL",
+        ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
       );
 
       const unsignedPsbtHex =
@@ -307,9 +324,24 @@ export const UnbondModal: React.FC = () => {
 
       setStatus("Signing the PSBT");
 
-      const signedPsbt = await walletProvider?.signPsbt(
-        scalarVaultModule.bytesToHex(unsignedPsbtHex),
-      );
+      const hexPsbt = scalarVaultModule.bytesToHex(unsignedPsbtHex);
+
+      console.log("unsignedPsbtHex", hexPsbt);
+
+      const psbtDetails = Psbt.fromHex(hexPsbt);
+
+      console.log("psbtDetails", psbtDetails.txOutputs);
+
+      const signedPsbt = await walletProvider?.signPsbt(hexPsbt, {
+        autoFinalized: false,
+        toSignInputs: [
+          {
+            index: 0,
+            address: btcAddress,
+            disableTweakSigner: true,
+          },
+        ],
+      });
 
       if (!signedPsbt) {
         throw new Error("Failed to sign the psbt");
@@ -486,3 +518,7 @@ const ConnectWallet: React.FC = () => {
     </div>
   );
 };
+
+
+
+// 70736274ff01005202000000012b3a97ae1664d3ed739b7d7c6a2481987e111ba11a3a34901dcff8753f6f8ee90000000000fdffffff01b88201000000000016001450dceca158a9c872eb405d52293d351110572c9e000000000001012ba08601000000000022512067bff357780a93826a444646aec681c4ff1f4316244478c0d611f91a75c93b8a0103040000000041142ae31ea8709aeda8194ba3e2f7e7e95e680e8b65135c8983c0a298d17bc5350a8b212098a1c9f95fadf69babfe738c34897215e91707f1fdba99fa5474d93b1f4036fb4588283184cb47eda759f42466e866c4fef6dbd05794ac5a10b1c6b2903d20f14d8fb0eb5e3ad0dd297579656b845896cdea4e4f01ee392254f2f6d557344215c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0063c58b39161dea318c02ae3381c4ddffa040ae88e6fe9ae1562c28f2db1028545202ae31ea8709aeda8194ba3e2f7e7e95e680e8b65135c8983c0a298d17bc5350aad201387aab21303782b17e760c670432559df3968e52cb82cc2d8f9be43a227d5dcacc021161387aab21303782b17e760c670432559df3968e52cb82cc2d8f9be43a227d5dc25018b212098a1c9f95fadf69babfe738c34897215e91707f1fdba99fa5474d93b1f0000000021162ae31ea8709aeda8194ba3e2f7e7e95e680e8b65135c8983c0a298d17bc5350a25018b212098a1c9f95fadf69babfe738c34897215e91707f1fdba99fa5474d93b1f0000000001172050929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac00118204782e2e5ffe126f896b0fb1ee51ed2cd4ff0a7bafcbb8b335772a75b915a86900000
