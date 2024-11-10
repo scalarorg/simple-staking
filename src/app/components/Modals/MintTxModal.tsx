@@ -22,7 +22,6 @@ import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/components/ui/use-toast";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useMintTxModal } from "@/app/stores/modal";
-import { DApp } from "@/app/types/dApps";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
 
 import { GeneralModal } from "./GeneralModal";
@@ -48,9 +47,7 @@ const FormSchema = z.object({
     .optional(),
 });
 
-const MintTxModal: React.FC<{
-  dApp: DApp;
-}> = ({ dApp }) => {
+const MintTxModal: React.FC<{}> = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -61,7 +58,7 @@ const MintTxModal: React.FC<{
     },
   });
 
-  const { isOpen, open, close } = useMintTxModal();
+  const { isOpen, open, close, dApp } = useMintTxModal();
 
   const { address, pubkey } = useWalletInfo();
 
@@ -71,6 +68,8 @@ const MintTxModal: React.FC<{
   const id = useChainId();
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
+    if (!dApp) return;
+
     const { destRecipientAddress, stakingAmount, mintFeeRate, customFeeRate } =
       data;
 
@@ -180,6 +179,7 @@ const MintTxModal: React.FC<{
           </div>
         ),
       });
+      close();
     } catch (error) {
       console.error({ error });
       toast({
@@ -232,6 +232,8 @@ const MintTxModal: React.FC<{
 
     fetchFeeRates();
   }, [open, address, isOpen, mempoolClient]);
+
+  if (!dApp) return null;
 
   return (
     <>

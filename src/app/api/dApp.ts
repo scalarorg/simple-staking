@@ -2,7 +2,6 @@ import {
   CreatePayload,
   DApp,
   DAppAPI,
-  DApps,
   DAppsAPIResponse,
   IdPayload,
   UpdatePayload,
@@ -15,7 +14,7 @@ import { apiWrapper } from "./apiWrapper";
 const config = getConfig();
 const chains = config.chains;
 
-export const getDApps = async (): Promise<DApps> => {
+export const getDApps = async (): Promise<{ dApps: DApp[] }> => {
   // const limit = 100;
   // const reverse = false;
 

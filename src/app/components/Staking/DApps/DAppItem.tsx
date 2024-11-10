@@ -12,7 +12,7 @@ interface DAppProps {
   onClick: () => void;
   selected: boolean;
 }
-export const DApp: React.FC<DAppProps> = ({
+export const DAppItem: React.FC<DAppProps> = ({
   dApp,
   onClick,
   selected,
@@ -62,7 +62,7 @@ export const DApp: React.FC<DAppProps> = ({
             className={`px-2 hover:text-orange-600 flex items-center gap-2 justify-center ${
               !address ? "opacity-50 pointer-events-none" : ""
             }`}
-            onClick={openMintTxModal}
+            onClick={() => openMintTxModal(dApp)}
             disabled={!address}
           >
             Mint

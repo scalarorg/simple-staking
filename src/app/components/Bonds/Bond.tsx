@@ -3,22 +3,6 @@ import Link from "next/link";
 
 import { Bond as TBond } from "@/app/types/bonds";
 
-// interface BondProps {
-//   finalityProviderMoniker: string;
-//   stakingTx: StakingTx;
-//   stakingValueSat: number;
-//   stakingTxHash: string;
-//   state: string;
-//   onUnbond: (id: string) => void;
-//   onWithdraw: (id: string) => void;
-//   // This attribute is set when an action has been taken by the user
-//   // that should change the status but the back-end
-//   // has not had time to reflect this change yet
-//   intermediateState?: string;
-//   isOverflow: boolean;
-//   globalParamsVersion: GlobalParamsVersion;
-// }
-
 export const Bond: React.FC<{
   data: TBond;
   index: number;

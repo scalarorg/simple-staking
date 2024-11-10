@@ -2,27 +2,45 @@ import { create } from "zustand";
 
 import { DApp as DAppInterface } from "@/app/types/dApps";
 
+import { Bond } from "../types/bonds";
+
 interface IModalStore {
   isOpen: boolean;
-  open: () => void;
+  dApp?: DAppInterface;
+  open: (dApp?: DAppInterface) => void;
   close: () => void;
 }
 
 export const useMintTxModal = create<IModalStore>((set) => ({
   isOpen: false,
+  dApp: undefined,
+  open: (dApp?: DAppInterface) => set({ isOpen: true, dApp }),
+  close: () => set({ isOpen: false, dApp: undefined }),
+}));
+
+export const useDAppModal = create<IModalStore>((set) => ({
+  isOpen: false,
+  dApp: undefined,
+  open: (dApp?: DAppInterface) => set({ isOpen: true, dApp }),
+  close: () => set({ isOpen: false, dApp: undefined }),
+}));
+
+export const useAddDAppModal = create<IModalStore>((set) => ({
+  isOpen: false,
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
 }));
 
-interface IDAppModalStore extends Omit<IModalStore, "open"> {
-  dApp?: DAppInterface;
-  open: (dApp: DAppInterface) => void;
+interface IUnbondModalStore {
+  isOpen: boolean;
+  bond?: Bond;
+  open: (bond?: Bond) => void;
   close: () => void;
 }
 
-export const useDAppModal = create<IDAppModalStore>((set) => ({
+export const useUnbondModal = create<IUnbondModalStore>((set) => ({
   isOpen: false,
-  dApp: undefined,
-  open: (dApp: DAppInterface) => set({ isOpen: true, dApp }),
-  close: () => set({ isOpen: false, dApp: undefined }),
+  bond: undefined,
+  open: (bond?: Bond) => set({ isOpen: true, bond }),
+  close: () => set({ isOpen: false, bond: undefined }),
 }));

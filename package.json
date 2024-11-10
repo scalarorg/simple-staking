@@ -32,7 +32,7 @@
     "@radix-ui/react-popover": "^1.1.1",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-toast": "^1.2.1",
-    "@scalar-lab/bitcoin-vault": "^0.0.14",
+    "@scalar-lab/bitcoin-vault": "^0.0.15",
     "@scure/bip32": "^1.4.0",
     "@tanstack/react-query": "^5.28.14",
     "@tanstack/react-query-next-experimental": "^5.28.14",

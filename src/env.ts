@@ -31,9 +31,8 @@ export const ProjectENV = ProjectENVSchema.parse({
     ? 0
     : Number(process.env.NEXT_PUBLIC_VERSION),
 
-  NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL: Boolean(
-    process.env.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
-  ),
+  NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL:
+    process.env.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL === "true",
   NEXT_PUBLIC_COVENANT_QUORUM: isNaN(
     Number(process.env.NEXT_PUBLIC_COVENANT_QUORUM),
   )

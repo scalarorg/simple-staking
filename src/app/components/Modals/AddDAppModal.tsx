@@ -2,6 +2,7 @@ import { useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
 import { postDApp } from "@/app/api/dApp";
+import { useAddDAppModal } from "@/app/stores/modal";
 import { getConfig } from "@/app/wagmi";
 
 import { BtcAddress } from "../Staking/Form/BtcAddress";
@@ -11,15 +12,8 @@ import { InputField } from "../Staking/Form/InputField";
 
 import { GeneralModal } from "./GeneralModal";
 
-interface AddDAppModalProps {
-  open: boolean;
-  onClose: (value: boolean) => void;
-}
-
-export const AddDAppModal: React.FC<AddDAppModalProps> = ({
-  open,
-  onClose,
-}) => {
+export const AddDAppModal: React.FC<{}> = () => {
+  const { isOpen, close } = useAddDAppModal();
   const [chainName, setChainName] = useState("");
   const [btcAddress, setBtcAddress] = useState("");
   const [btcPubKey, setBtcPubKey] = useState("");
@@ -92,19 +86,19 @@ export const AddDAppModal: React.FC<AddDAppModalProps> = ({
     )
       .then(() => {
         console.log("Successfully added DApp");
-        onClose(false);
+        close();
       })
       .catch((error) => {
         console.error(error);
       });
   };
   return (
-    <GeneralModal open={open} onClose={onClose}>
+    <GeneralModal open={isOpen} onClose={close} big>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-bold">Fill in DApp information!</h3>
         <button
           className="btn btn-circle btn-ghost btn-sm"
-          onClick={() => onClose(false)}
+          onClick={() => close()}
         >
           <IoMdClose size={24} />
         </button>

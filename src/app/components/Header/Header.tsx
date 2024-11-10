@@ -1,6 +1,3 @@
-import { buttonStyles } from "@/app/scalar/theme";
-import { useMintTxModal } from "@/app/stores/modal";
-
 import { useNetwork } from "../../context/NetworkProvicer";
 import { useWalletInfo } from "../../context/WalletProvider";
 import { ConnectButton } from "../Connect/ConnectButton";
@@ -10,11 +7,10 @@ import { Logo } from "./Logo";
 export const Header: React.FC = () => {
   const { network } = useNetwork();
   const { address } = useWalletInfo();
-  const { open } = useMintTxModal();
   return (
     <nav>
       <div>
-        <div className="container mx-auto flex w-full items-center justify-between gap-4 p-6">
+        <div className="container mx-auto flex w-full items-center justify-between gap-4 py-6">
           <Logo />
 
           <div className="grow flex gap-4 items-center justify-end">

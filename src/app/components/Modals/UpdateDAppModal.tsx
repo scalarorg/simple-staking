@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
@@ -21,41 +22,14 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
   const config = getConfig();
   const chains = config.chains;
 
-  // const handleChainNameChange = (input: string) => {
-  //   setChainName(input);
-  //   // Find the selected chain based on the name
-  //   const selectedChain = chains.find((chain) => chain.name === input);
-  //   if (selectedChain) {
-  //     // Update chainId and chainEndpoint based on the selected chain
-  //     setChainId(selectedChain.id.toString());
-  //     setChainEndpoint(selectedChain.rpcUrls.default.http[0]);
-  //   } else if (!isCustomChain) {
-  //     // If no matching chain is found, reset the values
-  //     setChainId("");
-  //     setChainEndpoint("");
-  //   }
-  // };
-  // const handleBtcAddressChange = (input: string) => {
-  //   setBtcAddress(input);
-  // };
-  // const handleBtcPubKeyChange = (input: string) => {
-  //   setBtcPubKey(input);
-  // };
-
-  // const handleSmartContractAddressChange = (input: string) => {
-  //   setScAddress(input);
-  // };
-
-  // const handleTokenContractAddressChange = (input: string) => {
-  //   setTokenContractAddress(input);
-  // };
-
   const handleChange = (key: keyof DApp, value: string) => {
     if (!updatedDApp) return;
     setUpdatedDApp({ ...updatedDApp, [key]: value });
   };
 
   const [loading, setLoading] = useState(false);
+
+  const queryClient = useQueryClient();
 
   const handleUpdate = useCallback(async () => {
     setLoading(true);
@@ -71,7 +45,6 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
       !updatedDApp.scAddress ||
       !updatedDApp.tokenContractAddress
     ) {
-      console.log({ updatedDApp });
       console.error("Missing required fields");
       setLoading(false);
       return;
@@ -97,8 +70,9 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
       })
       .finally(() => {
         setLoading(false);
+        queryClient.invalidateQueries({ queryKey: ["getListDApps"] });
       });
-  }, [updatedDApp, setLoading, close]);
+  }, [updatedDApp, setLoading, close, queryClient]);
 
   useEffect(() => {
     if (!updatedDApp) {

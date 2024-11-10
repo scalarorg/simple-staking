@@ -43,13 +43,11 @@ const WalletProviderContext = createContext<{
     balance: number;
     address: string;
     pubkey: string;
-    xOnlyPubkey: string;
   };
   setWalletInfo: (walletInfo: {
     balance: number;
     address: string;
     pubkey: string;
-    xOnlyPubkey: string;
   }) => void;
   walletProvider?: TWalletProvider;
   setWalletProvider: (walletProvider: TWalletProvider) => void;
@@ -67,7 +65,6 @@ const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     balance: 0,
     address: "",
     pubkey: "",
-    xOnlyPubkey: "",
   });
 
   const [walletProvider, setWalletProvider] = useState<TWalletProvider>();
@@ -94,16 +91,10 @@ const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
       const balanceSat = await walletProvider.getBalance();
       const pubKeyHex = await walletProvider.getPublicKeyHex();
-      const pubKeyBytes = Buffer.from(pubKeyHex, "hex");
-      const xOnlyPubKeyBytes =
-        pubKeyBytes.length === 33 ? pubKeyBytes.subarray(1, 33) : pubKeyBytes;
-      const xOnlyPubKeyHex = xOnlyPubKeyBytes.toString("hex");
-
       setWalletInfo({
         balance: balanceSat,
         address,
         pubkey: pubKeyHex,
-        xOnlyPubkey: xOnlyPubKeyHex,
       });
 
       setWalletProvider(walletProvider);
@@ -153,7 +144,6 @@ const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       balance: 0,
       address: "",
       pubkey: "",
-      xOnlyPubkey: "",
     });
   }, [setNetworkConfig, walletProvider]);
 

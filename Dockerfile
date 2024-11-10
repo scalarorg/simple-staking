@@ -16,7 +16,6 @@ COPY package.json package-lock.json ./
 # Omit --production flag for TypeScript devDependencies
 RUN npm install --frozen-lockfile
 
-COPY chains ./chains
 COPY src ./src
 COPY public ./public
 COPY next.config.* .
