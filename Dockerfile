@@ -4,14 +4,6 @@ FROM node:20-alpine3.19 AS builder
 RUN apk add python3 make gcc g++
 
 WORKDIR /app
-COPY remotebtclib ./remotebtclib
-
-WORKDIR /app/remotebtclib/bitcoin-flow
-RUN yarn
-WORKDIR /app/remotebtclib/vault
-RUN yarn
-
-WORKDIR /app
 COPY package.json package-lock.json ./
 # Omit --production flag for TypeScript devDependencies
 RUN npm install --frozen-lockfile
