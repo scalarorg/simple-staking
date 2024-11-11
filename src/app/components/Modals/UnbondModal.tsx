@@ -62,21 +62,21 @@ function calculateBitcoinTxFee(
   feeRate: number,
 ): bigint {
   // Base transaction overhead
-  let totalSize = 10; // Version (4) + LockTime (4) + Input/Output counters (2)
+  let totalSize = 10.5; // Version (4) + LockTime (4) + Input/Output counters (2) + segwit marker and flag (0.5)
 
   // Calculate input sizes
   for (const input of inputs) {
-    // Previous txid (32) + vout (4) + sequence (4)
-    let inputSize = 40;
+    // Previous txid (32) + vout (4) + sequence (4) + empty scriptSig (1)
+    let inputSize = 41;
 
     // Check if input is P2TR (Taproot)
     if (input.script_pubkey.length === 34 && input.script_pubkey[0] === 0x51) {
-      // P2TR input witness: signature (64) + pubkey (32)
-      inputSize += 57.5; // Adding witness data size (divided by 4 for witness discount)
+      // P2TR input witness: signature (64 bytes) + control block with key path spend (~33 bytes)
+      inputSize += (64 + 33) / 4; // Witness data is divided by 4 for vsize calculation
     } else {
-      // Assume P2WPKH as fallback
+      // Assume P2WPKH
       // P2WPKH input witness: signature (72) + pubkey (33)
-      inputSize += 26.5; // Adding witness data size (divided by 4 for witness discount)
+      inputSize += (72 + 33) / 4; // Witness data is divided by 4 for vsize calculation
     }
 
     totalSize += inputSize;
@@ -91,7 +91,7 @@ function calculateBitcoinTxFee(
   // Round up to the nearest byte
   const totalVBytes = Math.ceil(totalSize);
 
-  // Calculate fee (sats)
+  // Calculate fee (sats) = vbytes * fee_rate
   return BigInt(Math.ceil(totalVBytes * feeRate));
 }
 
@@ -264,9 +264,9 @@ export const UnbondModal: React.FC = () => {
         value: input.value,
       };
 
-      const txFee = calculateBitcoinTxFee([input], [output], fastest);
+      const txFee = calculateBitcoinTxFee([input], [output], fastest * 1.5);
 
-      output.value = output.value - txFee;
+      output.value = output.value - BigInt(txFee);
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
 
