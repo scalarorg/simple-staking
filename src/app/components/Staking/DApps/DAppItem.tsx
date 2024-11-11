@@ -59,7 +59,7 @@ export const DAppItem: React.FC<DAppProps> = ({
             <PencilIcon size={12} />
           </button>
           <button
-            className={`px-2 hover:text-orange-600 flex items-center gap-2 justify-center ${
+            className={`px-2 hover:text-orange-600 flex items-center gap-2 justify-center text-orange-700 ${
               !address ? "opacity-50 pointer-events-none" : ""
             }`}
             onClick={() => openMintTxModal(dApp)}

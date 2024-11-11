@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { FaBitcoin } from "react-icons/fa";
 
 import { useWalletInfo } from "@/app/context/WalletProvider";
@@ -16,17 +16,36 @@ export const Summary: React.FC = () => {
   const { address, balance, pubkey } = useWalletInfo();
 
   const queryClient = useQueryClient();
+  const [totalStakedSat, setTotalStakedSat] = useState(0);
 
-  const data = queryClient.getQueryData<{ bonds: Bond[] }>([
-    "getListBonds",
-    pubkey,
-  ]);
-  const totalStakedSat = useMemo(() => {
-    if (!data?.bonds) {
-      return 0;
-    }
-    return data.bonds.reduce((acc, bond) => acc + Number(bond.amount), 0);
-  }, [data]);
+  useEffect(() => {
+    // Initial value
+    const data = queryClient.getQueryData<{ bonds: Bond[] }>([
+      "getListBonds",
+      pubkey,
+    ]);
+    setTotalStakedSat(
+      data?.bonds?.reduce((acc, bond) => acc + Number(bond.amount), 0) ?? 0,
+    );
+
+    // Subscribe to cache updates
+    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      const updatedData = queryClient.getQueryData<{ bonds: Bond[] }>([
+        "getListBonds",
+        pubkey,
+      ]);
+      setTotalStakedSat(
+        updatedData?.bonds?.reduce(
+          (acc, bond) => acc + Number(bond.amount),
+          0,
+        ) ?? 0,
+      );
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [pubkey, queryClient]);
 
   return (
     <div className="card flex flex-col gap-2 bg-base-300 p-4 shadow-sm xl:flex-row xl:items-center xl:justify-between xl:gap-4">

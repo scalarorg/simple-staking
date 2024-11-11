@@ -127,8 +127,6 @@ const MintTxModal: React.FC<{}> = () => {
         dApp.scAddress.replace("0x", ""),
       );
 
-      console.log("selectedFeeRate", selectedFeeRate);
-
       const { psbt: unsignedVaultPsbt, fee: estimatedFee } =
         globalThis.scalarVaultModule.buildUnsignedStakingPsbt(
           ProjectENV.NEXT_PUBLIC_TAG,

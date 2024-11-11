@@ -13,6 +13,7 @@ import { z } from "zod";
 import PROTOCOL_ABI from "@/abis/protocol";
 import SBTC_ABI from "@/abis/sbtc";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
+import { useRecommendedFees } from "@/app/hooks/useRecommendedFees";
 import { useUnbondModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
@@ -42,6 +43,57 @@ const FormSchema = z.object({
 });
 
 const MOCK_ZERO_BYTES = "0x0000000000000000000000000000000000000000";
+
+interface TxInput {
+  script_pubkey: Buffer;
+  txid: string;
+  vout: number;
+  value: bigint;
+}
+
+interface TxOutput {
+  script: Buffer;
+  value: bigint;
+}
+
+function calculateBitcoinTxFee(
+  inputs: TxInput[],
+  outputs: TxOutput[],
+  feeRate: number,
+): bigint {
+  // Base transaction overhead
+  let totalSize = 10; // Version (4) + LockTime (4) + Input/Output counters (2)
+
+  // Calculate input sizes
+  for (const input of inputs) {
+    // Previous txid (32) + vout (4) + sequence (4)
+    let inputSize = 40;
+
+    // Check if input is P2TR (Taproot)
+    if (input.script_pubkey.length === 34 && input.script_pubkey[0] === 0x51) {
+      // P2TR input witness: signature (64) + pubkey (32)
+      inputSize += 57.5; // Adding witness data size (divided by 4 for witness discount)
+    } else {
+      // Assume P2WPKH as fallback
+      // P2WPKH input witness: signature (72) + pubkey (33)
+      inputSize += 26.5; // Adding witness data size (divided by 4 for witness discount)
+    }
+
+    totalSize += inputSize;
+  }
+
+  // Calculate output sizes
+  for (const output of outputs) {
+    // value (8) + script length (1) + script
+    totalSize += 9 + output.script.length;
+  }
+
+  // Round up to the nearest byte
+  const totalVBytes = Math.ceil(totalSize);
+
+  // Calculate fee (sats)
+  return BigInt(Math.ceil(totalVBytes * feeRate));
+}
 
 const lookupErrorSignature = async (signature: string): Promise<string> => {
   try {
@@ -110,6 +162,8 @@ export const UnbondModal: React.FC = () => {
       btcReceiverAddress: btcAddress,
     },
   });
+
+  const { fastest } = useRecommendedFees();
 
   useEffect(() => {
     if (!form.getValues("btcReceiverAddress")) {
@@ -195,20 +249,24 @@ export const UnbondModal: React.FC = () => {
 
       const txFromHex = Transaction.fromHex(bond.sourceTxHex);
 
-      const input = {
+      const input: TxInput = {
         txid: txFromHex.getId(),
         vout: 0,
         value: BigInt(txFromHex.outs[0].value),
         script_pubkey: txFromHex.outs[0].script,
       };
 
-      const output = {
+      const output: TxOutput = {
         script: bitcoinAddress.toOutputScript(
           data.btcReceiverAddress,
           btcNetwork,
         ),
-        value: input.value - BigInt(1_000),
+        value: input.value,
       };
+
+      const txFee = calculateBitcoinTxFee([input], [output], fastest);
+
+      output.value = output.value - txFee;
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
 
@@ -258,9 +316,7 @@ export const UnbondModal: React.FC = () => {
 
         setStatus("Waiting for approval transaction to be mined");
 
-        const response = await txApprove.wait();
-
-        console.log("response", response);
+        await txApprove.wait();
 
         await refetchAllowance();
         setStatus("Approval transaction mined");
@@ -304,7 +360,7 @@ export const UnbondModal: React.FC = () => {
           errorMessage = await lookupErrorSignature(errorSignature);
         }
       } else {
-        errorMessage = error.shortMessage;
+        errorMessage = error.shortMessage || error.message;
       }
 
       setStatus(`Failed: ${errorMessage}`);
@@ -323,11 +379,11 @@ export const UnbondModal: React.FC = () => {
     }
   }
 
-  if (!bond) {
+  if (!bond && isOpen) {
     return <div>Bond not found</div>;
   }
 
-  if (!dApp) {
+  if (!dApp && isOpen) {
     return <div>DApp not found</div>;
   }
 
@@ -357,7 +413,7 @@ export const UnbondModal: React.FC = () => {
               </div>
               <div className="space-y-2 col-span-2">
                 <FormLabel className="text-gray-500 capitalize">
-                  {bond.destinationChain.replace("ethereum-", " ")} Staker
+                  {bond?.destinationChain.replace("ethereum-", " ")} Staker
                   Address
                 </FormLabel>
                 <Input readOnly value={address} />
@@ -366,7 +422,7 @@ export const UnbondModal: React.FC = () => {
                 <FormLabel className="text-gray-500">
                   BTC Staked Amount (sats)
                 </FormLabel>
-                <Input readOnly value={bond.amount} />
+                <Input readOnly value={bond?.amount ?? ""} />
               </div>
               <div className="space-y-2">
                 <FormLabel className="text-gray-500">Unstaked Amount</FormLabel>
