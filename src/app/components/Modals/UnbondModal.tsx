@@ -3,12 +3,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Psbt, Transaction, address as bitcoinAddress } from "bitcoinjs-lib";
 import { ethers, parseUnits } from "ethers";
 import { Loader2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
+import { decodeErrorResult } from "viem";
 import { useAccount, useChainId, useConnect, useReadContract } from "wagmi";
 import { z } from "zod";
 
+import PROTOCOL_ABI from "@/abis/protocol";
+import SBTC_ABI from "@/abis/sbtc";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useUnbondModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
@@ -30,108 +33,6 @@ import { toast } from "../ui/use-toast";
 
 import { GeneralModal } from "./GeneralModal";
 
-const SBTC_ABI = [
-  {
-    type: "function",
-    name: "balanceOf",
-    inputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-  },
-  {
-    type: "function",
-    name: "approve",
-    inputs: [
-      {
-        internalType: "address",
-        name: "spender",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-    ],
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "nonpayable",
-  },
-
-  {
-    type: "function",
-    name: "allowance",
-    inputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-  },
-];
-
-const PROTOCOL_ABI = [
-  {
-    type: "function",
-    name: "unstake",
-    inputs: [
-      {
-        name: "_destinationChain",
-        type: "string",
-        internalType: "string",
-      },
-      {
-        name: "_destinationAddress",
-        type: "string",
-        internalType: "string",
-      },
-      {
-        name: "_amount",
-        type: "uint256",
-        internalType: "uint256",
-      },
-      {
-        name: "_psbtBase64",
-        type: "string",
-        internalType: "string",
-      },
-    ],
-    outputs: [],
-    stateMutability: "nonpayable",
-  },
-];
-
 const FormSchema = z.object({
   btcReceiverAddress: z
     .string({
@@ -141,6 +42,23 @@ const FormSchema = z.object({
 });
 
 const MOCK_ZERO_BYTES = "0x0000000000000000000000000000000000000000";
+
+const lookupErrorSignature = async (signature: string): Promise<string> => {
+  try {
+    const response = await fetch(
+      `https://api.openchain.xyz/signature-database/v1/lookup?filter=false&function=${signature}`,
+    );
+    const data = await response.json();
+
+    if (data.ok && data.result.function[signature]?.[0]) {
+      return data.result.function[signature][0].name;
+    }
+    return signature;
+  } catch (error) {
+    console.error("Failed to lookup error signature:", error);
+    return signature;
+  }
+};
 
 export const UnbondModal: React.FC = () => {
   const { address } = useAccount();
@@ -165,15 +83,15 @@ export const UnbondModal: React.FC = () => {
   const signer = useEthersSigner();
 
   const sBTC = useMemo(() => {
-    if (!bond) {
+    if (!dApp) {
       return null;
     }
     return new ethers.Contract(
-      bond?.destinationSmartContractAddress as `0x${string}`,
+      dApp?.tokenContractAddress as `0x${string}`,
       SBTC_ABI,
       signer,
     );
-  }, [bond, signer]);
+  }, [dApp, signer]);
 
   const protocol = useMemo(() => {
     if (!dApp) {
@@ -193,6 +111,12 @@ export const UnbondModal: React.FC = () => {
     },
   });
 
+  useEffect(() => {
+    if (!form.getValues("btcReceiverAddress")) {
+      form.setValue("btcReceiverAddress", btcAddress);
+    }
+  }, [btcAddress, form]);
+
   const { data: sbtcBalance } = useReadContract({
     address: bond?.destinationSmartContractAddress as `0x${string}`,
     abi: SBTC_ABI,
@@ -204,12 +128,12 @@ export const UnbondModal: React.FC = () => {
   });
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: bond?.destinationSmartContractAddress as `0x${string}`,
+    address: dApp?.tokenContractAddress as `0x${string}`,
     abi: SBTC_ABI,
     functionName: "allowance",
-    args: [address, bond?.destinationSmartContractAddress as `0x${string}`],
+    args: [address, dApp?.scAddress as `0x${string}`],
     query: {
-      enabled: !!bond,
+      enabled: !!dApp && !!bond,
     },
   });
 
@@ -292,23 +216,6 @@ export const UnbondModal: React.FC = () => {
         dApp.btcPk.replace("0x", ""),
       );
 
-      console.log("input", input);
-      console.log("output", output);
-      console.log("btcUserPk", btcUserPk);
-      console.log("btcProtocolPk", btcProtocolPk);
-      console.log(
-        "ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS",
-        ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
-      );
-      console.log(
-        "ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM",
-        ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
-      );
-      console.log(
-        "ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL",
-        ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
-      );
-
       const unsignedPsbtHex =
         await globalThis.scalarVaultModule.buildUnsignedUnstakingUserProtocolPsbt(
           ProjectENV.NEXT_PUBLIC_TAG,
@@ -326,12 +233,6 @@ export const UnbondModal: React.FC = () => {
 
       const hexPsbt = scalarVaultModule.bytesToHex(unsignedPsbtHex);
 
-      console.log("unsignedPsbtHex", hexPsbt);
-
-      const psbtDetails = Psbt.fromHex(hexPsbt);
-
-      console.log("psbtDetails", psbtDetails.txOutputs);
-
       const signedPsbt = await walletProvider?.signPsbt(hexPsbt, {
         autoFinalized: false,
         toSignInputs: [
@@ -348,7 +249,7 @@ export const UnbondModal: React.FC = () => {
       }
 
       // // Step 2.1: Check if the allowance is enough
-      if (Number(allowance) < Number(tokenBurnAmount)) {
+      if (!allowance || Number(allowance) < Number(tokenBurnAmount)) {
         // Step 3: Call the contract to burn the token
         setStatus("Approving the token");
         setIsBurning(true);
@@ -367,13 +268,9 @@ export const UnbondModal: React.FC = () => {
 
       setStatus("Burning the token");
 
-      console.log("signedPsbt", signedPsbt);
-
       const psbt = Psbt.fromHex(signedPsbt).toBase64();
 
-      console.log("signedPsbt", signedPsbt);
-      console.log("psbt", psbt);
-      console.log("burnAmount", burnAmount);
+      setStatus("Unstaking the token");
 
       const txBurn = await protocol.unstake(
         bond.sourceChain, // destination chain of the unbond = source chain of the bond
@@ -387,15 +284,36 @@ export const UnbondModal: React.FC = () => {
       await txBurn.wait();
 
       setStatus("Token unstaked successfully");
+      close();
     } catch (error: any) {
-      console.error(error);
-      setStatus(
-        "Failed to burn the token: " + error?.message || JSON.stringify(error),
-      );
+      console.log({ error });
+      let errorMessage = "An error occurred";
+
+      if (error?.data) {
+        // Handle Viem-style errors
+        try {
+          const decodedError = decodeErrorResult({
+            abi: PROTOCOL_ABI,
+            data: error.data as `0x${string}`,
+          });
+          errorMessage = `${decodedError.errorName}: ${decodedError.args?.join(", ")}`;
+        } catch (decodeError) {
+          // Try to decode as an approval error
+          setStatus("Decoding error...");
+          const errorSignature = error.data.slice(0, 10);
+          errorMessage = await lookupErrorSignature(errorSignature);
+        }
+      } else {
+        errorMessage = error.shortMessage;
+      }
+
+      setStatus(`Failed: ${errorMessage}`);
       toast({
-        title: "Failed to burn the token: ",
-        description: error?.message || "An error occurred",
+        title: "Transaction Failed",
+        description: errorMessage,
+        variant: "destructive",
       });
+      setIsBurning(false);
     } finally {
       setIsBurning(false);
       const resetStatusTimeoutMs = 10000;
@@ -518,5 +436,3 @@ const ConnectWallet: React.FC = () => {
     </div>
   );
 };
-
-// 70736274ff01005202000000012b3a97ae1664d3ed739b7d7c6a2481987e111ba11a3a34901dcff8753f6f8ee90000000000fdffffff01b88201000000000016001450dceca158a9c872eb405d52293d351110572c9e000000000001012ba08601000000000022512067bff357780a93826a444646aec681c4ff1f4316244478c0d611f91a75c93b8a0103040000000041142ae31ea8709aeda8194ba3e2f7e7e95e680e8b65135c8983c0a298d17bc5350a8b212098a1c9f95fadf69babfe738c34897215e91707f1fdba99fa5474d93b1f4036fb4588283184cb47eda759f42466e866c4fef6dbd05794ac5a10b1c6b2903d20f14d8fb0eb5e3ad0dd297579656b845896cdea4e4f01ee392254f2f6d557344215c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0063c58b39161dea318c02ae3381c4ddffa040ae88e6fe9ae1562c28f2db1028545202ae31ea8709aeda8194ba3e2f7e7e95e680e8b65135c8983c0a298d17bc5350aad201387aab21303782b17e760c670432559df3968e52cb82cc2d8f9be43a227d5dcacc021161387aab21303782b17e760c670432559df3968e52cb82cc2d8f9be43a227d5dc25018b212098a1c9f95fadf69babfe738c34897215e91707f1fdba99fa5474d93b1f0000000021162ae31ea8709aeda8194ba3e2f7e7e95e680e8b65135c8983c0a298d17bc5350a25018b212098a1c9f95fadf69babfe738c34897215e91707f1fdba99fa5474d93b1f0000000001172050929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac00118204782e2e5ffe126f896b0fb1ee51ed2cd4ff0a7bafcbb8b335772a75b915a86900000

@@ -49,8 +49,6 @@ export class UnisatWallet extends WalletProvider {
       throw new Error("Please update Unisat Wallet to the latest version");
     }
 
-    console.log("this.networkEnv", this.networkEnv);
-
     switch (this.networkEnv) {
       case Network.MAINNET:
         await this.bitcoinNetworkProvider.switchNetwork(

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Unlock } from "lucide-react";
 import Link from "next/link";
 
 import { getBonds } from "@/app/api/getBonds";
@@ -6,7 +7,6 @@ import { useWalletInfo } from "@/app/context/WalletProvider";
 import { fpStyles, fpTableStyles } from "@/app/scalar/theme";
 import { useUnbondModal } from "@/app/stores/modal";
 import { ProjectENV } from "@/env";
-import { getBondValueStringFromStakingTxHex } from "@/utils/bitcoin";
 import { getRelativeTime } from "@/utils/tool";
 
 const generalStyles = "cursor-pointer transition-shadow hover:shadow-md py-4";
@@ -15,7 +15,7 @@ export const ListBonds: React.FC = () => {
   const { pubkey } = useWalletInfo();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["bonds", pubkey],
+    queryKey: ["getListBonds", pubkey],
     queryFn: () => getBonds("bonds", pubkey),
     enabled: !!pubkey,
   });
@@ -36,24 +36,23 @@ export const ListBonds: React.FC = () => {
       )}
       {data && data.bonds.length > 0 && (
         <div className={`flex flex-col gap-4 ${fpTableStyles}`}>
-          <div className="no-scrollbar max-h-[21rem] overflow-y-auto">
+          <div>
             <table className="min-w-full">
               <thead className="">
                 <tr className="[&>*]:p-4">
                   <th>No</th>
                   <th>Source Chain</th>
                   <th>TxID</th>
-                  <th>Amount (sats)</th>
                   <th>Dest. Chain</th>
                   <th>Dest. SC Address</th>
-                  <th>Minted Amount</th>
+                  <th>Staked Amount (sats)</th>
                   <th>Time</th>
-                  <th>Unbonded $BTC</th>
+                  <th>Unstaked Amount (sats)</th>
                 </tr>
               </thead>
               <tbody
                 id="staking-history"
-                className="no-scrollbar max-h-[21rem] overflow-y-auto"
+                className="no-scrollbar max-h-96 overflow-y-auto"
               >
                 {data.bonds.map((bond, index) => (
                   <tr
@@ -73,9 +72,6 @@ export const ListBonds: React.FC = () => {
                         {bond.sourceTxHash.slice(-4)}
                       </Link>
                     </td>
-                    <td>
-                      {getBondValueStringFromStakingTxHex(bond.sourceTxHex)}
-                    </td>
                     <td>{bond.destinationChain}</td>
                     <td>
                       {bond.destinationSmartContractAddress.slice(2, 6)}...
@@ -85,19 +81,23 @@ export const ListBonds: React.FC = () => {
                     <td>{getRelativeTime(bond.createdAt)}</td>
                     <td>
                       {!bond.executedAmount && (
-                        <button
-                          className="btn btn-outline btn-xs inline-flex text-sm font-normal text-primary"
-                          onClick={() => open(bond)}
-                        >
-                          Unbond
-                        </button>
+                        <div className="flex justify-center">
+                          <button
+                            className="btn btn-outline text-sm font-normal text-white p-1 px-2 flex items-center gap-2 border-white justify-center hover:bg-white hover:text-primary"
+                            onClick={() => open(bond)}
+                          >
+                            <Unlock className="w-4 h-4" />
+                            Unstaked
+                          </button>
+                        </div>
                       )}
                       {bond.executedAmount && (
-                        <div className="text-white flex gap-2">
-                          Unbonded:
-                          <span className="text-orange-700 bg-white rounded-lg px-2">
-                            {bond.executedAmount}
-                          </span>
+                        <div className="font-normal text-white flex items-center justify-center">
+                          <div className="p-2 flex items-center gap-2  bg-primary justify-center rounded-lg w-28">
+                            {isNaN(Number(bond.executedAmount))
+                              ? "N/A"
+                              : Number(bond.executedAmount).toLocaleString()}
+                          </div>
                         </div>
                       )}
                     </td>

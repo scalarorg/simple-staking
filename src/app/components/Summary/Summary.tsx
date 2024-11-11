@@ -1,6 +1,9 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { FaBitcoin } from "react-icons/fa";
 
 import { useWalletInfo } from "@/app/context/WalletProvider";
+import { Bond } from "@/app/types/bonds";
 import { getNetworkConfig } from "@/config/network.config";
 import { satoshiToBtc } from "@/utils/btcConversions";
 import { maxDecimals } from "@/utils/maxDecimals";
@@ -10,8 +13,20 @@ import { Network } from "@/utils/wallet/wallet_provider";
 export const Summary: React.FC = () => {
   const { coinName } = getNetworkConfig();
   const onMainnet = getNetworkConfig().network === Network.MAINNET;
-  const { address, balance } = useWalletInfo();
-  const totalStakedSat = 0;
+  const { address, balance, pubkey } = useWalletInfo();
+
+  const queryClient = useQueryClient();
+
+  const data = queryClient.getQueryData<{ bonds: Bond[] }>([
+    "getListBonds",
+    pubkey,
+  ]);
+  const totalStakedSat = useMemo(() => {
+    if (!data?.bonds) {
+      return 0;
+    }
+    return data.bonds.reduce((acc, bond) => acc + Number(bond.amount), 0);
+  }, [data]);
 
   return (
     <div className="card flex flex-col gap-2 bg-base-300 p-4 shadow-sm xl:flex-row xl:items-center xl:justify-between xl:gap-4">
