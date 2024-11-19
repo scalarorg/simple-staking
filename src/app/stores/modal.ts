@@ -44,3 +44,16 @@ export const useUnbondModal = create<IUnbondModalStore>((set) => ({
   open: (bond?: Bond) => set({ isOpen: true, bond }),
   close: () => set({ isOpen: false, bond: undefined }),
 }));
+
+export const useStakeCustodialModal = create<IModalStore>((set) => ({
+  isOpen: false,
+  dApp: undefined,
+  open: (dApp?: DAppInterface) => set({ isOpen: true, dApp }),
+  close: () => set({ isOpen: false, dApp: undefined }),
+}));
+
+export const useUnstakeCustodialModal = create<IModalStore>((set) => ({
+  isOpen: false,
+  open: () => set({ isOpen: true }),
+  close: () => set({ isOpen: false }),
+}));
