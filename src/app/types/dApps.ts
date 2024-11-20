@@ -19,6 +19,10 @@ export interface DApps {
   dApps: DApp[];
 }
 
+export interface DAppUpdate extends DApp {
+  custodialGroupName: string;
+}
+
 export interface CreatePayload {
   chain_name: string;
   btc_address_hex: string;

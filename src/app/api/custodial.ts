@@ -1,5 +1,3 @@
-import { apiWrapper } from "./apiWrapper";
-
 // export const getCustodialGroups = async (): Promise<{
 //   custodialGroups: CustodialGroup[];
 // }> => {
@@ -27,12 +25,14 @@ import { apiWrapper } from "./apiWrapper";
 // };
 
 export const getCustodialGroupNames = async (): Promise<{
-  custodialGroupNames: string[];
+  groupNames: string[];
 }> => {
-  const response = await apiWrapper(
-    "GET",
-    "/v1/custodial-group",
-    "Error getting custodial group names",
-  );
-  return response.data;
+  // TODO: uncomment this after xchains-api is done implementing the custodial group names
+  //   const response = await apiWrapper(
+  //     "GET",
+  //     "/v1/custodial/group/names",
+  //     "Error getting custodial group names",
+  //   );
+  //   return response.data;
+  return { groupNames: ["All"] };
 };

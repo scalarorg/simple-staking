@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
@@ -10,6 +11,7 @@ import { BtcPubKey } from "../Staking/Form/BtcPubkey";
 import { ChainName } from "../Staking/Form/ChainName";
 import { InputField } from "../Staking/Form/InputField";
 
+import { getCustodialGroupNames } from "@/app/api/custodial";
 import { SelectField } from "../Staking/Form/SelectField";
 import { GeneralModal } from "./GeneralModal";
 
@@ -28,6 +30,20 @@ export const AddDAppModal: React.FC<{}> = () => {
   const [custodialGroupName, setCustodialGroupName] = useState("");
   const config = getConfig();
   const chains = config.chains;
+
+  const {
+    data: custodialGroups,
+    isLoading,
+    error: custodialGroupsError,
+    isError: hasCustodialGroupsError,
+  } = useQuery({
+    queryKey: ["getCustodialGroupNames"],
+    queryFn: () => getCustodialGroupNames(),
+    refetchInterval: 60000, // 1 minute
+    retry: (failureCount, error) => {
+      return failureCount <= 3;
+    },
+  });
 
   const handleChainNameChange = (input: string) => {
     setChainName(input);
@@ -119,10 +135,14 @@ export const AddDAppModal: React.FC<{}> = () => {
             onChange={setCustodialGroupName}
             reset={false}
             initValue=""
-            options={["All"]}
+            options={custodialGroups?.groupNames || []}
             label="Custodial Group"
-            placeholder="Select Custodial Group"
-            errorMessage="Please select a custodial group"
+            placeholder={isLoading ? "Loading..." : "Select Custodial Group"}
+            errorMessage={
+              hasCustodialGroupsError
+                ? "Failed to load custodial groups"
+                : "Please select a custodial group"
+            }
           />
         </div>
         <div className="flex flex-1 flex-col hidden">

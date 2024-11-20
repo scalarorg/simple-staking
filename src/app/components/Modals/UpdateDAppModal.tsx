@@ -11,12 +11,16 @@ import { BtcAddress } from "../Staking/Form/BtcAddress";
 import { BtcPubKey } from "../Staking/Form/BtcPubkey";
 import { ChainName } from "../Staking/Form/ChainName";
 import { InputField } from "../Staking/Form/InputField";
+import { SelectField } from "../Staking/Form/SelectField";
 
 import { GeneralModal } from "./GeneralModal";
 
 export const UpdateDAppModal: React.FC<{}> = ({}) => {
   const { dApp, isOpen, close } = useDAppModal();
   const [updatedDApp, setUpdatedDApp] = useState<DApp | undefined>(dApp);
+  const [newCustodialGroupName, setNewCustodialGroupName] = useState<string>(
+    dApp?.custodialGroup.Name || "",
+  );
 
   const [isCustomChain, setIsCustomChain] = useState(false);
   const config = getConfig();
@@ -43,7 +47,8 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
       !updatedDApp?.btcAddress ||
       !updatedDApp.btcPk ||
       !updatedDApp.scAddress ||
-      !updatedDApp.tokenContractAddress
+      !updatedDApp.tokenContractAddress ||
+      !newCustodialGroupName
     ) {
       console.error("Missing required fields");
       setLoading(false);
@@ -60,6 +65,7 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
       updatedDApp.btcPk,
       updatedDApp.scAddress,
       updatedDApp.tokenContractAddress,
+      newCustodialGroupName,
     )
       .then(() => {
         console.log("Successfully updated DApp");
@@ -77,6 +83,9 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
   useEffect(() => {
     if (!updatedDApp) {
       setUpdatedDApp(dApp);
+    }
+    if (dApp?.custodialGroup?.Name) {
+      setNewCustodialGroupName(dApp.custodialGroup.Name);
     }
   }, [dApp, updatedDApp, setUpdatedDApp]);
 
@@ -122,6 +131,17 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
             placeholder=""
             generalErrorMessage="Please input a chain endpoint"
             disabled={!isCustomChain}
+          />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <SelectField
+            onChange={(value) => setNewCustodialGroupName(value)}
+            reset={false}
+            initValue={newCustodialGroupName || ""}
+            options={["All"]}
+            label="Custodial Group"
+            placeholder="Select Custodial Group"
+            errorMessage="Please select a custodial group"
           />
         </div>
         <div className="flex flex-1 flex-col">
