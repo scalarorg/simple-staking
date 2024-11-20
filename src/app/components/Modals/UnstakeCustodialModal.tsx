@@ -69,7 +69,7 @@ export const UnstakeCustodialModal: React.FC = () => {
   const sBTC = useSBTCContract(dApp ?? null);
   const protocol = useProtocolContract(dApp ?? null);
   const sbtcBalance = useSBTCBalance({
-    contractAddress: dApp?.scAddress as `0x${string}`,
+    contractAddress: dApp?.tokenContractAddress as `0x${string}`,
     userAddress: address,
   });
   const { allowance, refetchAllowance } = useSBTCAllowance({
@@ -217,8 +217,8 @@ export const UnstakeCustodialModal: React.FC = () => {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="flex flex-col gap-4">
               <div className="space-y-2">
-                <FormLabel>Smart contract address</FormLabel>
-                <Input readOnly value={dApp?.scAddress || ""} />
+                <FormLabel>Token Smart Contract Address</FormLabel>
+                <Input readOnly value={dApp?.tokenContractAddress || ""} />
               </div>
               <div className="space-y-2">
                 <FormLabel>Custodial Group Name</FormLabel>
@@ -248,6 +248,13 @@ export const UnstakeCustodialModal: React.FC = () => {
             <div className="space-y-2">
               <FormLabel className="text-gray-500">Ethereum Address</FormLabel>
               <Input readOnly value={address} />
+            </div>
+
+            <div className="space-y-2">
+              <FormLabel className="text-gray-500">
+                Available sBTC Balance
+              </FormLabel>
+              <Input readOnly value={sbtcBalance?.toString() || "0"} />
             </div>
 
             <FormField
