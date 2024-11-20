@@ -127,6 +127,23 @@ const MintTxModal: React.FC<{}> = () => {
         dApp.scAddress.replace("0x", ""),
       );
 
+      const numberOfCustodialPubkeys = dApp.custodialGroup.Custodials.length;
+      const custodial_pubkeys_uint8array = new Uint8Array(
+        33 * numberOfCustodialPubkeys,
+      );
+
+      for (let i = 0; i < numberOfCustodialPubkeys; i++) {
+        custodial_pubkeys_uint8array.set(
+          scalarVaultModule.hexToBytes(
+            dApp.custodialGroup.Custodials[i].BtcPublicKeyHex!.replace(
+              "0x",
+              "",
+            ),
+          ),
+          i * 33,
+        );
+      }
+
       const { psbt: unsignedVaultPsbt, fee: estimatedFee } =
         globalThis.scalarVaultModule.buildUnsignedStakingPsbt(
           ProjectENV.NEXT_PUBLIC_TAG,
@@ -135,9 +152,9 @@ const MintTxModal: React.FC<{}> = () => {
           address,
           btcUserPk,
           btcServicePk,
-          ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
-          ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
-          ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
+          custodial_pubkeys_uint8array,
+          dApp.custodialGroup.Quorum,
+          false,
           BigInt(id),
           smartContractAddress,
           destAddress,

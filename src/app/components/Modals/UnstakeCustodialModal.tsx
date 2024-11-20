@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Psbt } from "bitcoinjs-lib";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -8,9 +9,7 @@ import { IoMdClose } from "react-icons/io";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 
-import { useWalletInfo } from "@/app/context/WalletProvider";
-import { useUnstakeCustodialModal } from "@/app/stores/modal";
-import { Button } from "../ui/button";
+import { Button } from "@/app/components/ui/button";
 import {
   Form,
   FormControl,
@@ -18,10 +17,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../ui/form";
-import { Input } from "../ui/input";
-import { toast } from "../ui/use-toast";
+} from "@/app/components/ui/form";
+import { Input } from "@/app/components/ui/input";
+import { TransactionRateSelect } from "@/app/components/ui/TransactionRateSelect";
+import { toast } from "@/app/components/ui/use-toast";
+import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
+import { useProtocolContract, useSBTCContract } from "@/app/hooks/useContracts";
+import { useExchangeRate } from "@/app/hooks/useExchangeRate";
+import { useFeeRates } from "@/app/hooks/useFeeRates";
+import { useSBTCAllowance } from "@/app/hooks/useSBTCAllowance";
+import { useSBTCBalance } from "@/app/hooks/useSBTCBalance";
+import { useUnstakeCustodialModal } from "@/app/stores/modal";
+import { parseUnits } from "ethers";
 import { GeneralModal } from "./GeneralModal";
+
+const MOCK_ZERO_BYTES = "0x0000000000000000000000000000000000000000";
 
 // Define your form schema
 const FormSchema = z.object({
@@ -35,22 +45,45 @@ const FormSchema = z.object({
       required_error: "Please enter unstake amount.",
     })
     .min(1, "Amount must be greater than 0"),
+  mintFeeRate: z.string().default("hourFee"),
+  customFeeRate: z.coerce
+    .number()
+    .int("Please enter a whole number.")
+    .positive("Please enter a positive number.")
+    .optional(),
 });
 
 export const UnstakeCustodialModal: React.FC = () => {
   const { address } = useAccount();
-  const isOpen = useUnstakeCustodialModal((state) => state.isOpen);
-  const close = useUnstakeCustodialModal((state) => state.close);
+  const { isOpen, close, dApp } = useUnstakeCustodialModal();
   const { address: btcAddress } = useWalletInfo();
+
+  const { mempoolClient, walletProvider, btcNetwork, networkConfig } =
+    useWalletProvider();
 
   const [status, setStatus] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+
+  const feeRates = useFeeRates(isOpen, address, mempoolClient);
+
+  const sBTC = useSBTCContract(dApp ?? null);
+  const protocol = useProtocolContract(dApp ?? null);
+  const sbtcBalance = useSBTCBalance({
+    contractAddress: dApp?.scAddress as `0x${string}`,
+    userAddress: address,
+  });
+  const { allowance, refetchAllowance } = useSBTCAllowance({
+    dApp,
+    userAddress: address,
+  });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       btcReceiverAddress: btcAddress,
       unstakeAmount: "",
+      mintFeeRate: "hourFee",
+      customFeeRate: undefined,
     },
   });
 
@@ -61,12 +94,101 @@ export const UnstakeCustodialModal: React.FC = () => {
   }, [btcAddress, form]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
+    if (!dApp) return;
+    const { btcReceiverAddress, unstakeAmount, mintFeeRate, customFeeRate } =
+      data;
     try {
+      if (!walletProvider) {
+        throw new Error("Wallet provider not found");
+      }
+      if (!sBTC) {
+        throw new Error("sBTC contract not found");
+      }
+      if (!protocol) {
+        throw new Error("Protocol contract not found");
+      }
+
+      if (
+        Number(sbtcBalance) <= 0 ||
+        Number(sbtcBalance) < Number(unstakeAmount)
+      ) {
+        throw new Error("Insufficient balance");
+      }
+
+      const burnAmount = parseUnits(unstakeAmount, 0);
+      if (!burnAmount) {
+        throw new Error("Invalid burn amount");
+      }
+
+      const btcReturnAmount = useExchangeRate(dApp, unstakeAmount);
+
+      const addressUtxos = await walletProvider.getUtxos(
+        dApp.custodialGroup.BtcAddress,
+        btcReturnAmount,
+      );
+
+      const mappedAddressUtxos = addressUtxos.map((utxo) => ({
+        ...utxo,
+        status: {} as any,
+      }));
+
+      const selectedFeeRate = (() => {
+        switch (mintFeeRate) {
+          case "fastestFee":
+            return feeRates.fastestFee;
+          case "hourFee":
+            return feeRates.hourFee;
+          case "minimumFee":
+            return feeRates.minimumFee;
+          case "custom":
+            return customFeeRate ?? feeRates.fastestFee;
+          default:
+            return feeRates.fastestFee;
+        }
+      })();
+
       setIsProcessing(true);
       setStatus("Processing unstake request...");
 
-      // Add your unstaking logic here
+      // TODO: APPLY NEW UNSTAKING CUSTODIAL LOGIC HERE
+      const unsignedPsbtHexString = "";
+      const unsignedPsbtHex = Uint8Array.from(
+        Buffer.from(unsignedPsbtHexString, "hex"),
+      );
+      const hexPsbt = scalarVaultModule.bytesToHex(unsignedPsbtHex);
 
+      if (!allowance || Number(allowance) < Number(burnAmount)) {
+        setStatus("Approving the token");
+
+        const txApprove = await sBTC.approve(dApp.scAddress, burnAmount);
+
+        setStatus("Waiting for approval transaction to be mined");
+
+        await txApprove.wait();
+
+        await refetchAllowance();
+        setStatus("Approval transaction mined");
+      }
+
+      setStatus("Burning the token");
+
+      const psbt = Psbt.fromHex(hexPsbt).toBase64();
+
+      setStatus("Unstaking the token");
+
+      // TODO: Split to hook
+      const txBurn = await protocol.unstake(
+        dApp.chainId, // destination chain of the unbond = source chain of the bond
+        MOCK_ZERO_BYTES,
+        burnAmount,
+        psbt,
+      );
+
+      setStatus("Waiting for burning transaction to be mined");
+
+      await txBurn.wait();
+
+      setStatus("Token unstaked successfully");
       close();
     } catch (error: any) {
       console.error(error);
@@ -93,6 +215,36 @@ export const UnstakeCustodialModal: React.FC = () => {
       {address ? (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="flex flex-col gap-4">
+              <div className="space-y-2">
+                <FormLabel>Smart contract address</FormLabel>
+                <Input readOnly value={dApp?.scAddress || ""} />
+              </div>
+              <div className="space-y-2">
+                <FormLabel>Custodial Group Name</FormLabel>
+                <Input readOnly value={dApp?.custodialGroup.Name} />
+              </div>
+              <div className="space-y-2">
+                <FormLabel>
+                  Custodials ({dApp?.custodialGroup.Quorum} of{" "}
+                  {dApp?.custodialGroup.Custodials.length} required)
+                </FormLabel>
+                <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-input bg-background p-2">
+                  {dApp?.custodialGroup.Custodials.map((custodial, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-col space-y-1 text-sm"
+                    >
+                      <div className="font-medium">Custodial #{index + 1}</div>
+                      <div className="text-muted-foreground">
+                        BTC Public Key: {custodial.BtcPublicKeyHex}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <FormLabel className="text-gray-500">Ethereum Address</FormLabel>
               <Input readOnly value={address} />
@@ -122,6 +274,20 @@ export const UnstakeCustodialModal: React.FC = () => {
                     <Input placeholder="Enter BTC address" {...field} />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="mintFeeRate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Transaction fee rate</FormLabel>
+                  <TransactionRateSelect
+                    control={form.control}
+                    feeRates={feeRates}
+                  />
                 </FormItem>
               )}
             />

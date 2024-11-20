@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import { z } from "zod";
@@ -20,6 +19,8 @@ import { toast } from "@/app/components/ui/use-toast";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useStakeCustodialModal } from "@/app/stores/modal";
 
+import { TransactionRateSelect } from "@/app/components/ui/TransactionRateSelect";
+import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
 import { Psbt } from "bitcoinjs-lib";
 import Link from "next/link";
@@ -134,6 +135,23 @@ export const StakeCustodialModal = () => {
         dApp.scAddress.replace("0x", ""),
       );
 
+      const numberOfCustodialPubkeys = dApp.custodialGroup.Custodials.length;
+      const custodial_pubkeys_uint8array = new Uint8Array(
+        33 * numberOfCustodialPubkeys,
+      );
+
+      for (let i = 0; i < numberOfCustodialPubkeys; i++) {
+        custodial_pubkeys_uint8array.set(
+          scalarVaultModule.hexToBytes(
+            dApp.custodialGroup.Custodials[i].BtcPublicKeyHex!.replace(
+              "0x",
+              "",
+            ),
+          ),
+          i * 33,
+        );
+      }
+
       const { psbt: unsignedVaultPsbt, fee: estimatedFee } =
         globalThis.scalarVaultModule.buildUnsignedStakingPsbt(
           ProjectENV.NEXT_PUBLIC_TAG,
@@ -142,9 +160,9 @@ export const StakeCustodialModal = () => {
           address,
           btcUserPk,
           btcServicePk,
-          ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
-          ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
-          ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
+          custodial_pubkeys_uint8array,
+          dApp.custodialGroup.Quorum,
+          true,
           BigInt(id),
           smartContractAddress,
           destAddress,
@@ -197,38 +215,7 @@ export const StakeCustodialModal = () => {
     }
   }
 
-  const [feeRates, setFeeRates] = useState({
-    fastestFee: 1,
-    hourFee: 1,
-    minimumFee: 1,
-  });
-
-  useEffect(() => {
-    const fetchFeeRates = async () => {
-      if (!mempoolClient) return;
-      if (!isOpen || !address) return;
-      try {
-        const { fees } = mempoolClient;
-        const { fastestFee, hourFee, minimumFee } =
-          await fees.getFeesRecommended();
-
-        setFeeRates({
-          fastestFee,
-          hourFee,
-          minimumFee,
-        });
-      } catch (error) {
-        console.warn("Error fetching fee rates:", error);
-        setFeeRates({
-          fastestFee: 1,
-          hourFee: 1,
-          minimumFee: 1,
-        });
-      }
-    };
-
-    fetchFeeRates();
-  }, [isOpen, address, mempoolClient]);
+  const feeRates = useFeeRates(isOpen, address, mempoolClient);
 
   return (
     <GeneralModal open={isOpen} big onClose={close}>
@@ -321,94 +308,13 @@ export const StakeCustodialModal = () => {
           <FormField
             control={form.control}
             name="mintFeeRate"
-            render={({ field }) => (
+            render={() => (
               <FormItem>
                 <FormLabel>Minting fee rate</FormLabel>
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant={
-                        field.value === "fastestFee" ? "default" : "outline"
-                      }
-                      onClick={() => form.setValue("mintFeeRate", "fastestFee")}
-                      className="flex flex-col items-center justify-center h-auto py-2"
-                    >
-                      <span>Fastest</span>
-                      <span className="text-sm">
-                        ({feeRates.fastestFee} sat/vB)
-                      </span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={
-                        field.value === "hourFee" ? "default" : "outline"
-                      }
-                      onClick={() => form.setValue("mintFeeRate", "hourFee")}
-                      className="flex flex-col items-center justify-center h-auto py-2"
-                    >
-                      <span>Medium</span>
-                      <span className="text-sm">
-                        ({feeRates.hourFee} sat/vB)
-                      </span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={
-                        field.value === "minimumFee" ? "default" : "outline"
-                      }
-                      onClick={() => form.setValue("mintFeeRate", "minimumFee")}
-                      className="flex flex-col items-center justify-center h-auto py-2"
-                    >
-                      <span>Minimum</span>
-                      <span className="text-sm">
-                        ({feeRates.minimumFee} sat/vB)
-                      </span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={
-                        field.value !== "fastestFee" &&
-                        field.value !== "hourFee" &&
-                        field.value !== "minimumFee"
-                          ? "default"
-                          : "outline"
-                      }
-                      onClick={() => {
-                        form.setValue("mintFeeRate", "custom");
-                        form.setFocus("customFeeRate");
-                      }}
-                      className="flex items-center justify-center h-auto py-2"
-                    >
-                      Custom
-                    </Button>
-                  </div>
-                  {field.value === "custom" && (
-                    <FormField
-                      control={form.control}
-                      name="customFeeRate"
-                      render={({ field: customField }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              {...customField}
-                              type="number"
-                              placeholder="Custom fee rate (sat/vB)"
-                              onChange={(e) => {
-                                const value = parseInt(e.target.value, 10);
-                                if (!isNaN(value) && value > 0) {
-                                  customField.onChange(value);
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                </div>
-                <FormMessage />
+                <TransactionRateSelect
+                  control={form.control}
+                  feeRates={feeRates}
+                />
               </FormItem>
             )}
           />
@@ -419,12 +325,31 @@ export const StakeCustodialModal = () => {
             </h3>
             <div className="flex flex-col gap-4">
               <div className="space-y-2">
-                <FormLabel>Custodial Group Name</FormLabel>
-                <Input readOnly value={"dummy group name"} />
-              </div>
-              <div className="space-y-2">
                 <FormLabel>Smart contract address</FormLabel>
                 <Input readOnly value={dApp?.scAddress || ""} />
+              </div>
+              <div className="space-y-2">
+                <FormLabel>Custodial Group Name</FormLabel>
+                <Input readOnly value={dApp?.custodialGroup.Name} />
+              </div>
+              <div className="space-y-2">
+                <FormLabel>
+                  Custodials ({dApp?.custodialGroup.Quorum} of{" "}
+                  {dApp?.custodialGroup.Custodials.length} required)
+                </FormLabel>
+                <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-input bg-background p-2">
+                  {dApp?.custodialGroup.Custodials.map((custodial, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-col space-y-1 text-sm"
+                    >
+                      <div className="font-medium">Custodial #{index + 1}</div>
+                      <div className="text-muted-foreground">
+                        BTC Public Key: {custodial.BtcPublicKeyHex}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

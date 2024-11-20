@@ -54,6 +54,7 @@ export const useStakeCustodialModal = create<IModalStore>((set) => ({
 
 export const useUnstakeCustodialModal = create<IModalStore>((set) => ({
   isOpen: false,
-  open: () => set({ isOpen: true }),
-  close: () => set({ isOpen: false }),
+  dApp: undefined,
+  open: (dApp?: DAppInterface) => set({ isOpen: true, dApp }),
+  close: () => set({ isOpen: false, dApp: undefined }),
 }));

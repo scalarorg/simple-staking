@@ -1,3 +1,5 @@
+import { CustodialGroup } from "./custodials";
+
 export interface DApp {
   id: string;
   chainName: string;
@@ -9,6 +11,7 @@ export interface DApp {
   btcPk: string;
   scAddress: string;
   tokenContractAddress: string;
+  custodialGroup: CustodialGroup;
   state: boolean;
 }
 
@@ -26,6 +29,7 @@ export interface CreatePayload {
   rpc_url: string;
   access_token: string;
   token_contract_address: string;
+  custodial_group_name: string;
 }
 
 export interface IdPayload {

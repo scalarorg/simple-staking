@@ -1,23 +1,24 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Psbt, Transaction, address as bitcoinAddress } from "bitcoinjs-lib";
-import { ethers, parseUnits } from "ethers";
+import { parseUnits } from "ethers";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import { decodeErrorResult } from "viem";
-import { useAccount, useChainId, useConnect, useReadContract } from "wagmi";
+import { useAccount, useChainId, useConnect } from "wagmi";
 import { z } from "zod";
 
 import PROTOCOL_ABI from "@/abis/protocol";
-import SBTC_ABI from "@/abis/sbtc";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
+import { useProtocolContract, useSBTCContract } from "@/app/hooks/useContracts";
 import { useRecommendedFees } from "@/app/hooks/useRecommendedFees";
+import { useSBTCAllowance } from "@/app/hooks/useSBTCAllowance";
+import { useSBTCBalance } from "@/app/hooks/useSBTCBalance";
 import { useUnbondModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
-import { useEthersSigner } from "@/utils/ethers";
 
 import { Button } from "../ui/button";
 import {
@@ -132,29 +133,8 @@ export const UnbondModal: React.FC = () => {
     );
   }, [data, bond]);
 
-  const signer = useEthersSigner();
-
-  const sBTC = useMemo(() => {
-    if (!dApp) {
-      return null;
-    }
-    return new ethers.Contract(
-      dApp?.tokenContractAddress as `0x${string}`,
-      SBTC_ABI,
-      signer,
-    );
-  }, [dApp, signer]);
-
-  const protocol = useMemo(() => {
-    if (!dApp) {
-      return null;
-    }
-    return new ethers.Contract(
-      dApp?.scAddress as `0x${string}`,
-      PROTOCOL_ABI,
-      signer,
-    );
-  }, [dApp, signer]);
+  const sBTC = useSBTCContract(dApp ?? null);
+  const protocol = useProtocolContract(dApp ?? null);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -171,24 +151,14 @@ export const UnbondModal: React.FC = () => {
     }
   }, [btcAddress, form]);
 
-  const { data: sbtcBalance } = useReadContract({
-    address: bond?.destinationSmartContractAddress as `0x${string}`,
-    abi: SBTC_ABI,
-    functionName: "balanceOf",
-    args: [address],
-    query: {
-      enabled: !!bond,
-    },
+  const sbtcBalance = useSBTCBalance({
+    contractAddress: bond?.destinationSmartContractAddress as `0x${string}`,
+    userAddress: address,
   });
 
-  const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: dApp?.tokenContractAddress as `0x${string}`,
-    abi: SBTC_ABI,
-    functionName: "allowance",
-    args: [address, dApp?.scAddress as `0x${string}`],
-    query: {
-      enabled: !!dApp && !!bond,
-    },
+  const { allowance, refetchAllowance } = useSBTCAllowance({
+    dApp,
+    userAddress: address,
   });
 
   const [status, setStatus] = useState<string>("");
@@ -328,6 +298,7 @@ export const UnbondModal: React.FC = () => {
 
       setStatus("Unstaking the token");
 
+      // TODO: Split to hook
       const txBurn = await protocol.unstake(
         bond.sourceChain, // destination chain of the unbond = source chain of the bond
         MOCK_ZERO_BYTES,
