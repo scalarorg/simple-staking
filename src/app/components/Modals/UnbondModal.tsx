@@ -2,22 +2,25 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Psbt, Transaction, address as bitcoinAddress } from "bitcoinjs-lib";
 import { parseUnits } from "ethers";
-import { Loader2 } from "lucide-react";
+import { Loader2, XIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { IoMdClose } from "react-icons/io";
 import { decodeErrorResult } from "viem";
 import { useAccount, useChainId, useConnect } from "wagmi";
 import { z } from "zod";
 
 import PROTOCOL_ABI from "@/abis/protocol";
+import SBTC_ABI from "@/abis/sbtc";
+import { useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
-import { useERC20Contract } from "@/app/hooks/useContracts";
+import {
+  useERC20Contract,
+  useProtocolContract,
+} from "@/app/hooks/useContracts";
 import { useRecommendedFees } from "@/app/hooks/useRecommendedFees";
 import { useUnbondModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
-import { useVault } from "@/app/context/VaultContext";
 
 import { Button } from "../ui/button";
 import {
@@ -41,8 +44,6 @@ const FormSchema = z.object({
     })
     .min(12, "Invalid BTC address"),
 });
-
-const MOCK_ZERO_BYTES = "0x0000000000000000000000000000000000000000";
 
 interface TxInput {
   script_pubkey: Buffer;
@@ -132,17 +133,14 @@ export const UnbondModal: React.FC = () => {
     );
   }, [data, bond]);
 
-  const {
-    sBTC,
-    protocol,
-    sbtcBalance,
-    allowance,
-    refetchAllowance,
-    approve,
-    unstake,
-    loading,
-    error,
-  } = useERC20Contract(dApp!.tokenContractAddress, dApp!.scAddress, address!);
+  const { balance, allowance, approve } = useERC20Contract(
+    SBTC_ABI,
+    dApp?.tokenContractAddress,
+    address,
+    dApp?.scAddress,
+  );
+
+  const { unstake } = useProtocolContract(PROTOCOL_ABI, dApp?.scAddress);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -185,14 +183,6 @@ export const UnbondModal: React.FC = () => {
       throw new Error("BTC receiver address not found");
     }
 
-    if (!sBTC) {
-      throw new Error("sBTC contract not found");
-    }
-
-    if (!protocol) {
-      throw new Error("Protocol contract not found");
-    }
-
     if (!ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS) {
       throw new Error("Covenant pubkeys not found");
     }
@@ -200,10 +190,7 @@ export const UnbondModal: React.FC = () => {
     const tokenBurnAmount = bond.amount;
 
     try {
-      if (
-        Number(sbtcBalance) <= 0 ||
-        Number(sbtcBalance) < Number(tokenBurnAmount)
-      ) {
+      if (Number(balance) <= 0 || Number(balance) < Number(tokenBurnAmount)) {
         throw new Error("Insufficient balance");
       }
 
@@ -280,9 +267,7 @@ export const UnbondModal: React.FC = () => {
         setStatus("Approving the token");
         setIsBurning(true);
 
-        await approve(burnAmount);
-
-        await refetchAllowance();
+        await approve(dApp.scAddress, burnAmount);
 
         setStatus("Approval transaction mined");
       }
@@ -351,7 +336,7 @@ export const UnbondModal: React.FC = () => {
           className="btn btn-circle btn-ghost btn-sm"
           onClick={() => close()}
         >
-          <IoMdClose size={24} />
+          <XIcon size={24} />
         </button>
       </div>
       {address ? (

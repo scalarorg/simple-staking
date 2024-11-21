@@ -1,94 +1,76 @@
 import { ethers } from "ethers";
 import { useCallback, useMemo, useState } from "react";
+import { Abi } from "viem";
 import { useReadContract } from "wagmi";
 
-import PROTOCOL_ABI from "@/abis/protocol";
 import SBTC_ABI from "@/abis/sbtc";
 import { useEthersSigner } from "@/utils/ethers";
 
 const MOCK_ZERO_BYTES = "0x0000000000000000000000000000000000000000";
 
-// export function useSBTCContract(tokenContractAddress: string) {
-//   const signer = useEthersSigner();
-
-//   return useMemo(() => {
-//     if (!tokenContractAddress) {
-//       return null;
-//     }
-//     return new ethers.Contract(
-//       tokenContractAddress as `0x${string}`,
-//       SBTC_ABI,
-//       signer,
-//     );
-//   }, [tokenContractAddress, signer]);
-// }
-
-// export function useProtocolContract(scAddress: string) {
-//   const signer = useEthersSigner();
-
-//   return useMemo(() => {
-//     if (!scAddress) {
-//       return null;
-//     }
-//     return new ethers.Contract(
-//       scAddress as `0x${string}`,
-//       PROTOCOL_ABI,
-//       signer,
-//     );
-//   }, [scAddress, signer]);
-// }
-
 const Contracts: Record<string, ethers.Contract> = {};
 
-export const useContract = (address: string, abi: any) => {
+export const useContract = (abi: Abi, address?: string) => {
   const signer = useEthersSigner();
   return useMemo(() => {
+    if (!address) return null;
     if (Contracts[address]) {
       return Contracts[address];
     }
-    const contract = new ethers.Contract(address as `0x${string}`, abi, signer);
+    const contract = new ethers.Contract(
+      address as `0x${string}`,
+      abi as any,
+      signer,
+    );
     Contracts[address] = contract;
     return contract;
-  }, [address, signer]);
+  }, [address, signer, abi]);
 };
 
 export const useERC20Contract = (
-  tokenContractAddress: string,
-  scAddress: string,
-  userEthAddress: string,
+  abi: any,
+  contractAddress?: string,
+  senderAddress?: string,
+  spenderAddress?: string,
 ) => {
-  const sBTC = useContract(tokenContractAddress, SBTC_ABI);
-  const protocol = useContract(scAddress, PROTOCOL_ABI);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // -------------
-  const { data: sbtcBalance } = useReadContract({
-    address: scAddress as `0x${string}`,
+  const contract = useContract(abi, contractAddress);
+  const {
+    data: balance,
+    isLoading: isLoadingBalance,
+    error: balanceError,
+  } = useReadContract({
+    address: contractAddress as `0x${string}`,
     abi: SBTC_ABI,
     functionName: "balanceOf",
-    args: [userEthAddress],
+    args: [senderAddress ?? MOCK_ZERO_BYTES],
     query: {
-      enabled: !!userEthAddress,
+      enabled: !!senderAddress && !!contractAddress && !!contract,
     },
   });
-
-  // -------------
-  const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: tokenContractAddress as `0x${string}`,
+  const {
+    data: allowance,
+    refetch: refetchAllowance,
+    isLoading: isLoadingAllowance,
+    error: allowanceError,
+  } = useReadContract({
+    address: contractAddress as `0x${string}`,
     abi: SBTC_ABI,
     functionName: "allowance",
-    args: [userEthAddress, scAddress as `0x${string}`],
+    args: [senderAddress ?? MOCK_ZERO_BYTES, spenderAddress ?? MOCK_ZERO_BYTES],
     query: {
-      enabled: !!tokenContractAddress && !!scAddress && !!userEthAddress,
+      enabled:
+        !!senderAddress && !!spenderAddress && !!contractAddress && !!contract,
     },
   });
 
   const approve = useCallback(
-    async (burnAmount: bigint) => {
+    async (spenderAddress: string, burnAmount: bigint) => {
+      if (!contract) return;
       try {
         setLoading(true);
-        const txApprove = await sBTC.approve(scAddress, burnAmount);
+        const txApprove = await contract.approve(spenderAddress, burnAmount);
         await txApprove.wait();
         await refetchAllowance();
       } catch (error) {
@@ -97,15 +79,35 @@ export const useERC20Contract = (
         setLoading(false);
       }
     },
-    [sBTC],
+    [contract, refetchAllowance],
   );
 
-  // -------------
+  return {
+    isLoadingApprove: loading,
+    approveError: error,
+    balance,
+    isLoadingBalance,
+    balanceError,
+    allowance,
+    isLoadingAllowance,
+    allowanceError,
+    refetchAllowance,
+    approve,
+  };
+};
+
+export const useProtocolContract = (abi: any, address?: string) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const contract = useContract(abi, address);
+
   const unstake = useCallback(
     async (chainID: string, burnAmount: bigint, psbt: string) => {
+      if (!contract) return;
       try {
         setLoading(true);
-        const txBurn = await protocol.unstake(
+        const txBurn = await contract.unstake(
           chainID, // destination chain of the unbond = source chain of the bond
           MOCK_ZERO_BYTES,
           burnAmount,
@@ -118,18 +120,12 @@ export const useERC20Contract = (
         setLoading(false);
       }
     },
-    [protocol],
+    [contract],
   );
 
   return {
-    sBTC,
-    protocol,
-    sbtcBalance,
-    allowance,
-    refetchAllowance,
-    approve,
+    unstakeLoading: loading,
+    unstakeError: error,
     unstake,
-    loading,
-    error,
   };
 };

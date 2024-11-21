@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
-import { IoMdClose } from "react-icons/io";
+import { XIcon } from "lucide-react";
 import { z } from "zod";
 import { Psbt } from "bitcoinjs-lib";
 import Link from "next/link";
@@ -228,7 +228,7 @@ export const StakeCustodialModal = () => {
           className="btn btn-circle btn-ghost btn-sm"
           onClick={() => close()}
         >
-          <IoMdClose size={24} />
+          <XIcon size={24} />
         </button>
       </div>
       <Form {...form}>

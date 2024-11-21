@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { IoMdClose } from "react-icons/io";
+import { XIcon } from "lucide-react";
 
 import { postDApp } from "@/app/api/dApp";
 import { useAddDAppModal } from "@/app/stores/modal";
@@ -88,7 +88,7 @@ export const AddDAppModal: React.FC<{}> = () => {
           className="btn btn-circle btn-ghost btn-sm"
           onClick={() => close()}
         >
-          <IoMdClose size={24} />
+          <XIcon size={24} />
         </button>
       </div>
       <div className="flex flex-1 flex-col">

@@ -8,9 +8,11 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId, useConnect } from "wagmi";
 import { z } from "zod";
 
+import PROTOCOL_ABI from "@/abis/protocol";
+import SBTC_ABI from "@/abis/sbtc";
 import { Button } from "@/app/components/ui/button";
 import {
   Form,
@@ -25,7 +27,10 @@ import { TransactionRateSelect } from "@/app/components/ui/TransactionRateSelect
 import { toast } from "@/app/components/ui/use-toast";
 import { useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
-import { useERC20Contract } from "@/app/hooks/useContracts";
+import {
+  useERC20Contract,
+  useProtocolContract,
+} from "@/app/hooks/useContracts";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useUnstakeCustodialModal } from "@/app/stores/modal";
 
@@ -54,7 +59,7 @@ const FormSchema = z.object({
 });
 
 export const UnstakeCustodialModal: React.FC = () => {
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const { isOpen, close, dApp } = useUnstakeCustodialModal();
   const { address: btcAddress, pubkey: stakerPubkey } = useWalletInfo();
 
@@ -66,17 +71,16 @@ export const UnstakeCustodialModal: React.FC = () => {
 
   const feeRates = useFeeRates(isOpen, address, mempoolClient);
 
-  const {
-    sBTC,
-    protocol,
-    sbtcBalance,
-    allowance,
-    refetchAllowance,
-    approve,
-    unstake,
-    loading,
-    error,
-  } = useERC20Contract(dApp!.tokenContractAddress, dApp!.scAddress, address!);
+  const { balance, allowance, approve } = useERC20Contract(
+    SBTC_ABI,
+    dApp?.tokenContractAddress,
+    address,
+    dApp?.scAddress,
+  );
+
+  const { unstake } = useProtocolContract(PROTOCOL_ABI, dApp?.scAddress);
+
+  const vault = useVault();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -94,8 +98,6 @@ export const UnstakeCustodialModal: React.FC = () => {
     }
   }, [btcAddress, form]);
 
-  const vault = useVault();
-
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!dApp) return;
     const { btcReceiverAddress, unstakeAmount, mintFeeRate, customFeeRate } =
@@ -104,17 +106,8 @@ export const UnstakeCustodialModal: React.FC = () => {
       if (!walletProvider) {
         throw new Error("Wallet provider not found");
       }
-      if (!sBTC) {
-        throw new Error("sBTC contract not found");
-      }
-      if (!protocol) {
-        throw new Error("Protocol contract not found");
-      }
 
-      if (
-        Number(sbtcBalance) <= 0 ||
-        Number(sbtcBalance) < Number(unstakeAmount)
-      ) {
+      if (Number(balance) <= 0 || Number(balance) < Number(unstakeAmount)) {
         throw new Error("Insufficient balance");
       }
 
@@ -202,9 +195,7 @@ export const UnstakeCustodialModal: React.FC = () => {
       if (!allowance || Number(allowance) < Number(burnAmount)) {
         setStatus("Approving the token");
 
-        await approve(burnAmount);
-
-        await refetchAllowance();
+        await approve(dApp.scAddress, burnAmount);
 
         setStatus("Approval transaction mined");
       }
@@ -287,7 +278,7 @@ export const UnstakeCustodialModal: React.FC = () => {
               <FormLabel className="text-gray-500">
                 Available sBTC Balance
               </FormLabel>
-              <Input readOnly value={sbtcBalance?.toString() || "0"} />
+              <Input readOnly value={balance?.toString() || "0"} />
             </div>
 
             <FormField
@@ -347,8 +338,33 @@ export const UnstakeCustodialModal: React.FC = () => {
           </form>
         </Form>
       ) : (
-        <div>Please connect your wallet</div>
+        <ConnectWallet />
       )}
     </GeneralModal>
+  );
+};
+
+const ConnectWallet: React.FC = () => {
+  const chainId = useChainId();
+  const { connectors, connect, status, error } = useConnect();
+
+  return (
+    <div className="flex flex-col gap-4 items-center">
+      <h2>Choose Ethereum Wallet</h2>
+      <div className="flex gap-2 flex-col w-full">
+        {connectors.map((connector) => (
+          <button
+            className="btn btn-gray-700 hover:bg-gray-500 transition-colors"
+            key={connector.uid}
+            onClick={() => connect({ connector, chainId })}
+            type="button"
+          >
+            {connector.name}
+          </button>
+        ))}
+      </div>
+      {status === "pending" && <Loader2 size={32} className="animate-spin" />}
+      {error?.message && <div>Error: {error.message}</div>}
+    </div>
   );
 };

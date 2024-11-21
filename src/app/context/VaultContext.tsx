@@ -1,7 +1,7 @@
 "use client";
 
-import { memo, useCallback, useEffect, useState } from "react";
 import { TNetwork } from "@scalar-lab/bitcoin-vault";
+import { memo, useCallback, useEffect, useState } from "react";
 
 import { ProjectENV } from "@/env";
 
@@ -40,11 +40,6 @@ export const useVault = () => {
         aliasedNetwork,
       );
   }
-
-  console.log("--- public tag ---", ProjectENV.NEXT_PUBLIC_TAG);
-  console.log("--- public service tag ---", ProjectENV.NEXT_PUBLIC_SERVICE_TAG);
-  console.log("--- public version ---", ProjectENV.NEXT_PUBLIC_VERSION);
-  console.log("--- network ---", aliasedNetwork);
 
   return vaultUtilsInstances[aliasedNetwork];
 };

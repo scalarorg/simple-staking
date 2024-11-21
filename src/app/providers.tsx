@@ -5,9 +5,14 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "next-themes";
 import React from "react";
 import { WagmiProvider } from "wagmi";
+import { ReactQueryStreamedHydration } from "@tanstack/react-query-next-experimental";
 
+import { ErrorProvider } from "./context/Error/ErrorContext";
+import NetworkProvicer from "./context/NetworkProvicer";
+import { TermsProvider } from "./context/Terms/TermsContext";
+import WalletProvider from "./context/WalletProvider";
+import { AppLayout } from "./layout/AppLayout";
 import { getConfig } from "./wagmi";
-import { ClientWrapper } from "./wrapper";
 
 function Providers({ children }: React.PropsWithChildren) {
   const [config] = React.useState(getConfig());
@@ -17,7 +22,17 @@ function Providers({ children }: React.PropsWithChildren) {
     <ThemeProvider defaultTheme="dark" attribute="data-theme">
       <WagmiProvider config={config}>
         <QueryClientProvider client={client}>
-          <ClientWrapper>{children}</ClientWrapper>
+          <ErrorProvider>
+            <NetworkProvicer>
+              <TermsProvider>
+                <WalletProvider>
+                  <ReactQueryStreamedHydration>
+                    <AppLayout>{children}</AppLayout>
+                  </ReactQueryStreamedHydration>
+                </WalletProvider>
+              </TermsProvider>
+            </NetworkProvicer>
+          </ErrorProvider>
           <ReactQueryDevtools
             buttonPosition="bottom-left"
             initialIsOpen={false}

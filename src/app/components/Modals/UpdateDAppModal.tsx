@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { XIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { IoMdClose } from "react-icons/io";
 
 import { updateDApp } from "@/app/api/dApp";
 import { useDAppModal } from "@/app/stores/modal";
@@ -78,7 +78,7 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
         setLoading(false);
         queryClient.invalidateQueries({ queryKey: ["getListDApps"] });
       });
-  }, [updatedDApp, setLoading, close, queryClient]);
+  }, [updatedDApp, setLoading, close, queryClient, newCustodialGroupName]);
 
   useEffect(() => {
     if (!updatedDApp) {
@@ -97,7 +97,7 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
           className="btn btn-circle btn-ghost btn-sm"
           onClick={() => close()}
         >
-          <IoMdClose size={24} />
+          <XIcon size={24} />
         </button>
       </div>
       <div className="flex flex-1 flex-col">

@@ -49,7 +49,7 @@ const FormSchema = z.object({
     .optional(),
 });
 
-const MintTxModal: React.FC<{}> = () => {
+export const MintTxModal: React.FC<{}> = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -464,5 +464,3 @@ const MintTxModal: React.FC<{}> = () => {
     </>
   );
 };
-
-export default MintTxModal;
