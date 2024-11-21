@@ -22,9 +22,10 @@ import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/components/ui/use-toast";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useMintTxModal } from "@/app/stores/modal";
-import { ExtendedProjectENV, ProjectENV } from "@/env";
+import { ExtendedProjectENV } from "@/env";
 
 import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
+import { ChainType, DestinationChain } from "@scalar-lab/bitcoin-vault";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -70,15 +71,10 @@ const MintTxModal: React.FC<{}> = () => {
 
   const scalarVaultModule = useScalarVaultModule();
 
-  console.log({ scalarVaultModule });
-
   const vault = useVault();
-  console.log({ vault: vault.buildStakingOutput });
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!dApp) return;
-
-    return;
 
     const { destRecipientAddress, stakingAmount, mintFeeRate, customFeeRate } =
       data;
@@ -155,23 +151,21 @@ const MintTxModal: React.FC<{}> = () => {
       }
 
       const { psbt: unsignedVaultPsbt, fee: estimatedFee } =
-        vault.buildStakingOutput(
-          ProjectENV.NEXT_PUBLIC_TAG,
-          ProjectENV.NEXT_PUBLIC_VERSION,
-          btcNetwork,
-          address,
-          btcUserPk,
-          btcServicePk,
-          custodial_pubkeys_uint8array,
-          dApp.custodialGroup.Quorum,
-          false,
-          BigInt(id),
-          smartContractAddress,
-          destAddress,
-          mappedAddressUtxos,
-          selectedFeeRate,
-          BigInt(stakingAmount),
-        );
+        vault.buildStakingOutput({
+          stakingAmount: BigInt(stakingAmount),
+          stakerPubkey: btcUserPk,
+          stakerAddress: address,
+          protocolPubkey: btcServicePk,
+          custodialPubkeys: custodial_pubkeys_uint8array,
+          covenantQuorum: dApp.custodialGroup.Quorum,
+          haveOnlyCovenants: false,
+          destinationChain: new DestinationChain(ChainType.EVM, BigInt(id)), // TODO: handle ChainType according to dApp
+          destinationContractAddress: smartContractAddress,
+          destinationRecipientAddress: destAddress,
+          availableUTXOs: mappedAddressUtxos,
+          feeRate: selectedFeeRate,
+          rbf: false,
+        });
 
       const hexPsbt = unsignedVaultPsbt.toHex();
 

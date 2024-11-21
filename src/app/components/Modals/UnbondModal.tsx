@@ -12,10 +12,8 @@ import { z } from "zod";
 
 import PROTOCOL_ABI from "@/abis/protocol";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
-import { useProtocolContract, useSBTCContract } from "@/app/hooks/useContracts";
+import { useERC20Contract } from "@/app/hooks/useContracts";
 import { useRecommendedFees } from "@/app/hooks/useRecommendedFees";
-import { useSBTCAllowance } from "@/app/hooks/useSBTCAllowance";
-import { useSBTCBalance } from "@/app/hooks/useSBTCBalance";
 import { useUnbondModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
@@ -33,6 +31,7 @@ import {
 import { Input } from "../ui/input";
 import { toast } from "../ui/use-toast";
 
+import { useVault } from "@/app/context/VaultContext";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -133,8 +132,17 @@ export const UnbondModal: React.FC = () => {
     );
   }, [data, bond]);
 
-  const sBTC = useSBTCContract(dApp ?? null);
-  const protocol = useProtocolContract(dApp ?? null);
+  const {
+    sBTC,
+    protocol,
+    sbtcBalance,
+    allowance,
+    refetchAllowance,
+    approve,
+    unstake,
+    loading,
+    error,
+  } = useERC20Contract(dApp!.tokenContractAddress, dApp!.scAddress, address!);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -151,18 +159,10 @@ export const UnbondModal: React.FC = () => {
     }
   }, [btcAddress, form]);
 
-  const sbtcBalance = useSBTCBalance({
-    contractAddress: bond?.destinationSmartContractAddress as `0x${string}`,
-    userAddress: address,
-  });
-
-  const { allowance, refetchAllowance } = useSBTCAllowance({
-    dApp,
-    userAddress: address,
-  });
-
   const [status, setStatus] = useState<string>("");
   const [isBurning, setIsBurning] = useState<boolean>(false);
+
+  const vault = useVault();
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!bond) {
@@ -244,18 +244,16 @@ export const UnbondModal: React.FC = () => {
         dApp.btcPk.replace("0x", ""),
       );
 
-      const unsignedPsbtHex =
-        await globalThis.scalarVaultModule.buildUnsignedUnstakingUserProtocolPsbt(
-          ProjectENV.NEXT_PUBLIC_TAG,
-          ProjectENV.NEXT_PUBLIC_VERSION,
-          input,
-          output,
-          btcUserPk,
-          btcProtocolPk,
-          ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
-          ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
-          ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
-        );
+      const unsignedPsbtHex = vault.buildUnsignedUnstakingUserProtocolPsbt({
+        input,
+        output,
+        stakerPubkey: btcUserPk,
+        protocolPubkey: btcProtocolPk,
+        covenantPubkeys: ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
+        covenantQuorum: ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
+        haveOnlyCovenants: false,
+        rbf: false,
+      });
 
       setStatus("Signing the PSBT");
 
@@ -282,13 +280,10 @@ export const UnbondModal: React.FC = () => {
         setStatus("Approving the token");
         setIsBurning(true);
 
-        const txApprove = await sBTC.approve(dApp.scAddress, burnAmount);
-
-        setStatus("Waiting for approval transaction to be mined");
-
-        await txApprove.wait();
+        await approve(burnAmount);
 
         await refetchAllowance();
+
         setStatus("Approval transaction mined");
       }
 
@@ -298,17 +293,7 @@ export const UnbondModal: React.FC = () => {
 
       setStatus("Unstaking the token");
 
-      // TODO: Split to hook
-      const txBurn = await protocol.unstake(
-        bond.sourceChain, // destination chain of the unbond = source chain of the bond
-        MOCK_ZERO_BYTES,
-        burnAmount,
-        psbt,
-      );
-
-      setStatus("Waiting for burning transaction to be mined");
-
-      await txBurn.wait();
+      await unstake(bond.sourceChain, burnAmount, psbt);
 
       setStatus("Token unstaked successfully");
       close();

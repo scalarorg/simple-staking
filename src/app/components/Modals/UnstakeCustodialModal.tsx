@@ -23,11 +23,9 @@ import { TransactionRateSelect } from "@/app/components/ui/TransactionRateSelect
 import { toast } from "@/app/components/ui/use-toast";
 import { useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
-import { useProtocolContract, useSBTCContract } from "@/app/hooks/useContracts";
+import { useERC20Contract } from "@/app/hooks/useContracts";
 import { useExchangeRate } from "@/app/hooks/useExchangeRate";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
-import { useSBTCAllowance } from "@/app/hooks/useSBTCAllowance";
-import { useSBTCBalance } from "@/app/hooks/useSBTCBalance";
 import { useUnstakeCustodialModal } from "@/app/stores/modal";
 import { toOutputScript } from "bitcoinjs-lib/src/address";
 import { parseUnits } from "ethers";
@@ -68,16 +66,17 @@ export const UnstakeCustodialModal: React.FC = () => {
 
   const feeRates = useFeeRates(isOpen, address, mempoolClient);
 
-  const sBTC = useSBTCContract(dApp ?? null);
-  const protocol = useProtocolContract(dApp ?? null);
-  const sbtcBalance = useSBTCBalance({
-    contractAddress: dApp?.tokenContractAddress as `0x${string}`,
-    userAddress: address,
-  });
-  const { allowance, refetchAllowance } = useSBTCAllowance({
-    dApp,
-    userAddress: address,
-  });
+  const {
+    sBTC,
+    protocol,
+    sbtcBalance,
+    allowance,
+    refetchAllowance,
+    approve,
+    unstake,
+    loading,
+    error,
+  } = useERC20Contract(dApp!.tokenContractAddress, dApp!.scAddress, address!);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -201,13 +200,10 @@ export const UnstakeCustodialModal: React.FC = () => {
       if (!allowance || Number(allowance) < Number(burnAmount)) {
         setStatus("Approving the token");
 
-        const txApprove = await sBTC.approve(dApp.scAddress, burnAmount);
-
-        setStatus("Waiting for approval transaction to be mined");
-
-        await txApprove.wait();
+        await approve(burnAmount);
 
         await refetchAllowance();
+
         setStatus("Approval transaction mined");
       }
 
@@ -217,17 +213,7 @@ export const UnstakeCustodialModal: React.FC = () => {
 
       setStatus("Unstaking the token");
 
-      // TODO: Split to hook
-      const txBurn = await protocol.unstake(
-        dApp.chainId, // destination chain of the unbond = source chain of the bond
-        MOCK_ZERO_BYTES,
-        burnAmount,
-        psbt,
-      );
-
-      setStatus("Waiting for burning transaction to be mined");
-
-      await txBurn.wait();
+      await unstake(dApp.chainId, burnAmount, psbt);
 
       setStatus("Token unstaked successfully");
       close();
