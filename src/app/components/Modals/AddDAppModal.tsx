@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
@@ -10,9 +9,8 @@ import { BtcAddress } from "../Staking/Form/BtcAddress";
 import { BtcPubKey } from "../Staking/Form/BtcPubkey";
 import { ChainName } from "../Staking/Form/ChainName";
 import { InputField } from "../Staking/Form/InputField";
-
-import { getCustodialGroupNames } from "@/app/api/custodial";
 import { SelectField } from "../Staking/Form/SelectField";
+
 import { GeneralModal } from "./GeneralModal";
 
 export const AddDAppModal: React.FC<{}> = () => {
@@ -30,20 +28,6 @@ export const AddDAppModal: React.FC<{}> = () => {
   const [custodialGroupName, setCustodialGroupName] = useState("");
   const config = getConfig();
   const chains = config.chains;
-
-  const {
-    data: custodialGroups,
-    isLoading,
-    error: custodialGroupsError,
-    isError: hasCustodialGroupsError,
-  } = useQuery({
-    queryKey: ["getCustodialGroupNames"],
-    queryFn: () => getCustodialGroupNames(),
-    refetchInterval: 60000, // 1 minute
-    retry: (failureCount, error) => {
-      return failureCount <= 3;
-    },
-  });
 
   const handleChainNameChange = (input: string) => {
     setChainName(input);
@@ -87,7 +71,6 @@ export const AddDAppModal: React.FC<{}> = () => {
       btcPubKey,
       smartContractAddress,
       tokenContractAddress,
-      custodialGroupName,
     )
       .then(() => {
         console.log("Successfully added DApp");
@@ -135,14 +118,10 @@ export const AddDAppModal: React.FC<{}> = () => {
             onChange={setCustodialGroupName}
             reset={false}
             initValue=""
-            options={custodialGroups?.groupNames || []}
+            options={["All"]}
             label="Custodial Group"
-            placeholder={isLoading ? "Loading..." : "Select Custodial Group"}
-            errorMessage={
-              hasCustodialGroupsError
-                ? "Failed to load custodial groups"
-                : "Please select a custodial group"
-            }
+            placeholder="Select Custodial Group"
+            errorMessage="Please select a custodial group"
           />
         </div>
         <div className="flex flex-1 flex-col hidden">

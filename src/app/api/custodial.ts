@@ -24,25 +24,25 @@
 //   return { custodialGroups };
 // };
 
-export const getCustodialGroupNames = async (): Promise<{
-  groupNames: string[];
-}> => {
-  // TODO: uncomment this after xchains-api is done implementing the custodial group names
-  //   const response = await apiWrapper(
-  //     "GET",
-  //     "/v1/custodial/group/names",
-  //     "Error getting custodial group names",
-  //   );
-  //   return response.data;
-  return { groupNames: ["All"] };
-};
+// export const getCustodialGroupNames = async (): Promise<{
+//   groupNames: string[];
+// }> => {
+//   // TODO: uncomment this after xchains-api is done implementing the custodial group names
+//   const response = await apiWrapper(
+//     "GET",
+//     "/v1/custodial/group/names",
+//     "Error getting custodial group names",
+//   );
+//   return response.data;
+//   return { groupNames: ["All"] };
+// };
 
-export const getCustodialGroups = async (): Promise<{
-  groups: CustodialGroup[];
-}> => {
-  return {
-    groups: [
-      { ID: 0, Name: "All", BtcAddress: "", Quorum: 0, Custodials: [] },
-    ],
-  };
-};
+// export const getCustodialGroups = async (): Promise<{
+//   groups: CustodialGroup[];
+// }> => {
+//   return {
+//     groups: [
+//       { ID: 0, Name: "All", BtcAddress: "", Quorum: 0, Custodials: [] },
+//     ],
+//   };
+// };

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ChainType, DestinationChain } from "@scalar-lab/bitcoin-vault";
 import { Psbt } from "bitcoinjs-lib";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -20,12 +21,11 @@ import {
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/components/ui/use-toast";
+import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useMintTxModal } from "@/app/stores/modal";
 import { ExtendedProjectENV } from "@/env";
 
-import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
-import { ChainType, DestinationChain } from "@scalar-lab/bitcoin-vault";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({

@@ -1,3 +1,5 @@
+import { ProjectENV } from "@/env";
+
 import {
   CreatePayload,
   DApp,
@@ -9,8 +11,6 @@ import {
 import { getConfig } from "../wagmi";
 
 import { apiWrapper } from "./apiWrapper";
-
-import { ProjectENV } from "@/env";
 
 // TODO: remove this after xchains-api is done implemeting the chainId and chainEndpoint
 const config = getConfig();
@@ -50,7 +50,7 @@ export const getDApps = async (): Promise<{ dApps: DApp[] }> => {
           "tb1p7ryudk57kwsth09rn4qy5rmvpapgw2h9pjs5nhhc8u9g2un8egcswpg9xk",
         Quorum: ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
         Custodials: ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS!.map(
-          (pubkey, index) => ({
+          (pubkey: string, index: number) => ({
             ID: index,
             Name: "Custodial" + (index + 1),
             BtcPublicKeyHex: pubkey,
@@ -73,7 +73,7 @@ export const postDApp = async (
   publicKeyHex: string,
   smartContractAddress: string,
   tokenContractAddress: string,
-  custodialGroupName: string,
+  // custodialGroupName: string,
 ) => {
   // TODO: Update this after xchains-api done
   const payload: CreatePayload = {
@@ -86,7 +86,7 @@ export const postDApp = async (
     rpc_url: dappBtcSignerEndpoint,
     access_token: accessToken,
     token_contract_address: tokenContractAddress,
-    custodial_group_name: custodialGroupName,
+    // custodial_group_name: custodialGroupName,
   };
 
   const response = await apiWrapper(
@@ -124,7 +124,7 @@ export const updateDApp = async (
     rpc_url: dappBtcSignerEndpoint,
     access_token: accessToken,
     token_contract_address: tokenContractAddress,
-    custodial_group_name: custodialGroupName,
+    // custodial_group_name: custodialGroupName,
   };
   // TODO: Update this after xchains-api done
   const response = await apiWrapper(

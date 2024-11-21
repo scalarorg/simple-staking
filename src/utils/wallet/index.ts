@@ -11,12 +11,12 @@ export const toNetwork = (network: Network): networks.Network => {
     case Network.MAINNET:
       return networks.bitcoin;
     case Network.TESTNET:
-    case Network.SIGNET:
+      // case Network.SIGNET:
       return networks.testnet;
     case Network.REGTEST:
       return networks.regtest;
     case Network.TESTNET4:
-      return networks.testnet
+      return networks.testnet;
     default:
       throw new Error("Unsupported network");
   }

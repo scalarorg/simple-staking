@@ -1,5 +1,6 @@
-import SBTC_ABI from "@/abis/sbtc";
 import { useReadContract } from "wagmi";
+
+import SBTC_ABI from "@/abis/sbtc";
 
 interface UseSBTCBalanceProps {
   contractAddress?: `0x${string}`; // bond?.destinationSmartContractAddress

@@ -17,6 +17,7 @@ import { useRecommendedFees } from "@/app/hooks/useRecommendedFees";
 import { useUnbondModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
+import { useVault } from "@/app/context/VaultContext";
 
 import { Button } from "../ui/button";
 import {
@@ -31,7 +32,6 @@ import {
 import { Input } from "../ui/input";
 import { toast } from "../ui/use-toast";
 
-import { useVault } from "@/app/context/VaultContext";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({

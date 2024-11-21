@@ -1,6 +1,7 @@
+import { useReadContract } from "wagmi";
+
 import SBTC_ABI from "@/abis/sbtc";
 import { DApp } from "@/app/types/dApps";
-import { useReadContract } from "wagmi";
 
 interface UseSBTCAllowanceProps {
   dApp: DApp | undefined | null;

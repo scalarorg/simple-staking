@@ -2,6 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Psbt } from "bitcoinjs-lib";
+import { toOutputScript } from "bitcoinjs-lib/src/address";
+import { parseUnits } from "ethers";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -24,11 +26,9 @@ import { toast } from "@/app/components/ui/use-toast";
 import { useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useERC20Contract } from "@/app/hooks/useContracts";
-import { useExchangeRate } from "@/app/hooks/useExchangeRate";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useUnstakeCustodialModal } from "@/app/stores/modal";
-import { toOutputScript } from "bitcoinjs-lib/src/address";
-import { parseUnits } from "ethers";
+
 import { GeneralModal } from "./GeneralModal";
 
 const MOCK_ZERO_BYTES = "0x0000000000000000000000000000000000000000";
@@ -123,7 +123,9 @@ export const UnstakeCustodialModal: React.FC = () => {
         throw new Error("Invalid burn amount");
       }
 
-      const btcReturnAmount = useExchangeRate(dApp, unstakeAmount);
+      // TODO: Implement exchange rate
+      // const btcReturnAmount = useExchangeRate(dApp, unstakeAmount);
+      const btcReturnAmount = Number(unstakeAmount);
 
       const addressUtxos = await walletProvider.getUtxos(
         dApp.custodialGroup.BtcAddress,
@@ -257,17 +259,21 @@ export const UnstakeCustodialModal: React.FC = () => {
                   {dApp?.custodialGroup.Custodials.length} required)
                 </FormLabel>
                 <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-input bg-background p-2">
-                  {dApp?.custodialGroup.Custodials.map((custodial, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-col space-y-1 text-sm"
-                    >
-                      <div className="font-medium">Custodial #{index + 1}</div>
-                      <div className="text-muted-foreground">
-                        BTC Public Key: {custodial.BtcPublicKeyHex}
+                  {dApp?.custodialGroup.Custodials.map(
+                    (custodial: { BtcPublicKeyHex: string }, index: number) => (
+                      <div
+                        key={index}
+                        className="flex flex-col space-y-1 text-sm"
+                      >
+                        <div className="font-medium">
+                          Custodial #{index + 1}
+                        </div>
+                        <div className="text-muted-foreground">
+                          BTC Public Key: {custodial.BtcPublicKeyHex}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ),
+                  )}
                 </div>
               </div>
             </div>

@@ -1,11 +1,12 @@
 "use client";
 
 import { memo, useCallback, useEffect, useState } from "react";
+import { TNetwork } from "@scalar-lab/bitcoin-vault";
 
 import { ProjectENV } from "@/env";
 
-import { TNetwork } from "@scalar-lab/bitcoin-vault";
 import { LoadingView } from "../components/Loading/Loading";
+
 import { useNetwork } from "./NetworkProvicer";
 
 declare global {

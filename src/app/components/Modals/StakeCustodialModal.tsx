@@ -4,6 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import { z } from "zod";
+import { Psbt } from "bitcoinjs-lib";
+import Link from "next/link";
+import { useAccount, useChainId } from "wagmi";
 
 import { Button } from "@/app/components/ui/button";
 import {
@@ -18,14 +21,11 @@ import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/components/ui/use-toast";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useStakeCustodialModal } from "@/app/stores/modal";
-
 import { TransactionRateSelect } from "@/app/components/ui/TransactionRateSelect";
 import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { ExtendedProjectENV } from "@/env";
-import { Psbt } from "bitcoinjs-lib";
-import Link from "next/link";
-import { useAccount, useChainId } from "wagmi";
+
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
