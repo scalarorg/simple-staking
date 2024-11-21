@@ -21,6 +21,7 @@ import {
 import { Input } from "@/app/components/ui/input";
 import { TransactionRateSelect } from "@/app/components/ui/TransactionRateSelect";
 import { toast } from "@/app/components/ui/use-toast";
+import { useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useProtocolContract, useSBTCContract } from "@/app/hooks/useContracts";
 import { useExchangeRate } from "@/app/hooks/useExchangeRate";
@@ -28,6 +29,7 @@ import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useSBTCAllowance } from "@/app/hooks/useSBTCAllowance";
 import { useSBTCBalance } from "@/app/hooks/useSBTCBalance";
 import { useUnstakeCustodialModal } from "@/app/stores/modal";
+import { toOutputScript } from "bitcoinjs-lib/src/address";
 import { parseUnits } from "ethers";
 import { GeneralModal } from "./GeneralModal";
 
@@ -56,7 +58,7 @@ const FormSchema = z.object({
 export const UnstakeCustodialModal: React.FC = () => {
   const { address } = useAccount();
   const { isOpen, close, dApp } = useUnstakeCustodialModal();
-  const { address: btcAddress } = useWalletInfo();
+  const { address: btcAddress, pubkey: stakerPubkey } = useWalletInfo();
 
   const { mempoolClient, walletProvider, btcNetwork, networkConfig } =
     useWalletProvider();
@@ -93,6 +95,8 @@ export const UnstakeCustodialModal: React.FC = () => {
     }
   }, [btcAddress, form]);
 
+  const vault = useVault();
+
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!dApp) return;
     const { btcReceiverAddress, unstakeAmount, mintFeeRate, customFeeRate } =
@@ -128,8 +132,10 @@ export const UnstakeCustodialModal: React.FC = () => {
       );
 
       const mappedAddressUtxos = addressUtxos.map((utxo) => ({
-        ...utxo,
-        status: {} as any,
+        script_pubkey: Uint8Array.from(Buffer.from(utxo.scriptPubKey, "hex")),
+        txid: utxo.txid,
+        vout: utxo.vout,
+        value: BigInt(utxo.value),
       }));
 
       const selectedFeeRate = (() => {
@@ -151,12 +157,46 @@ export const UnstakeCustodialModal: React.FC = () => {
       setStatus("Processing unstake request...");
 
       // TODO: APPLY NEW UNSTAKING CUSTODIAL LOGIC HERE
-      const unsignedPsbtHexString =
-        "70736274ff0100520200000001be770f80f43b611db94b0d594218f4a6f9836f0f65ca0df842b6865dc7fe73910000000000fdffffff016f2600000000000016001450dceca158a9c872eb405d52293d351110572c9e000000000001012b102700000000000022512067bff357780a93826a444646aec681c4ff1f4316244478c0d611f91a75c93b8a010304000000004215c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac00a6c593bfbb1cdb988a1a9ebc4a5e31cc638de538f5155ed4a847fac4da5711f45202ae31ea8709aeda8194ba3e2f7e7e95e680e8b65135c8983c0a298d17bc5350aad201387aab21303782b17e760c670432559df3968e52cb82cc2d8f9be43a227d5dcacc021161387aab21303782b17e760c670432559df3968e52cb82cc2d8f9be43a227d5dc25018b212098a1c9f95fadf69babfe738c34897215e91707f1fdba99fa5474d93b1f0000000021162ae31ea8709aeda8194ba3e2f7e7e95e680e8b65135c8983c0a298d17bc5350a25018b212098a1c9f95fadf69babfe738c34897215e91707f1fdba99fa5474d93b1f0000000001172050929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0011820adaf76e5a1245ccd6434e59e56eb9b4be82ef7309cd1ecf97ea769ed4e44958f0000";
-      const unsignedPsbtHex = Uint8Array.from(
-        Buffer.from(unsignedPsbtHexString, "hex"),
+      const btcUserPk = scalarVaultModule.hexToBytes(
+        stakerPubkey.replace("0x", ""),
       );
-      const hexPsbt = scalarVaultModule.bytesToHex(unsignedPsbtHex);
+      const btcServicePk = scalarVaultModule.hexToBytes(
+        dApp.btcPk.replace("0x", ""),
+      );
+
+      const numberOfCustodialPubkeys = dApp.custodialGroup.Custodials.length;
+      const custodial_pubkeys_uint8array = new Uint8Array(
+        33 * numberOfCustodialPubkeys,
+      );
+
+      for (let i = 0; i < numberOfCustodialPubkeys; i++) {
+        custodial_pubkeys_uint8array.set(
+          scalarVaultModule.hexToBytes(
+            dApp.custodialGroup.Custodials[i].BtcPublicKeyHex!.replace(
+              "0x",
+              "",
+            ),
+          ),
+          i * 33,
+        );
+      }
+
+      const unsignedVaultPsbt =
+        vault.buildUnsignedUnstakingWithOnlyCovenantsPsbt({
+          inputs: mappedAddressUtxos,
+          output: {
+            value: BigInt(btcReturnAmount),
+            script: toOutputScript(btcReceiverAddress, btcNetwork),
+          },
+          stakerPubkey: btcUserPk,
+          protocolPubkey: btcServicePk,
+          covenantPubkeys: custodial_pubkeys_uint8array,
+          covenantQuorum: dApp.custodialGroup.Quorum,
+          haveOnlyCovenants: true,
+          rbf: true,
+        });
+
+      const hexPsbt = scalarVaultModule.bytesToHex(unsignedVaultPsbt);
 
       if (!allowance || Number(allowance) < Number(burnAmount)) {
         setStatus("Approving the token");

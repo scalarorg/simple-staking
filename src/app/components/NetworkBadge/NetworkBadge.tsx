@@ -13,7 +13,7 @@ export const NetworkBadge: React.FC<NetworkBadgeProps> = () => {
   const { network } = useNetwork();
   return (
     <div className="absolute left-2 top-[6rem]">
-      {[Network.SIGNET, Network.TESTNET].includes(network) && (
+      {[Network.TESTNET, Network.TESTNET4].includes(network) && (
         <>
           <Image src={testnetIcon} alt="Testnet" className="w-[10rem]" />
           {/* 

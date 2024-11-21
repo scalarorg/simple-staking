@@ -24,6 +24,7 @@ import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useMintTxModal } from "@/app/stores/modal";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
 
+import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -67,8 +68,17 @@ const MintTxModal: React.FC<{}> = () => {
 
   const id = useChainId();
 
+  const scalarVaultModule = useScalarVaultModule();
+
+  console.log({ scalarVaultModule });
+
+  const vault = useVault();
+  console.log({ vault: vault.buildStakingOutput });
+
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!dApp) return;
+
+    return;
 
     const { destRecipientAddress, stakingAmount, mintFeeRate, customFeeRate } =
       data;
@@ -145,7 +155,7 @@ const MintTxModal: React.FC<{}> = () => {
       }
 
       const { psbt: unsignedVaultPsbt, fee: estimatedFee } =
-        globalThis.scalarVaultModule.buildUnsignedStakingPsbt(
+        vault.buildStakingOutput(
           ProjectENV.NEXT_PUBLIC_TAG,
           ProjectENV.NEXT_PUBLIC_VERSION,
           btcNetwork,

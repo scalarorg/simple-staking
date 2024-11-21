@@ -20,8 +20,9 @@ import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useStakeCustodialModal } from "@/app/stores/modal";
 
 import { TransactionRateSelect } from "@/app/components/ui/TransactionRateSelect";
+import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
-import { ExtendedProjectENV, ProjectENV } from "@/env";
+import { ExtendedProjectENV } from "@/env";
 import { Psbt } from "bitcoinjs-lib";
 import Link from "next/link";
 import { useAccount, useChainId } from "wagmi";
@@ -74,6 +75,9 @@ export const StakeCustodialModal = () => {
   if (account.status === "connected") {
     form.setValue("destRecipientAddress", account.address?.toString() || "");
   }
+
+  const scalarVaultModule = useScalarVaultModule();
+  const vault = useVault();
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!dApp) return;
@@ -153,23 +157,22 @@ export const StakeCustodialModal = () => {
       }
 
       const { psbt: unsignedVaultPsbt, fee: estimatedFee } =
-        globalThis.scalarVaultModule.buildUnsignedStakingPsbt(
-          ProjectENV.NEXT_PUBLIC_TAG,
-          ProjectENV.NEXT_PUBLIC_VERSION,
-          btcNetwork,
-          address,
-          btcUserPk,
-          btcServicePk,
-          custodial_pubkeys_uint8array,
-          dApp.custodialGroup.Quorum,
-          true,
-          BigInt(id),
-          smartContractAddress,
-          destAddress,
-          mappedAddressUtxos,
-          selectedFeeRate,
-          BigInt(stakingAmount),
-        );
+        vault.buildStakingOutputWithOnlyCovenants({
+          stakingAmount: BigInt(stakingAmount),
+          stakerPubkey: btcUserPk,
+          stakerAddress: address,
+          custodialPubkeys: custodial_pubkeys_uint8array,
+          covenantQuorum: dApp.custodialGroup.Quorum,
+          destinationChain: new scalarVaultModule.DestinationChain(
+            scalarVaultModule.ChainType.EVM, // TODO: FIX HARD CODE
+            BigInt(id),
+          ),
+          destinationContractAddress: smartContractAddress,
+          destinationRecipientAddress: destAddress,
+          availableUTXOs: mappedAddressUtxos,
+          feeRate: selectedFeeRate,
+          rbf: true,
+        });
 
       const hexPsbt = unsignedVaultPsbt.toHex();
 

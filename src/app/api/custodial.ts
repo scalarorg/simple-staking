@@ -36,3 +36,13 @@ export const getCustodialGroupNames = async (): Promise<{
   //   return response.data;
   return { groupNames: ["All"] };
 };
+
+export const getCustodialGroups = async (): Promise<{
+  groups: CustodialGroup[];
+}> => {
+  return {
+    groups: [
+      { ID: 0, Name: "All", BtcAddress: "", Quorum: 0, Custodials: [] },
+    ],
+  };
+};
