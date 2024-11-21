@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChainType, DestinationChain } from "@scalar-lab/bitcoin-vault";
 import { Psbt } from "bitcoinjs-lib";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -10,7 +9,12 @@ import { IoMdClose } from "react-icons/io";
 import { useAccount, useChainId } from "wagmi";
 import { z } from "zod";
 
-import { Button } from "@/app/components/ui/button";
+import { ExtendedProjectENV } from "@/env";
+import { useMintTxModal } from "@/app/stores/modal";
+import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
+import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
+
+import { Button } from "../ui/button";
 import {
   Form,
   FormControl,
@@ -18,13 +22,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/app/components/ui/form";
-import { Input } from "@/app/components/ui/input";
-import { toast } from "@/app/components/ui/use-toast";
-import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
-import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
-import { useMintTxModal } from "@/app/stores/modal";
-import { ExtendedProjectENV } from "@/env";
+} from "../ui/form";
+import { Input } from "../ui/input";
+import { toast } from "../ui/use-toast";
 
 import { GeneralModal } from "./GeneralModal";
 
@@ -70,7 +70,6 @@ export const MintTxModal: React.FC<{}> = () => {
   const id = useChainId();
 
   const scalarVaultModule = useScalarVaultModule();
-
   const vault = useVault();
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
@@ -159,7 +158,10 @@ export const MintTxModal: React.FC<{}> = () => {
           custodialPubkeys: custodial_pubkeys_uint8array,
           covenantQuorum: dApp.custodialGroup.Quorum,
           haveOnlyCovenants: false,
-          destinationChain: new DestinationChain(ChainType.EVM, BigInt(id)), // TODO: handle ChainType according to dApp
+          destinationChain: new scalarVaultModule.DestinationChain(
+            scalarVaultModule.ChainType.EVM,
+            BigInt(id),
+          ), // TODO: handle ChainType according to dApp
           destinationContractAddress: smartContractAddress,
           destinationRecipientAddress: destAddress,
           availableUTXOs: mappedAddressUtxos,

@@ -1,12 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
-import { XIcon } from "lucide-react";
-import { z } from "zod";
 import { Psbt } from "bitcoinjs-lib";
+import { XIcon } from "lucide-react";
 import Link from "next/link";
+import { useForm, useWatch } from "react-hook-form";
 import { useAccount, useChainId } from "wagmi";
+import { z } from "zod";
 
 import { Button } from "@/app/components/ui/button";
 import {
@@ -18,12 +18,12 @@ import {
   FormMessage,
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
-import { toast } from "@/app/components/ui/use-toast";
-import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
-import { useStakeCustodialModal } from "@/app/stores/modal";
 import { TransactionRateSelect } from "@/app/components/ui/TransactionRateSelect";
+import { toast } from "@/app/components/ui/use-toast";
 import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
+import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
+import { useStakeCustodialModal } from "@/app/stores/modal";
 import { ExtendedProjectENV } from "@/env";
 
 import { GeneralModal } from "./GeneralModal";
@@ -128,10 +128,6 @@ export const StakeCustodialModal = () => {
       })();
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
-      const btcServicePk = scalarVaultModule.hexToBytes(
-        dApp.btcPk.replace("0x", ""),
-      );
-
       const destAddress = scalarVaultModule.hexToBytes(
         destRecipientAddress.replace("0x", ""),
       );
