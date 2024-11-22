@@ -1,12 +1,12 @@
 # Step 1. Rebuild the source code only when needed
-FROM node:20-alpine3.19 AS builder
+FROM oven/bun:1 AS builder
 
-RUN apk add python3 make gcc g++
+RUN apt-get update && apt-get install -y python3 make gcc g++ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY package.json package-lock.json ./
-# Omit --production flag for TypeScript devDependencies
-RUN npm install --frozen-lockfile
+COPY package.json bun.lockb ./
+# Install dependencies with bun
+RUN bun install
 
 COPY src ./src
 COPY public ./public
@@ -30,11 +30,11 @@ ENV NEXT_PUBLIC_COVENANT_PUBKEYS=APP_NEXT_PUBLIC_COVENANT_PUBKEYS
 ENV NEXT_PUBLIC_SERVICE_TAG=APP_NEXT_PUBLIC_SERVICE_TAG
 ENV NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS=APP_NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS
 
-RUN npm run build
+RUN bun run build
 
 # Step 2. Production image, copy all the files and run next
-FROM node:22-alpine3.19 AS runner
-RUN apk add --no-cache jq
+FROM oven/bun:1-slim AS runner
+RUN apt-get update && apt-get install -y jq && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Don't run production as root
@@ -54,5 +54,5 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 ENV NEXT_TELEMETRY_DISABLED 1
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["node", "server.js"]
+CMD ["bun", "server.js"]
 STOPSIGNAL SIGTERM
