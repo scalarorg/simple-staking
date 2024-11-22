@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { IoMdClose } from "react-icons/io";
+import { XIcon } from "lucide-react";
 
 import { postDApp } from "@/app/api/dApp";
 import { useAddDAppModal } from "@/app/stores/modal";
@@ -9,6 +9,7 @@ import { BtcAddress } from "../Staking/Form/BtcAddress";
 import { BtcPubKey } from "../Staking/Form/BtcPubkey";
 import { ChainName } from "../Staking/Form/ChainName";
 import { InputField } from "../Staking/Form/InputField";
+import { SelectField } from "../Staking/Form/SelectField";
 
 import { GeneralModal } from "./GeneralModal";
 
@@ -24,7 +25,7 @@ export const AddDAppModal: React.FC<{}> = () => {
   const [accessToken, setAccessToken] = useState("");
   const [isCustomChain, setIsCustomChain] = useState(false);
   const [tokenContractAddress, setTokenContractAddress] = useState("");
-
+  const [custodialGroupName, setCustodialGroupName] = useState("");
   const config = getConfig();
   const chains = config.chains;
 
@@ -42,20 +43,6 @@ export const AddDAppModal: React.FC<{}> = () => {
       setChainEndpoint("");
     }
   };
-  const handleBtcAddressChange = (input: string) => {
-    setBtcAddress(input);
-  };
-  const handleBtcPubKeyChange = (input: string) => {
-    setBtcPubKey(input);
-  };
-
-  const handleSmartContractAddressChange = (input: string) => {
-    setSmartContractAddress(input);
-  };
-
-  const handleTokenContractAddressChange = (input: string) => {
-    setTokenContractAddress(input);
-  };
 
   // TODO: add chainID and chainEndpoint to the postDApp function
   const handleAdd = async () => {
@@ -68,7 +55,8 @@ export const AddDAppModal: React.FC<{}> = () => {
       !btcAddress ||
       !btcPubKey ||
       !smartContractAddress ||
-      !tokenContractAddress
+      !tokenContractAddress ||
+      !custodialGroupName
     ) {
       console.error("Missing required fields");
       return;
@@ -100,7 +88,7 @@ export const AddDAppModal: React.FC<{}> = () => {
           className="btn btn-circle btn-ghost btn-sm"
           onClick={() => close()}
         >
-          <IoMdClose size={24} />
+          <XIcon size={24} />
         </button>
       </div>
       <div className="flex flex-1 flex-col">
@@ -123,6 +111,17 @@ export const AddDAppModal: React.FC<{}> = () => {
             placeholder=""
             generalErrorMessage="Please input a chain ID"
             disabled={!isCustomChain}
+          />
+        </div>
+        <div className="flex flex-1 flex-col">
+          <SelectField
+            onChange={setCustodialGroupName}
+            reset={false}
+            initValue=""
+            options={["All"]}
+            label="Custodial Group"
+            placeholder="Select Custodial Group"
+            errorMessage="Please select a custodial group"
           />
         </div>
         <div className="flex flex-1 flex-col hidden">
@@ -158,7 +157,7 @@ export const AddDAppModal: React.FC<{}> = () => {
         </div>
         <div className="flex flex-1 flex-col">
           <BtcAddress
-            onChange={handleBtcAddressChange}
+            onChange={setBtcAddress}
             reset={false}
             initValue=""
             label="DApp Bitcoin Address"
@@ -166,7 +165,7 @@ export const AddDAppModal: React.FC<{}> = () => {
         </div>
         <div className="flex flex-1 flex-col">
           <BtcPubKey
-            onChange={handleBtcPubKeyChange}
+            onChange={setBtcPubKey}
             reset={false}
             initValue=""
             label="DApp Bitcoin Public Key"
@@ -174,7 +173,7 @@ export const AddDAppModal: React.FC<{}> = () => {
         </div>
         <div className="flex flex-1 flex-col">
           <BtcAddress
-            onChange={handleSmartContractAddressChange}
+            onChange={setSmartContractAddress}
             reset={false}
             initValue=""
             label="Smart Contract Address"
@@ -183,7 +182,7 @@ export const AddDAppModal: React.FC<{}> = () => {
         </div>
         <div className="flex flex-1 flex-col">
           <BtcAddress
-            onChange={handleTokenContractAddressChange}
+            onChange={setTokenContractAddress}
             reset={false}
             initValue=""
             label="Token Contract Address"

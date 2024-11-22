@@ -9,7 +9,12 @@ import { IoMdClose } from "react-icons/io";
 import { useAccount, useChainId } from "wagmi";
 import { z } from "zod";
 
-import { Button } from "@/app/components/ui/button";
+import { ExtendedProjectENV } from "@/env";
+import { useMintTxModal } from "@/app/stores/modal";
+import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
+import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
+
+import { Button } from "../ui/button";
 import {
   Form,
   FormControl,
@@ -17,12 +22,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/app/components/ui/form";
-import { Input } from "@/app/components/ui/input";
-import { toast } from "@/app/components/ui/use-toast";
-import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
-import { useMintTxModal } from "@/app/stores/modal";
-import { ExtendedProjectENV, ProjectENV } from "@/env";
+} from "../ui/form";
+import { Input } from "../ui/input";
+import { toast } from "../ui/use-toast";
 
 import { GeneralModal } from "./GeneralModal";
 
@@ -47,7 +49,7 @@ const FormSchema = z.object({
     .optional(),
 });
 
-const MintTxModal: React.FC<{}> = () => {
+export const MintTxModal: React.FC<{}> = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -66,6 +68,9 @@ const MintTxModal: React.FC<{}> = () => {
     useWalletProvider();
 
   const id = useChainId();
+
+  const scalarVaultModule = useScalarVaultModule();
+  const vault = useVault();
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!dApp) return;
@@ -127,24 +132,42 @@ const MintTxModal: React.FC<{}> = () => {
         dApp.scAddress.replace("0x", ""),
       );
 
-      const { psbt: unsignedVaultPsbt, fee: estimatedFee } =
-        globalThis.scalarVaultModule.buildUnsignedStakingPsbt(
-          ProjectENV.NEXT_PUBLIC_TAG,
-          ProjectENV.NEXT_PUBLIC_VERSION,
-          btcNetwork,
-          address,
-          btcUserPk,
-          btcServicePk,
-          ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
-          ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
-          ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
-          BigInt(id),
-          smartContractAddress,
-          destAddress,
-          mappedAddressUtxos,
-          selectedFeeRate,
-          BigInt(stakingAmount),
+      const numberOfCustodialPubkeys = dApp.custodialGroup.Custodials.length;
+      const custodial_pubkeys_uint8array = new Uint8Array(
+        33 * numberOfCustodialPubkeys,
+      );
+
+      for (let i = 0; i < numberOfCustodialPubkeys; i++) {
+        custodial_pubkeys_uint8array.set(
+          scalarVaultModule.hexToBytes(
+            dApp.custodialGroup.Custodials[i].BtcPublicKeyHex!.replace(
+              "0x",
+              "",
+            ),
+          ),
+          i * 33,
         );
+      }
+
+      const { psbt: unsignedVaultPsbt, fee: estimatedFee } =
+        vault.buildStakingOutput({
+          stakingAmount: BigInt(stakingAmount),
+          stakerPubkey: btcUserPk,
+          stakerAddress: address,
+          protocolPubkey: btcServicePk,
+          custodialPubkeys: custodial_pubkeys_uint8array,
+          covenantQuorum: dApp.custodialGroup.Quorum,
+          haveOnlyCovenants: false,
+          destinationChain: new scalarVaultModule.DestinationChain(
+            scalarVaultModule.ChainType.EVM,
+            BigInt(id),
+          ), // TODO: handle ChainType according to dApp
+          destinationContractAddress: smartContractAddress,
+          destinationRecipientAddress: destAddress,
+          availableUTXOs: mappedAddressUtxos,
+          feeRate: selectedFeeRate,
+          rbf: false,
+        });
 
       const hexPsbt = unsignedVaultPsbt.toHex();
 
@@ -443,5 +466,3 @@ const MintTxModal: React.FC<{}> = () => {
     </>
   );
 };
-
-export default MintTxModal;

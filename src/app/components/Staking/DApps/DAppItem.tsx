@@ -1,9 +1,19 @@
-import { Coins, PencilIcon } from "lucide-react";
+import {
+  CircleArrowDown,
+  CircleArrowUp,
+  Coins,
+  PencilIcon,
+} from "lucide-react";
 import { Tooltip } from "react-tooltip";
 
 import { useWalletInfo } from "@/app/context/WalletProvider";
 import { fpStyles } from "@/app/scalar/theme";
-import { useDAppModal, useMintTxModal } from "@/app/stores/modal";
+import {
+  useDAppModal,
+  useMintTxModal,
+  useStakeCustodialModal,
+  useUnstakeCustodialModal,
+} from "@/app/stores/modal";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 
 interface DAppProps {
@@ -24,6 +34,8 @@ export const DAppItem: React.FC<DAppProps> = ({
   const { open } = useDAppModal();
   const { address } = useWalletInfo();
   const { open: openMintTxModal } = useMintTxModal();
+  const { open: openStakeCustodialModal } = useStakeCustodialModal();
+  const { open: openUnstakeCustodialModal } = useUnstakeCustodialModal();
 
   return (
     <tr
@@ -38,10 +50,10 @@ export const DAppItem: React.FC<DAppProps> = ({
       <td className="p-4">{index + 1}</td>
       <td className="p-4">{dApp.chainName}</td>
       <td className="p-4">
-        {dApp.btcAddress.slice(0, 12)}...{dApp.btcAddress.slice(-8)}
+        {dApp.btcAddress.slice(0, 12)}...{dApp.btcAddress.slice(-4)}
       </td>
       <td className="p-4">
-        {dApp.btcPk.slice(0, 20)}...{dApp.btcPk.slice(-20)}
+        {dApp.btcPk.slice(0, 20)}...{dApp.btcPk.slice(-4)}
       </td>
       <td className="p-4">
         <div className="flex gap-2 items-center">
@@ -67,6 +79,26 @@ export const DAppItem: React.FC<DAppProps> = ({
           >
             Mint
             <Coins size={12} />
+          </button>
+          <button
+            className={`px-2 hover:text-green-600 flex items-center gap-2 justify-center text-green-700 ${
+              !address ? "opacity-50 pointer-events-none" : ""
+            }`}
+            onClick={() => openStakeCustodialModal(dApp)}
+            disabled={!address}
+          >
+            Stake
+            <CircleArrowDown size={16} />
+          </button>
+          <button
+            className={`px-2 hover:text-cyan-600 flex items-center gap-2 justify-center text-cyan-700 ${
+              !address ? "opacity-50 pointer-events-none" : ""
+            }`}
+            onClick={() => openUnstakeCustodialModal(dApp)}
+            disabled={!address}
+          >
+            Unstake
+            <CircleArrowUp size={16} />
           </button>
         </div>
         <Tooltip id={`tooltip-delegation-${dApp.btcPk}`} />

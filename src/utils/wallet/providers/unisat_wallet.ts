@@ -65,11 +65,6 @@ export class UnisatWallet extends WalletProvider {
           INTERNAL_NETWORK_NAMES.testnet,
         );
         break;
-      case Network.SIGNET:
-        await this.bitcoinNetworkProvider.switchNetwork(
-          INTERNAL_NETWORK_NAMES.signet,
-        );
-        break;
       default:
         throw new Error("Unsupported network");
     }

@@ -7,6 +7,7 @@ export const useRecommendedFees = () => {
   const { data: feeRate, isLoading } = useQuery({
     queryKey: ["recommendedFees"],
     queryFn: () => mempoolClient?.fees.getFeesRecommended(),
+    enabled: !!mempoolClient,
   });
 
   return {

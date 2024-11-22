@@ -10,10 +10,12 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_SCALAR_SCANNER: z.string().min(10),
 
   NEXT_PUBLIC_VERSION: z.number().default(0),
-  NEXT_PUBLIC_TAG: z.string().min(8),
+  NEXT_PUBLIC_TAG: z.string(),
   NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL: z.boolean().default(false),
   NEXT_PUBLIC_COVENANT_QUORUM: z.number().min(1),
   NEXT_PUBLIC_COVENANT_PUBKEYS: z.array(z.string().min(5)).optional(),
+  NEXT_PUBLIC_SERVICE_TAG: z.string().default("light"),
+  NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS: z.string().default(""),
 });
 
 /**
@@ -43,6 +45,9 @@ export const ProjectENV = ProjectENVSchema.parse({
     process.env.NEXT_PUBLIC_COVENANT_PUBKEYS.split(",").length > 0
       ? process.env.NEXT_PUBLIC_COVENANT_PUBKEYS.split(",")
       : undefined,
+  NEXT_PUBLIC_SERVICE_TAG: process.env.NEXT_PUBLIC_SERVICE_TAG,
+  NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS:
+    process.env.NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS,
 });
 
 export const ExtendedProjectENVSchema = z.object({

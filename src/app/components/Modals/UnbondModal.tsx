@@ -1,23 +1,26 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Psbt, Transaction, address as bitcoinAddress } from "bitcoinjs-lib";
-import { ethers, parseUnits } from "ethers";
-import { Loader2 } from "lucide-react";
+import { parseUnits } from "ethers";
+import { Loader2, XIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { IoMdClose } from "react-icons/io";
 import { decodeErrorResult } from "viem";
-import { useAccount, useChainId, useConnect, useReadContract } from "wagmi";
+import { useAccount, useChainId, useConnect } from "wagmi";
 import { z } from "zod";
 
 import PROTOCOL_ABI from "@/abis/protocol";
 import SBTC_ABI from "@/abis/sbtc";
+import { useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
+import {
+  useERC20Contract,
+  useProtocolContract,
+} from "@/app/hooks/useContracts";
 import { useRecommendedFees } from "@/app/hooks/useRecommendedFees";
 import { useUnbondModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
-import { useEthersSigner } from "@/utils/ethers";
 
 import { Button } from "../ui/button";
 import {
@@ -41,8 +44,6 @@ const FormSchema = z.object({
     })
     .min(12, "Invalid BTC address"),
 });
-
-const MOCK_ZERO_BYTES = "0x0000000000000000000000000000000000000000";
 
 interface TxInput {
   script_pubkey: Buffer;
@@ -132,29 +133,14 @@ export const UnbondModal: React.FC = () => {
     );
   }, [data, bond]);
 
-  const signer = useEthersSigner();
+  const { balance, allowance, approve } = useERC20Contract(
+    SBTC_ABI,
+    dApp?.tokenContractAddress,
+    address,
+    dApp?.scAddress,
+  );
 
-  const sBTC = useMemo(() => {
-    if (!dApp) {
-      return null;
-    }
-    return new ethers.Contract(
-      dApp?.tokenContractAddress as `0x${string}`,
-      SBTC_ABI,
-      signer,
-    );
-  }, [dApp, signer]);
-
-  const protocol = useMemo(() => {
-    if (!dApp) {
-      return null;
-    }
-    return new ethers.Contract(
-      dApp?.scAddress as `0x${string}`,
-      PROTOCOL_ABI,
-      signer,
-    );
-  }, [dApp, signer]);
+  const { unstake } = useProtocolContract(PROTOCOL_ABI, dApp?.scAddress);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -171,28 +157,10 @@ export const UnbondModal: React.FC = () => {
     }
   }, [btcAddress, form]);
 
-  const { data: sbtcBalance } = useReadContract({
-    address: bond?.destinationSmartContractAddress as `0x${string}`,
-    abi: SBTC_ABI,
-    functionName: "balanceOf",
-    args: [address],
-    query: {
-      enabled: !!bond,
-    },
-  });
-
-  const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: dApp?.tokenContractAddress as `0x${string}`,
-    abi: SBTC_ABI,
-    functionName: "allowance",
-    args: [address, dApp?.scAddress as `0x${string}`],
-    query: {
-      enabled: !!dApp && !!bond,
-    },
-  });
-
   const [status, setStatus] = useState<string>("");
   const [isBurning, setIsBurning] = useState<boolean>(false);
+
+  const vault = useVault();
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!bond) {
@@ -215,14 +183,6 @@ export const UnbondModal: React.FC = () => {
       throw new Error("BTC receiver address not found");
     }
 
-    if (!sBTC) {
-      throw new Error("sBTC contract not found");
-    }
-
-    if (!protocol) {
-      throw new Error("Protocol contract not found");
-    }
-
     if (!ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS) {
       throw new Error("Covenant pubkeys not found");
     }
@@ -230,10 +190,7 @@ export const UnbondModal: React.FC = () => {
     const tokenBurnAmount = bond.amount;
 
     try {
-      if (
-        Number(sbtcBalance) <= 0 ||
-        Number(sbtcBalance) < Number(tokenBurnAmount)
-      ) {
+      if (Number(balance) <= 0 || Number(balance) < Number(tokenBurnAmount)) {
         throw new Error("Insufficient balance");
       }
 
@@ -274,18 +231,16 @@ export const UnbondModal: React.FC = () => {
         dApp.btcPk.replace("0x", ""),
       );
 
-      const unsignedPsbtHex =
-        await globalThis.scalarVaultModule.buildUnsignedUnstakingUserProtocolPsbt(
-          ProjectENV.NEXT_PUBLIC_TAG,
-          ProjectENV.NEXT_PUBLIC_VERSION,
-          input,
-          output,
-          btcUserPk,
-          btcProtocolPk,
-          ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
-          ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
-          ProjectENV.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL,
-        );
+      const unsignedPsbtHex = vault.buildUnsignedUnstakingUserProtocolPsbt({
+        input,
+        output,
+        stakerPubkey: btcUserPk,
+        protocolPubkey: btcProtocolPk,
+        covenantPubkeys: ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
+        covenantQuorum: ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
+        haveOnlyCovenants: false,
+        rbf: false,
+      });
 
       setStatus("Signing the PSBT");
 
@@ -312,13 +267,8 @@ export const UnbondModal: React.FC = () => {
         setStatus("Approving the token");
         setIsBurning(true);
 
-        const txApprove = await sBTC.approve(dApp.scAddress, burnAmount);
+        await approve(dApp.scAddress, burnAmount);
 
-        setStatus("Waiting for approval transaction to be mined");
-
-        await txApprove.wait();
-
-        await refetchAllowance();
         setStatus("Approval transaction mined");
       }
 
@@ -328,16 +278,7 @@ export const UnbondModal: React.FC = () => {
 
       setStatus("Unstaking the token");
 
-      const txBurn = await protocol.unstake(
-        bond.sourceChain, // destination chain of the unbond = source chain of the bond
-        MOCK_ZERO_BYTES,
-        burnAmount,
-        psbt,
-      );
-
-      setStatus("Waiting for burning transaction to be mined");
-
-      await txBurn.wait();
+      await unstake(bond.sourceChain, burnAmount, psbt);
 
       setStatus("Token unstaked successfully");
       close();
@@ -395,7 +336,7 @@ export const UnbondModal: React.FC = () => {
           className="btn btn-circle btn-ghost btn-sm"
           onClick={() => close()}
         >
-          <IoMdClose size={24} />
+          <XIcon size={24} />
         </button>
       </div>
       {address ? (

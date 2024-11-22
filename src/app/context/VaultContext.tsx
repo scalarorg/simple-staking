@@ -1,10 +1,13 @@
 "use client";
 
+import { TNetwork } from "@scalar-lab/bitcoin-vault";
 import { memo, useCallback, useEffect, useState } from "react";
 
 import { ProjectENV } from "@/env";
 
 import { LoadingView } from "../components/Loading/Loading";
+
+import { useNetwork } from "./NetworkProvicer";
 
 declare global {
   namespace globalThis {
@@ -12,19 +15,41 @@ declare global {
   }
 }
 
-let vault: ReturnType<TVaultModule["createVaultWasm"]> | null = null;
+type TVaultUtilsInstances = Record<
+  TNetwork,
+  ReturnType<TVaultModule["VaultUtils"]["getInstance"]>
+>;
+
+// let vault: ReturnType<TVaultModule["createVaultWasm"]> | null = null;
+const vaultUtilsInstances: TVaultUtilsInstances = {} as TVaultUtilsInstances;
 
 export const useVault = () => {
   if (!globalThis.scalarVaultModule) {
     throw new Error("Vault module not found");
   }
-  if (!vault) {
-    vault = globalThis.scalarVaultModule.createVaultWasm(
-      ProjectENV.NEXT_PUBLIC_TAG,
-      ProjectENV.NEXT_PUBLIC_VERSION,
-    );
+
+  const { network } = useNetwork();
+  const aliasedNetwork = network as TNetwork;
+
+  if (!vaultUtilsInstances[aliasedNetwork]) {
+    vaultUtilsInstances[aliasedNetwork] =
+      globalThis.scalarVaultModule.VaultUtils.getInstance(
+        ProjectENV.NEXT_PUBLIC_TAG,
+        ProjectENV.NEXT_PUBLIC_SERVICE_TAG,
+        ProjectENV.NEXT_PUBLIC_VERSION,
+        aliasedNetwork,
+      );
   }
-  return vault;
+
+  return vaultUtilsInstances[aliasedNetwork];
+};
+
+export const useScalarVaultModule = () => {
+  if (!globalThis.scalarVaultModule) {
+    throw new Error("Vault module not found");
+  }
+
+  return globalThis.scalarVaultModule;
 };
 
 const isClientSide = typeof window !== "undefined";

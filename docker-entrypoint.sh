@@ -24,6 +24,10 @@ function apply_path {
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_COVENANT_QUORUM#$COVENANT_QUORUM#g"
 
     find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_COVENANT_PUBKEYS#$COVENANT_PUBKEYS#g"
+
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_SERVICE_TAG#$SERVICE_TAG#g"
+
+    find /app/.next \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i "s#APP_NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS#$GROUP_ALL_BTC_ADDRESS#g"
 }
 
 apply_path

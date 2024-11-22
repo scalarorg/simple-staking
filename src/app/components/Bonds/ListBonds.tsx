@@ -36,8 +36,8 @@ export const ListBonds: React.FC = () => {
       )}
       {data && data.bonds.length > 0 && (
         <div className={`flex flex-col gap-4 ${fpTableStyles}`}>
-          <div>
-            <table className="min-w-full">
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
               <thead className="">
                 <tr className="[&>*]:p-4">
                   <th>No</th>

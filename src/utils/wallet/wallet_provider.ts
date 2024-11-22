@@ -41,14 +41,14 @@ export enum Network {
   TESTNET = "testnet",
   TESTNET4 = "testnet4",
   REGTEST = "regtest",
-  SIGNET = "signet",
+  // SIGNET = "signet",
 }
 
 export const INTERNAL_NETWORK_NAMES = {
   [Network.MAINNET]: "livenet",
   [Network.TESTNET]: "testnet",
   [Network.TESTNET4]: "testnet4",
-  [Network.SIGNET]: "signet",
+  // [Network.SIGNET]: "signet",
   [Network.REGTEST]: "regtest",
 };
 // WalletInfo is a structure defining attributes for a wallet

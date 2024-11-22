@@ -109,12 +109,12 @@ export class OneKeyWallet extends WalletProvider {
     const internalNetwork = await this.bitcoinNetworkProvider.getNetwork();
 
     for (const [key, value] of Object.entries(INTERNAL_NETWORK_NAMES)) {
-      if (value === "testnet") {
-        return Network.SIGNET;
-      }
+      // if (value === "testnet") {
+      //   return Network.SIGNET;
+      // }
       // TODO remove as soon as OneKey implements
       // in case of testnet return signet
-      else if (value === internalNetwork) {
+      if (value === internalNetwork) {
         return key as Network;
       }
     }
