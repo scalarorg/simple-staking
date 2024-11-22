@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -13,18 +13,38 @@ import { ChainName } from "../Staking/Form/ChainName";
 import { InputField } from "../Staking/Form/InputField";
 import { SelectField } from "../Staking/Form/SelectField";
 
+import { getShortenCustodialGroups } from "@/app/api/custodial";
 import { GeneralModal } from "./GeneralModal";
 
 export const UpdateDAppModal: React.FC<{}> = ({}) => {
   const { dApp, isOpen, close } = useDAppModal();
   const [updatedDApp, setUpdatedDApp] = useState<DApp | undefined>(dApp);
-  const [newCustodialGroupName, setNewCustodialGroupName] = useState<string>(
-    dApp?.custodialGroup.Name || "",
+  const [custodialGroupId, setCustodialGroupId] = useState<number | null>(
+    dApp?.custodialGroup.ID || null,
   );
 
   const [isCustomChain, setIsCustomChain] = useState(false);
   const config = getConfig();
   const chains = config.chains;
+
+  const {
+    data: shortenCustodialGroupsData,
+    isLoading: isShortenCustodialGroupsLoading,
+    error: shortenCustodialGroupsError,
+    isError: hasShortenCustodialGroupsError,
+    refetch: refetchShortenCustodialGroups,
+  } = useQuery({
+    queryKey: ["getShortenCustodialGroups"],
+    queryFn: () => getShortenCustodialGroups(),
+    refetchInterval: isOpen ? 60000 : false, // 1 minute
+    enabled: isOpen,
+    retry: (failureCount, error) => {
+      return failureCount <= 3;
+    },
+  });
+
+  const shortenCustodialGroups =
+    shortenCustodialGroupsData?.shortenCustodialGroups;
 
   const handleChange = (key: keyof DApp, value: string) => {
     if (!updatedDApp) return;
@@ -34,6 +54,13 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
   const [loading, setLoading] = useState(false);
 
   const queryClient = useQueryClient();
+
+  const handleCustodialGroupChange = (groupName: string) => {
+    const selectedGroup = shortenCustodialGroups?.find(
+      (group) => group.Name === groupName,
+    );
+    setCustodialGroupId(selectedGroup?.ID || null);
+  };
 
   const handleUpdate = useCallback(async () => {
     setLoading(true);
@@ -48,7 +75,7 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
       !updatedDApp.btcPk ||
       !updatedDApp.scAddress ||
       !updatedDApp.tokenContractAddress ||
-      !newCustodialGroupName
+      !custodialGroupId
     ) {
       console.error("Missing required fields");
       setLoading(false);
@@ -65,7 +92,7 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
       updatedDApp.btcPk,
       updatedDApp.scAddress,
       updatedDApp.tokenContractAddress,
-      newCustodialGroupName,
+      custodialGroupId,
     )
       .then(() => {
         console.log("Successfully updated DApp");
@@ -78,14 +105,11 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
         setLoading(false);
         queryClient.invalidateQueries({ queryKey: ["getListDApps"] });
       });
-  }, [updatedDApp, setLoading, close, queryClient, newCustodialGroupName]);
+  }, [updatedDApp, setLoading, close, queryClient, custodialGroupId]);
 
   useEffect(() => {
     if (!updatedDApp) {
       setUpdatedDApp(dApp);
-    }
-    if (dApp?.custodialGroup?.Name) {
-      setNewCustodialGroupName(dApp.custodialGroup.Name);
     }
   }, [dApp, updatedDApp, setUpdatedDApp]);
 
@@ -135,10 +159,10 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
         </div>
         <div className="flex flex-1 flex-col">
           <SelectField
-            onChange={(value) => setNewCustodialGroupName(value)}
+            onChange={handleCustodialGroupChange}
             reset={false}
-            initValue={newCustodialGroupName || ""}
-            options={["All"]}
+            initValue={dApp?.custodialGroup.Name || ""}
+            options={shortenCustodialGroups?.map((group) => group.Name) || []}
             label="Custodial Group"
             placeholder="Select Custodial Group"
             errorMessage="Please select a custodial group"

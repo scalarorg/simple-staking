@@ -33,7 +33,7 @@ export interface CreatePayload {
   rpc_url: string;
   access_token: string;
   token_contract_address: string;
-  // custodial_group_name: string;
+  custodial_group_id: number;
 }
 
 export interface IdPayload {
@@ -56,6 +56,7 @@ export interface DAppAPI {
   ChainEndpoint: string;
   RPCUrl: string;
   AccessToken: string;
+  CustodialGroup: CustodialGroup;
 }
 
 export interface DAppsAPIResponse {

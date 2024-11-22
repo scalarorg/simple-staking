@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState } from "react";
 import { Abi } from "viem";
 import { useReadContract } from "wagmi";
 
-import SBTC_ABI from "@/abis/sbtc";
 import { useEthersSigner } from "@/utils/ethers";
 
 const MOCK_ZERO_BYTES = "0x0000000000000000000000000000000000000000";
@@ -42,7 +41,7 @@ export const useERC20Contract = (
     error: balanceError,
   } = useReadContract({
     address: contractAddress as `0x${string}`,
-    abi: SBTC_ABI,
+    abi: abi,
     functionName: "balanceOf",
     args: [senderAddress ?? MOCK_ZERO_BYTES],
     query: {
@@ -56,12 +55,20 @@ export const useERC20Contract = (
     error: allowanceError,
   } = useReadContract({
     address: contractAddress as `0x${string}`,
-    abi: SBTC_ABI,
+    abi: abi,
     functionName: "allowance",
     args: [senderAddress ?? MOCK_ZERO_BYTES, spenderAddress ?? MOCK_ZERO_BYTES],
     query: {
       enabled:
         !!senderAddress && !!spenderAddress && !!contractAddress && !!contract,
+    },
+  });
+  const { data: tokenName } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: abi,
+    functionName: "name",
+    query: {
+      enabled: !!contractAddress && !!contract,
     },
   });
 
@@ -93,6 +100,7 @@ export const useERC20Contract = (
     allowanceError,
     refetchAllowance,
     approve,
+    tokenName,
   };
 };
 
