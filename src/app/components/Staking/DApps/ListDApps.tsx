@@ -77,8 +77,10 @@ export const ListDApps: React.FC<{}> = ({}) => {
               <tr className="text-left">
                 <th className="p-4 w-12">No</th>
                 <th className="p-4 w-[200px]">Chain Name</th>
+                <th className="p-4 w-[150px]">Token Name</th>
                 <th className="p-4">BTC Address</th>
                 <th className="p-4">BTC Pubkey</th>
+                <th className="p-4 w-20">Custodial</th>
                 <th className="p-4 w-20">Actions</th>
               </tr>
             </thead>

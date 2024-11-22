@@ -32,6 +32,21 @@ export const getDApps = async (): Promise<{ dApps: DApp[] }> => {
       lookUpChainId = lookUpChains.id.toString();
       lookUpChainEndpoint = lookUpChains.rpcUrls.default.http[0];
     }
+    const custodialGroup = da.CustodialGroup
+      ? da.CustodialGroup
+      : {
+          ID: 0,
+          Name: "All",
+          BtcAddress: ProjectENV.NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS,
+          Quorum: ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
+          Custodials: ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS!.map(
+            (pubkey: string, index: number) => ({
+              ID: index,
+              Name: "Custodial" + (index + 1),
+              BtcPublicKeyHex: pubkey,
+            }),
+          ),
+        };
     return {
       id: da.ID,
       chainId: da.ChainID ? da.ChainID : lookUpChainId,
@@ -43,19 +58,7 @@ export const getDApps = async (): Promise<{ dApps: DApp[] }> => {
       btcAddress: da.BTCAddressHex,
       btcPk: da.PublicKeyHex,
       scAddress: da.SmartContractAddress,
-      custodialGroup: {
-        ID: 0,
-        Name: "All",
-        BtcAddress: ProjectENV.NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS,
-        Quorum: ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
-        Custodials: ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS!.map(
-          (pubkey: string, index: number) => ({
-            ID: index,
-            Name: "Custodial" + (index + 1),
-            BtcPublicKeyHex: pubkey,
-          }),
-        ),
-      },
+      custodialGroup: custodialGroup,
       state: da.State,
     };
   });
@@ -72,7 +75,7 @@ export const postDApp = async (
   publicKeyHex: string,
   smartContractAddress: string,
   tokenContractAddress: string,
-  // custodialGroupName: string,
+  custodialGroupId: number,
 ) => {
   // TODO: Update this after xchains-api done
   const payload: CreatePayload = {
@@ -85,7 +88,7 @@ export const postDApp = async (
     rpc_url: dappBtcSignerEndpoint,
     access_token: accessToken,
     token_contract_address: tokenContractAddress,
-    // custodial_group_name: custodialGroupName,
+    custodial_group_id: custodialGroupId,
   };
 
   const response = await apiWrapper(
@@ -110,7 +113,7 @@ export const updateDApp = async (
   publicKeyHex: string,
   smartContractAddress: string,
   tokenContractAddress: string,
-  custodialGroupName: string,
+  custodialGroupId: number,
 ) => {
   const payload: UpdatePayload = {
     id: id,
@@ -123,7 +126,7 @@ export const updateDApp = async (
     rpc_url: dappBtcSignerEndpoint,
     access_token: accessToken,
     token_contract_address: tokenContractAddress,
-    // custodial_group_name: custodialGroupName,
+    custodial_group_id: custodialGroupId,
   };
   // TODO: Update this after xchains-api done
   const response = await apiWrapper(

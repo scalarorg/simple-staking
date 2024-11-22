@@ -12,6 +12,16 @@ export interface CustodialGroup {
   Custodials: Custodial[];
 }
 
+export interface ShortenCustodialGroup {
+  ID: number;
+  Name: string;
+  BtcAddress: string;
+}
+
+export interface ShortenCustodialGroupsAPIResponse {
+  data: ShortenCustodialGroup[];
+}
+
 export interface CustodialGroupsAPIResponse {
   data: CustodialGroup[];
 }

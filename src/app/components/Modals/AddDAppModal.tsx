@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { XIcon } from "lucide-react";
+import { useState } from "react";
 
 import { postDApp } from "@/app/api/dApp";
 import { useAddDAppModal } from "@/app/stores/modal";
@@ -11,6 +11,8 @@ import { ChainName } from "../Staking/Form/ChainName";
 import { InputField } from "../Staking/Form/InputField";
 import { SelectField } from "../Staking/Form/SelectField";
 
+import { getShortenCustodialGroups } from "@/app/api/custodial";
+import { useQuery } from "@tanstack/react-query";
 import { GeneralModal } from "./GeneralModal";
 
 export const AddDAppModal: React.FC<{}> = () => {
@@ -25,9 +27,28 @@ export const AddDAppModal: React.FC<{}> = () => {
   const [accessToken, setAccessToken] = useState("");
   const [isCustomChain, setIsCustomChain] = useState(false);
   const [tokenContractAddress, setTokenContractAddress] = useState("");
-  const [custodialGroupName, setCustodialGroupName] = useState("");
+  const [custodialGroupId, setCustodialGroupId] = useState<number | null>(null);
   const config = getConfig();
   const chains = config.chains;
+
+  const {
+    data: shortenCustodialGroupsData,
+    isLoading: isShortenCustodialGroupsLoading,
+    error: shortenCustodialGroupsError,
+    isError: hasShortenCustodialGroupsError,
+    refetch: refetchShortenCustodialGroups,
+  } = useQuery({
+    queryKey: ["getShortenCustodialGroups"],
+    queryFn: () => getShortenCustodialGroups(),
+    refetchInterval: isOpen ? 60000 : false,
+    enabled: isOpen,
+    retry: (failureCount, error) => {
+      return failureCount <= 3;
+    },
+  });
+
+  const shortenCustodialGroups =
+    shortenCustodialGroupsData?.shortenCustodialGroups;
 
   const handleChainNameChange = (input: string) => {
     setChainName(input);
@@ -44,6 +65,13 @@ export const AddDAppModal: React.FC<{}> = () => {
     }
   };
 
+  const handleCustodialGroupChange = (groupName: string) => {
+    const selectedGroup = shortenCustodialGroups?.find(
+      (group) => group.Name === groupName,
+    );
+    setCustodialGroupId(selectedGroup?.ID || null);
+  };
+
   // TODO: add chainID and chainEndpoint to the postDApp function
   const handleAdd = async () => {
     if (
@@ -56,7 +84,7 @@ export const AddDAppModal: React.FC<{}> = () => {
       !btcPubKey ||
       !smartContractAddress ||
       !tokenContractAddress ||
-      !custodialGroupName
+      !custodialGroupId
     ) {
       console.error("Missing required fields");
       return;
@@ -71,6 +99,7 @@ export const AddDAppModal: React.FC<{}> = () => {
       btcPubKey,
       smartContractAddress,
       tokenContractAddress,
+      custodialGroupId,
     )
       .then(() => {
         console.log("Successfully added DApp");
@@ -115,10 +144,10 @@ export const AddDAppModal: React.FC<{}> = () => {
         </div>
         <div className="flex flex-1 flex-col">
           <SelectField
-            onChange={setCustodialGroupName}
+            onChange={handleCustodialGroupChange}
             reset={false}
             initValue=""
-            options={["All"]}
+            options={shortenCustodialGroups?.map((group) => group.Name) || []}
             label="Custodial Group"
             placeholder="Select Custodial Group"
             errorMessage="Please select a custodial group"
