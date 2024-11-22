@@ -43,7 +43,7 @@ export const DAppItem: React.FC<DAppProps> = ({
   const { open: openMintTxModal } = useMintTxModal();
   const { open: openStakeCustodialModal } = useStakeCustodialModal();
   const { open: openUnstakeCustodialModal } = useUnstakeCustodialModal();
-  const { tokenName } = useERC20Contract(
+  const { tokenSymbol } = useERC20Contract(
     SBTC_ABI,
     dApp.tokenContractAddress,
     evmAddress,
@@ -62,7 +62,7 @@ export const DAppItem: React.FC<DAppProps> = ({
     >
       <td className="p-4">{index + 1}</td>
       <td className="p-4">{dApp.chainName}</td>
-      <td className="p-4">{tokenName?.toString() || "-"}</td>
+      <td className="p-4">{tokenSymbol?.toString() || "-"}</td>
       <td className="p-4">
         {dApp.btcAddress.slice(0, 8)}...{dApp.btcAddress.slice(-4)}
       </td>

@@ -7,7 +7,7 @@ export interface Custodial {
 export interface CustodialGroup {
   ID: number;
   Name: string;
-  BtcAddress: string;
+  TaprootAddress: string;
   Quorum: number;
   Custodials: Custodial[];
 }
@@ -15,7 +15,7 @@ export interface CustodialGroup {
 export interface ShortenCustodialGroup {
   ID: number;
   Name: string;
-  BtcAddress: string;
+  TaprootAddress: string;
 }
 
 export interface ShortenCustodialGroupsAPIResponse {
