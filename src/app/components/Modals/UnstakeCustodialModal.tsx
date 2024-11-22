@@ -121,7 +121,7 @@ export const UnstakeCustodialModal: React.FC = () => {
       const btcReturnAmount = Number(unstakeAmount);
 
       const addressUtxos = await walletProvider.getUtxos(
-        dApp.custodialGroup.BtcAddress,
+        dApp.custodialGroup.TaprootAddress,
         btcReturnAmount,
       );
 

@@ -71,6 +71,14 @@ export const useERC20Contract = (
       enabled: !!contractAddress && !!contract,
     },
   });
+  const { data: tokenSymbol } = useReadContract({
+    address: contractAddress as `0x${string}`,
+    abi: abi,
+    functionName: "symbol",
+    query: {
+      enabled: !!contractAddress && !!contract,
+    },
+  });
 
   const approve = useCallback(
     async (spenderAddress: string, burnAmount: bigint) => {
@@ -101,6 +109,7 @@ export const useERC20Contract = (
     refetchAllowance,
     approve,
     tokenName,
+    tokenSymbol,
   };
 };
 
