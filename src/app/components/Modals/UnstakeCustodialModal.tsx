@@ -206,7 +206,7 @@ export const UnstakeCustodialModal: React.FC = () => {
 
       setStatus("Unstaking the token");
 
-      await unstake(dApp.chainId, burnAmount, psbt);
+      await unstake("bitcoin-testnet4", burnAmount, psbt);
 
       setStatus("Token unstaked successfully");
       close();
@@ -276,7 +276,7 @@ export const UnstakeCustodialModal: React.FC = () => {
 
             <div className="space-y-2">
               <FormLabel className="text-gray-500">
-                Available sBTC Balance
+                Available Token Balance
               </FormLabel>
               <Input readOnly value={balance?.toString() || "0"} />
             </div>
