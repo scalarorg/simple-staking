@@ -206,7 +206,7 @@ export const UnstakeCustodialModal: React.FC = () => {
 
       setStatus("Unstaking the token");
 
-      await unstake("bitcoin-testnet4", burnAmount, psbt);
+      await unstake(dApp.btcNetwork, burnAmount, psbt);
 
       setStatus("Token unstaked successfully");
       close();

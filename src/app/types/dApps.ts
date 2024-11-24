@@ -8,6 +8,7 @@ export interface DApp {
   dappBtcSignerEndpoint: string;
   accessToken: string;
   btcAddress: string;
+  btcNetwork: string;
   btcPk: string;
   scAddress: string;
   tokenContractAddress: string;
@@ -48,6 +49,7 @@ export interface DAppAPI {
   ID: string;
   ChainName: string;
   BTCAddressHex: string;
+  BTCNetwork: string;
   PublicKeyHex: string;
   SmartContractAddress: string;
   TokenContractAddress: string;

@@ -56,6 +56,7 @@ export const getDApps = async (): Promise<{ dApps: DApp[] }> => {
       tokenContractAddress: da.TokenContractAddress,
       chainName: da.ChainName,
       btcAddress: da.BTCAddressHex,
+      btcNetwork: da.BTCNetwork || "bitcoin-testnet4",
       btcPk: da.PublicKeyHex,
       scAddress: da.SmartContractAddress,
       custodialGroup: custodialGroup,
