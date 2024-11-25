@@ -79,8 +79,7 @@ export const ListDApps: React.FC<{}> = ({}) => {
                 <th className="p-4 w-[200px]">Chain Name</th>
                 <th className="p-4 w-[150px]">Token</th>
                 <th className="p-4">BTC Address</th>
-                <th className="p-4">BTC Pubkey</th>
-                <th className="p-4 w-20">Custodial</th>
+                <th className="p-4">Smart Contract Address</th>
                 <th className="p-4 w-20">Actions</th>
               </tr>
             </thead>

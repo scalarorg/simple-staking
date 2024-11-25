@@ -35,6 +35,7 @@ import {
 import { Input } from "../ui/input";
 import { toast } from "../ui/use-toast";
 
+import { hexStringWithout0x } from "@/utils/trim";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -128,8 +129,10 @@ export const UnbondModal: React.FC = () => {
     }
     return data.dApps.find(
       (dApp) =>
-        dApp.scAddress.toLocaleLowerCase() ===
-        bond?.destinationSmartContractAddress?.toLocaleLowerCase(),
+        hexStringWithout0x(dApp.scAddress.toLocaleLowerCase()) ===
+        hexStringWithout0x(
+          bond?.destinationSmartContractAddress?.toLocaleLowerCase() ?? "",
+        ),
     );
   }, [data, bond]);
 

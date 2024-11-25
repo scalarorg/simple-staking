@@ -7,7 +7,9 @@ import { useWalletInfo } from "@/app/context/WalletProvider";
 import { fpStyles, fpTableStyles } from "@/app/scalar/theme";
 import { useUnbondModal } from "@/app/stores/modal";
 import { ProjectENV } from "@/env";
+import { isCustodialDApp } from "@/utils/isCustodialDApp";
 import { getRelativeTime } from "@/utils/tool";
+import { hexStringWith0x } from "@/utils/trim";
 
 const generalStyles = "cursor-pointer transition-shadow hover:shadow-md py-4";
 
@@ -80,7 +82,19 @@ export const ListBonds: React.FC = () => {
                     <td>{Number(bond.amount).toLocaleString()}</td>
                     <td>{getRelativeTime(bond.createdAt)}</td>
                     <td>
-                      {!bond.executedAmount && (
+                      {!bond.executedAmount &&
+                      isCustodialDApp(
+                        hexStringWith0x(bond.destinationSmartContractAddress),
+                      ) ? (
+                        <div className="flex justify-center">
+                          <button
+                            className="btn btn-outline text-sm font-normal text-white p-1 px-2 flex items-center gap-2 border-white justify-center bg-gray-400 cursor-not-allowed"
+                            disabled
+                          >
+                            Custodial - Unstaked
+                          </button>
+                        </div>
+                      ) : !bond.executedAmount ? (
                         <div className="flex justify-center">
                           <button
                             className="btn btn-outline text-sm font-normal text-white p-1 px-2 flex items-center gap-2 border-white justify-center hover:bg-white hover:text-primary"
@@ -90,8 +104,7 @@ export const ListBonds: React.FC = () => {
                             Unstaked
                           </button>
                         </div>
-                      )}
-                      {bond.executedAmount && (
+                      ) : (
                         <div className="font-normal text-white flex items-center justify-center">
                           <div className="p-2 flex items-center gap-2  bg-primary justify-center rounded-lg w-28">
                             {isNaN(Number(bond.executedAmount))

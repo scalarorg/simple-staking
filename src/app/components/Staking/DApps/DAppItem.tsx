@@ -1,10 +1,4 @@
-import {
-  CircleArrowDown,
-  CircleArrowUp,
-  Coins,
-  PencilIcon,
-} from "lucide-react";
-import { useState } from "react";
+import { CircleArrowDown, CircleArrowUp, PencilIcon } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 
 import SBTC_ABI from "@/abis/sbtc";
@@ -18,6 +12,8 @@ import {
   useUnstakeCustodialModal,
 } from "@/app/stores/modal";
 import { DApp as DAppInterface } from "@/app/types/dApps";
+import { isCustodialDApp } from "@/utils/isCustodialDApp";
+import { hexStringWith0x } from "@/utils/trim";
 import { useAccount } from "wagmi";
 
 interface DAppProps {
@@ -32,7 +28,7 @@ export const DAppItem: React.FC<DAppProps> = ({
   selected,
   index,
 }) => {
-  const [isCustodial, setIsCustodial] = useState(false);
+  const isCustodial = isCustodialDApp(hexStringWith0x(dApp.scAddress));
 
   const generalStyles = "cursor-pointer transition-shadow hover:shadow-md";
 
@@ -67,20 +63,7 @@ export const DAppItem: React.FC<DAppProps> = ({
         {dApp.btcAddress.slice(0, 8)}...{dApp.btcAddress.slice(-4)}
       </td>
       <td className="p-4">
-        {dApp.btcPk.slice(0, 10)}...{dApp.btcPk.slice(-4)}
-      </td>
-      <td className="p-4">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsCustodial(!isCustodial);
-          }}
-          className={`px-3 py-1 rounded-full transition-colors ${
-            isCustodial ? "bg-orange-500 text-white" : "bg-gray-200"
-          }`}
-        >
-          {isCustodial ? "On" : "Off"}
-        </button>
+        {dApp.scAddress.slice(0, 10)}...{dApp.scAddress.slice(-4)}
       </td>
       <td className="p-4">
         <div className="flex gap-2 items-center">
@@ -99,14 +82,14 @@ export const DAppItem: React.FC<DAppProps> = ({
           </button>
           {!isCustodial && (
             <button
-              className={`px-2 hover:text-orange-600 flex items-center gap-2 justify-center text-orange-700 ${
+              className={`px-2 hover:text-green-600 flex items-center gap-2 justify-center text-green-700 ${
                 !address ? "opacity-50 pointer-events-none" : ""
               }`}
               onClick={() => openMintTxModal(dApp)}
               disabled={!address}
             >
-              Mint
-              <Coins size={12} />
+              Stake
+              <CircleArrowDown size={16} />
             </button>
           )}
           {isCustodial && (
