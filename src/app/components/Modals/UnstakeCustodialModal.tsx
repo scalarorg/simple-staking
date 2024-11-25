@@ -206,7 +206,9 @@ export const UnstakeCustodialModal: React.FC = () => {
 
       setStatus("Unstaking the token");
 
-      await unstake(dApp.btcNetwork, burnAmount, psbt);
+      // TODO: Remove prefix when server is updated
+      const psbt_base64_with_prefix = `40${psbt}`;
+      await unstake(dApp.btcNetwork, burnAmount, psbt_base64_with_prefix);
 
       setStatus("Token unstaked successfully");
       close();

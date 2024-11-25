@@ -278,7 +278,9 @@ export const UnbondModal: React.FC = () => {
 
       setStatus("Unstaking the token");
 
-      await unstake(bond.sourceChain, burnAmount, psbt);
+      // TODO: Remove prefix when server is updated
+      const psbt_base64_with_prefix = `80${psbt}`;
+      await unstake(bond.sourceChain, burnAmount, psbt_base64_with_prefix);
 
       setStatus("Token unstaked successfully");
       close();
