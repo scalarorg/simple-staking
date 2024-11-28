@@ -89,7 +89,7 @@ export class BitgetWallet extends WalletProvider {
       method: "signPsbt",
       params: {
         from: this.bitcoinNetworkProvider.selectedAddress,
-        __internalFunc: "__signPsbt_babylon",
+        __internalFunc: "__signPsbt_scalar",
         psbtHex,
         options: {
           autoFinalized: true,
@@ -126,7 +126,7 @@ export class BitgetWallet extends WalletProvider {
       method: "signPsbt",
       params: {
         from: this.bitcoinNetworkProvider.selectedAddress,
-        __internalFunc: "__signPsbts_babylon",
+        __internalFunc: "__signPsbts_scalar",
         psbtHex: "_",
         psbtHexs: psbtsHexes,
         options,

@@ -54,7 +54,7 @@
 //     sdk.bootstrap();
 //     this.viewSdk = sdk;
 //     this.dataSdk = new KeystoneSDK({
-//       origin: "babylon staking app",
+//       origin: "scalar staking app",
 //     });
 //     this.networkEnv = getNetworkConfig().network;
 //   }
@@ -71,7 +71,7 @@
 //     const decodedResult = await keystoneContainer.read(
 //       [SupportedResult.UR_CRYPTO_ACCOUNT],
 //       {
-//         title: "Sync Keystone with Babylon Staking App",
+//         title: "Sync Keystone with Scalar Staking App",
 //         description:
 //           "Please scan the QR code displayed on your Keystone, Currently only the first Taproot Address will be used",
 //         renderInitial: {

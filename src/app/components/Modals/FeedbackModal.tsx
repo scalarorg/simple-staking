@@ -21,13 +21,13 @@ const SuccessContent = () => {
         <p>
           Your participation is crucial to our testnet’s success. We invite you
           to share your experience and feedback in our dedicated thread on the
-          Babylon Forum. Your insights are valuable to us and will help us
+          Scalar Forum. Your insights are valuable to us and will help us
           understand your experience with Bitcoin staking on our Testnet.
         </p>
         <p>
           Visit the{" "}
           <a
-            href="https://forum.babylonlabs.io/c/testnet/41"
+            href="https://forum.scalar.org/c/testnet/41"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary"
@@ -56,7 +56,7 @@ const CancelContent = () => {
         <p>
           If you need any help with Bitcoin staking, please{" "}
           <a
-            href="https://forum.babylonlabs.io/c/testnet/41"
+            href="https://forum.scalar.org/c/testnet/41"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary"
@@ -68,7 +68,7 @@ const CancelContent = () => {
         <p>
           You can also add your feedback to the{" "}
           <a
-            href="https://forum.babylonlabs.io/t/feedback-megathread/183"
+            href="https://forum.scalar.org/t/feedback-megathread/183"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary"

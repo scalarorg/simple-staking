@@ -82,7 +82,7 @@ export const Summary: React.FC = () => {
         <p className="xl:hidden">{trim(address)}</p>
         {!onMainnet && (
           <a
-            href="https://discord.com/invite/babylonglobal"
+            href="https://discord.com/invite/wzzYhgCggD"
             target="_blank"
             rel="noopener noreferrer"
             className="font-light text-primary hover:underline"

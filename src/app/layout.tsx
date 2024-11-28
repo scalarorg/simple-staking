@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <meta property="og:title" content="Babylon - Staking Dashboard" />
+      <meta property="og:title" content="Scalar - Staking Dashboard" />
       <meta name="description" content="BTC Staking Dashboard" key="desc" />
       <meta property="og:description" content="BTC Staking Dashboard" />
       <meta property="og:image:type" content="image/png" />
@@ -34,14 +34,14 @@ export default function RootLayout({
       <meta property="og:image:height" content="1170" />
       <meta
         property="og:image"
-        content="https://btcstaking.babylonchain.io/og.png"
+        content="https://btcstaking.scalar.org/og.png"
       />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="BTC Staking Dashboard" />
       <meta name="twitter:description" content="BTC Staking Dashboard" />
       <meta
         name="twitter:image"
-        content="https://btcstaking.babylonchain.io/og.png"
+        content="https://btcstaking.scalar.org/og.png"
       />
       <meta name="twitter:image:type" content="image/png" />
       <meta name="twitter:image:width" content="2048" />

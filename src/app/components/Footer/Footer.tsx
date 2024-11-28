@@ -64,12 +64,12 @@ export const Footer: React.FC<FooterProps> = () => {
         <div className="divider my-1" />
       </div>
       <div className="flex justify-center gap-8 p-2">
-        <button
+        {/* <button
           onClick={openTerms}
           className="transition-colors hover:text-primary cursor-pointer btn btn-link no-underline text-base-content"
         >
           Terms of Use
-        </button>
+        </button> */}
       </div>
       <div className="flex flex-wrap justify-center gap-8 p-4 pt-2 md:flex-row md:p-6 md:pt-2">
         {iconLinks.map(({ name, url, Icon }) => (

@@ -18,7 +18,7 @@ export const Logo: React.FC<LogoProps> = () => {
     setMounted(true);
   }, []);
 
-  // uses skeleton of babylon logo with primary color
+  // uses skeleton of scalar logo with primary color
   // since before theme is resolved, we don't know which logo to show
   if (!mounted) {
     return <div className="h-[40px] w-[159px]" />;
@@ -28,7 +28,7 @@ export const Logo: React.FC<LogoProps> = () => {
     <div className="flex">
       <Image
         src={lightSelected ? darkLogo : lightLogo}
-        alt="Babylon"
+        alt="Scalar"
         className={logoStyles}
       />
     </div>

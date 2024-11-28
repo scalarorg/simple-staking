@@ -5,24 +5,24 @@ connects to the Bitcoin network to identify important information about the
 account, such as available funds, and to propagate transactions.
 
 In this document,
-we present the interface that the Babylon staking dApp expects from a Bitcoin
+we present the interface that the Scalar staking dApp expects from a Bitcoin
 Wallet provider to fully integrate with it.
 While we expect a wallet provider to implement all of the below methods,
 there is the possibility that a provider might not have access to all the data
-that the Babylon dApp requires. In the end of the document, we provide some
+that the Scalar dApp requires. In the end of the document, we provide some
 examples on how this limitation can be overcome through the utilisation of 3rd
 party APIs.
 
 Integration using this interface can happen in the following ways,
 depending on the wallet provider:
 
-- _Extension Wallets_ should work with the Babylon technical support team
+- _Extension Wallets_ should work with the Scalar technical support team
   to create a class that wraps their internal wallet API into the expected
-  Babylon interface and integrate it to the Babylon BTC Staking dApp.
+  Scalar interface and integrate it to the Scalar BTC Staking dApp.
   This way, when the user loads up the page in their browser,
   they will have the option to connect using the Extension Wallet.
 - _Mobile Wallets_ can develop a class that wraps their internal Bitcoin APIs.
-  Before the mobile in-app browser loads the Babylon staking dApp, an
+  Before the mobile in-app browser loads the Scalar staking dApp, an
   instance of this class should be injected under window.btcwallet.
 
 ## 1. Wallet Interface
@@ -68,7 +68,7 @@ export abstract class WalletProvider {
   /**
    * Connects to the wallet and returns the instance of the wallet provider.
    * Currently only supports "native segwit" and "taproot" address types.
-   * @returns A promise that resolves to an instance of the wrapper wallet provider in babylon friendly format.
+   * @returns A promise that resolves to an instance of the wrapper wallet provider in scalar friendly format.
    * @throws An error if the wallet is not installed or if connection fails.
    */
   abstract connectWallet(): Promise<this>;
@@ -169,7 +169,7 @@ export abstract class WalletProvider {
 
 A mobile wallet with an in-app browser option can be integrated into the dApp
 by defining a class that implements the wallet interface and injecting an
-instance of it under the `window.btcwallet` global object when the Babylon dApp
+instance of it under the `window.btcwallet` global object when the Scalar dApp
 is loaded.
 
 ```ts
@@ -181,7 +181,7 @@ class MobileAppWallet extends WalletProvider {
 // Create an instance of the class
 const wallet = new MobileAppWallet();
 
-// Inject it under the `window.btcwallet` object before the Babylon dApp loads
+// Inject it under the `window.btcwallet` object before the Scalar dApp loads
 window.btcwallet = wallet;
 ```
 

@@ -5,15 +5,15 @@ export const Terms = () => {
       <br />
       <p>
         <a
-          href="https://btcstaking.testnet.babylonchain.io/"
+          href="https://btc-staking.testnet.scalar.org/"
           className="text-primary italic"
         >
-          https://btcstaking.testnet.babylonchain.io/
+          https://btc-staking.testnet.scalar.org/
         </a>{" "}
         is a website-hosted user interface (the{" "}
         <i className="text-primary">“Interface”</i>).{" "}
-        <a href="https://babylonchain.io" className="text-primary">
-          BabylonChain.io
+        <a href="https://scalar.org/" className="text-primary">
+          https://scalar.org/
         </a>{" "}
         is our website (<i className="text-primary">“Website”</i>).
       </p>
@@ -83,8 +83,8 @@ export const Terms = () => {
       <p>
         If you have any dispute or claim arising out of or relating in any way
         to the Interface or these Terms, you must send an email to{" "}
-        <a href="mailto:contracts@babylonchain.io" className="text-primary">
-          contracts@babylonchain.io
+        <a href="mailto:contracts@scalar.io" className="text-primary">
+          contracts@scalar.io
         </a>{" "}
         to resolve the matter via an informal, good faith negotiation process.
         If that dispute or claim is not resolved within 60 days of sending such
@@ -129,7 +129,7 @@ export const Terms = () => {
       <p>
         The Interface also offers interaction methods whereby the User can
         indicate a transaction that the User would like to perform in connection
-        with the publicly available Babylon staking protocols (the{" "}
+        with the publicly available Scalar staking protocols (the{" "}
         <i className="text-primary">“Protocols”</i>). The interaction methods
         include accessing the functionalities of publicly deployed Protocol for
         Users to self-authorize token transfers on relevant blockchains.

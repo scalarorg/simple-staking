@@ -66,7 +66,7 @@ export abstract class WalletProvider {
   /**
    * Connects to the wallet and returns the instance of the wallet provider.
    * Currently only supports "native segwit" and "taproot" address types.
-   * @returns A promise that resolves to an instance of the wrapper wallet provider in babylon friendly format.
+   * @returns A promise that resolves to an instance of the wrapper wallet provider in scalar friendly format.
    * @throws An error if the wallet is not installed or if connection fails.
    */
   abstract connectWallet(network?: Network): Promise<this>;

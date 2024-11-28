@@ -1,7 +1,7 @@
 export const questions = (coinName: string) => [
   {
-    title: "What is Babylon?",
-    content: `<p>Babylon is a suite of security-sharing protocols that bring Bitcoin\’s unparalleled security to the decentralized world. The latest protocol, Bitcoin Staking, enables Bitcoin holders to stake their Bitcoin to provide crypto-economic security to PoS (proof-of-stake) systems in a trustless and self-custodial way.</p>`,
+    title: "What is Scalar?",
+    content: `<p>Scalar is a high-performance blockchain platform that combines EVM and Move compatibility with interoperability features. It aims to provide a secure and scalable infrastructure for decentralized applications, smart contracts, and cross-chain communication.</p>`,
   },
   {
     title: "How does Bitcoin Staking Work?",
@@ -31,7 +31,7 @@ export const questions = (coinName: string) => [
     <ol>
       <li>
         1. Code security<br />
-        There is an inherent risk that the code developed for Bitcoin staking has vulnerabilities or bugs. The Babylon team has open-sourced the code, and it is under security audits.
+        There is an inherent risk that the code developed for Bitcoin staking has vulnerabilities or bugs. The Scalar team has open-sourced the code, and it is under security audits.
       </li>
       <br />
       <li>
@@ -56,7 +56,7 @@ export const questions = (coinName: string) => [
   },
   {
     title: "Are there any other ways to stake?",
-    content: `<p>Hands-on stakers can operate the <a href="https://github.com/babylonchain/btc-staker/blob/dev/docs/create-phase1-staking.md" target="_blank" rel="noopener noreferrer" class="text-primary"><u>btc-staker CLI program</u></a> that allows for the creation of ${coinName} staking transactions from the CLI.</p>
+    content: `<p>Hands-on stakers can operate the <a href="https://github.com/scalar-lab/bitcoin-vault/blob/main/docs/create-phase1-staking.md" target="_blank" rel="noopener noreferrer" class="text-primary"><u>btc-staker CLI program</u></a> that allows for the creation of ${coinName} staking transactions from the CLI.</p>
     `,
   },
 ];
