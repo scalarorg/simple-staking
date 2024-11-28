@@ -14,7 +14,7 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL: z.boolean().default(false),
   NEXT_PUBLIC_COVENANT_QUORUM: z.number().min(1),
   NEXT_PUBLIC_COVENANT_PUBKEYS: z.array(z.string().min(5)).optional(),
-  NEXT_PUBLIC_SERVICE_TAG: z.string().default("light"),
+  NEXT_PUBLIC_SERVICE_TAG: z.string().default("pools"),
   NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS: z.string().default(""),
 });
 

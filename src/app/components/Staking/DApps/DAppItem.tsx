@@ -1,5 +1,6 @@
 import { CircleArrowDown, CircleArrowUp, PencilIcon } from "lucide-react";
 import { Tooltip } from "react-tooltip";
+import { useAccount } from "wagmi";
 
 import SBTC_ABI from "@/abis/sbtc";
 import { useWalletInfo } from "@/app/context/WalletProvider";
@@ -14,7 +15,6 @@ import {
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { isCustodialDApp } from "@/utils/isCustodialDApp";
 import { hexStringWith0x } from "@/utils/trim";
-import { useAccount } from "wagmi";
 
 interface DAppProps {
   index: number;

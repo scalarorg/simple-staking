@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import { getShortenCustodialGroups } from "@/app/api/custodial";
 import { updateDApp } from "@/app/api/dApp";
 import { useDAppModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
@@ -13,7 +14,6 @@ import { ChainName } from "../Staking/Form/ChainName";
 import { InputField } from "../Staking/Form/InputField";
 import { SelectField } from "../Staking/Form/SelectField";
 
-import { getShortenCustodialGroups } from "@/app/api/custodial";
 import { GeneralModal } from "./GeneralModal";
 
 export const UpdateDAppModal: React.FC<{}> = ({}) => {

@@ -1,12 +1,13 @@
 # Step 1. Rebuild the source code only when needed
 FROM oven/bun:1 AS builder
 
-RUN apt-get update && apt-get install -y python3 make gcc g++ && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y python3 make gcc g++ python3-pip && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY package.json bun.lockb ./
 # Install dependencies with bun
-RUN bun install
+RUN bun install --no-optional || \
+    (bun add -d node-gyp && bun install --no-optional)
 
 COPY src ./src
 COPY public ./public

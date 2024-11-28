@@ -21,6 +21,7 @@ import { useRecommendedFees } from "@/app/hooks/useRecommendedFees";
 import { useUnbondModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
 import { ExtendedProjectENV, ProjectENV } from "@/env";
+import { hexStringWithout0x } from "@/utils/trim";
 
 import { Button } from "../ui/button";
 import {
@@ -35,7 +36,6 @@ import {
 import { Input } from "../ui/input";
 import { toast } from "../ui/use-toast";
 
-import { hexStringWithout0x } from "@/utils/trim";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -242,6 +242,7 @@ export const UnbondModal: React.FC = () => {
         covenantPubkeys: ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
         covenantQuorum: ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
         haveOnlyCovenants: false,
+        feeRate: txFee,
         rbf: false,
       });
 

@@ -187,6 +187,7 @@ export const UnstakeCustodialModal: React.FC = () => {
           covenantPubkeys: custodial_pubkeys_uint8array,
           covenantQuorum: dApp.custodialGroup.Quorum,
           haveOnlyCovenants: true,
+          feeRate: BigInt(selectedFeeRate),
           rbf: true,
         });
 
@@ -211,7 +212,7 @@ export const UnstakeCustodialModal: React.FC = () => {
       await unstake(dApp.btcNetwork, burnAmount, psbt_base64_with_prefix);
 
       setStatus("Token unstaked successfully");
-      close();
+      // close();
     } catch (error: any) {
       console.error(error);
       toast({
