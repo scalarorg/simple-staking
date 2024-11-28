@@ -16,6 +16,9 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_COVENANT_PUBKEYS: z.array(z.string().min(5)).optional(),
   NEXT_PUBLIC_SERVICE_TAG: z.string().default("pools"),
   NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS: z.string().default(""),
+  NEXT_PUBLIC_APP_URL: z
+    .string()
+    .default("https://btc-staking.testnet.scalar.org"),
 });
 
 /**
@@ -48,6 +51,8 @@ export const ProjectENV = ProjectENVSchema.parse({
   NEXT_PUBLIC_SERVICE_TAG: process.env.NEXT_PUBLIC_SERVICE_TAG,
   NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS:
     process.env.NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS,
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  // NEXT_PUBLIC_APP_URL: "https://btc-staking.testnet.scalar.org",
 });
 
 export const ExtendedProjectENVSchema = z.object({

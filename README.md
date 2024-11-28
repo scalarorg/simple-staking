@@ -69,7 +69,7 @@ src/
 
 ## 🌟 How to run
 
-To set up a development environment, first specify the required environment variables in the `.env` file in the root directory, using `.env.example` as reference. Then run the following command to start the development server:
+To set up a development environment, first specify the required environment variables in the `.env.local` file in the root directory, using `.env.example` as reference. Then run the following command to start the development server:
 
 ```
 bun install

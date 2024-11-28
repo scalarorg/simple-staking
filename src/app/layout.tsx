@@ -7,15 +7,49 @@ import { Toaster } from "@/app/components/ui/toaster";
 
 import Providers from "./providers";
 
+import { ProjectENV } from "@/env";
 import "react-responsive-modal/styles.css";
 import "react-tooltip/dist/react-tooltip.css";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1.0,
+};
+
 export const metadata: Metadata = {
   title: "Staking Dashboard",
   description: "BTC Staking Dashboard",
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    title: "Scalar - Staking Dashboard",
+    description: "BTC Staking Dashboard",
+    images: [
+      {
+        url: new URL("og.png", ProjectENV.NEXT_PUBLIC_APP_URL),
+        width: 1200,
+        height: 630,
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BTC Staking Dashboard",
+    description: "BTC Staking Dashboard",
+    images: [
+      {
+        url: new URL("og.png", ProjectENV.NEXT_PUBLIC_APP_URL),
+        width: 1200,
+        height: 630,
+        type: "image/png",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -25,27 +59,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <meta property="og:title" content="Scalar - Staking Dashboard" />
-      <meta name="description" content="BTC Staking Dashboard" key="desc" />
-      <meta property="og:description" content="BTC Staking Dashboard" />
-      <meta property="og:image:type" content="image/png" />
-      <meta property="og:image:width" content="2048" />
-      <meta property="og:image:height" content="1170" />
-      <meta
-        property="og:image"
-        content="https://btcstaking.scalar.org/og.png"
-      />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="BTC Staking Dashboard" />
-      <meta name="twitter:description" content="BTC Staking Dashboard" />
-      <meta
-        name="twitter:image"
-        content="https://btcstaking.scalar.org/og.png"
-      />
-      <meta name="twitter:image:type" content="image/png" />
-      <meta name="twitter:image:width" content="2048" />
-      <meta name="twitter:image:height" content="1170" />
       <body className={inter.className}>
         <div className="overflow-hidden relative h-full min-h-svh z-0 w-full">
           <div className={"absolute -z-10 left-[9%] top-[5%]"}>
