@@ -3,11 +3,11 @@ import { Unlock } from "lucide-react";
 import Link from "next/link";
 
 import { getBonds } from "@/app/api/getBonds";
+import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useWalletInfo } from "@/app/context/WalletProvider";
 import { fpStyles, fpTableStyles } from "@/app/scalar/theme";
 import { useUnbondModal } from "@/app/stores/modal";
 import { ProjectENV } from "@/env";
-import { isCustodialDApp } from "@/utils/isCustodialDApp";
 import { getRelativeTime } from "@/utils/tool";
 import { hexStringWith0x } from "@/utils/trim";
 
@@ -23,6 +23,8 @@ export const ListBonds: React.FC = () => {
   });
 
   const { open } = useUnbondModal();
+
+  const { client: scalarClient } = useScalarClient();
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -83,7 +85,7 @@ export const ListBonds: React.FC = () => {
                     <td>{getRelativeTime(bond.createdAt)}</td>
                     <td>
                       {!bond.executedAmount &&
-                      isCustodialDApp(
+                      scalarClient.isCustodialDApp(
                         hexStringWith0x(bond.destinationSmartContractAddress),
                       ) ? (
                         <div className="flex justify-center">

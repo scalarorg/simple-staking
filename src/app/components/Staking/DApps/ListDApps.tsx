@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-import { getDApps } from "@/app/api/dApp";
 import { LoadingView } from "@/app/components/Loading/Loading";
 import { useError } from "@/app/context/Error/ErrorContext";
 import { useWalletInfo } from "@/app/context/WalletProvider";
@@ -10,6 +9,7 @@ import { useAddDAppModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
 import { ErrorState } from "@/app/types/errors";
 
+import { useScalarClient } from "@/app/context/ScalarProvider";
 import { DAppItem } from "./DAppItem";
 
 // Staking form finality providers
@@ -18,6 +18,7 @@ export const ListDApps: React.FC<{}> = ({}) => {
   const [selectedDApp, setSelectedDApp] = useState<DApp | undefined>(undefined);
   const { open: openAddDAppModal } = useAddDAppModal();
   const { address } = useWalletInfo();
+  const { client: scalarClient } = useScalarClient();
 
   const {
     data,
@@ -27,7 +28,7 @@ export const ListDApps: React.FC<{}> = ({}) => {
     refetch: refetchDApps,
   } = useQuery({
     queryKey: ["getListDApps"],
-    queryFn: () => getDApps(),
+    queryFn: () => scalarClient.getDAppsFromScalar(),
     refetchInterval: 60000, // 1 minute
     retry: (failureCount, error) => {
       return !isErrorOpen && failureCount <= 3;

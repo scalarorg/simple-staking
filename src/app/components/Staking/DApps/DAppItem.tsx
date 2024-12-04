@@ -3,6 +3,7 @@ import { Tooltip } from "react-tooltip";
 import { useAccount } from "wagmi";
 
 import SBTC_ABI from "@/abis/sbtc";
+import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useWalletInfo } from "@/app/context/WalletProvider";
 import { useERC20Contract } from "@/app/hooks/useContracts";
 import { fpStyles } from "@/app/scalar/theme";
@@ -13,7 +14,6 @@ import {
   useUnstakeCustodialModal,
 } from "@/app/stores/modal";
 import { DApp as DAppInterface } from "@/app/types/dApps";
-import { isCustodialDApp } from "@/utils/isCustodialDApp";
 import { hexStringWith0x } from "@/utils/trim";
 
 interface DAppProps {
@@ -28,7 +28,10 @@ export const DAppItem: React.FC<DAppProps> = ({
   selected,
   index,
 }) => {
-  const isCustodial = isCustodialDApp(hexStringWith0x(dApp.scAddress));
+  const { client: scalarClient } = useScalarClient();
+  const isCustodial = scalarClient.isCustodialDApp(
+    hexStringWith0x(dApp.scAddress),
+  );
 
   const generalStyles = "cursor-pointer transition-shadow hover:shadow-md";
 
