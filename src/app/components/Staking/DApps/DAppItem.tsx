@@ -10,8 +10,8 @@ import { fpStyles } from "@/app/scalar/theme";
 import {
   useDAppModal,
   useMintTxModal,
-  useStakeCustodialModal,
-  useUnstakeCustodialModal,
+  useStakeCustodianModal,
+  useUnstakeCustodianModal,
 } from "@/app/stores/modal";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 import { hexStringWith0x } from "@/utils/trim";
@@ -28,8 +28,9 @@ export const DAppItem: React.FC<DAppProps> = ({
   selected,
   index,
 }) => {
+  console.log("--- dapp.chainId", dApp.chainId);
   const { client: scalarClient } = useScalarClient();
-  const isCustodial = scalarClient.isCustodialDApp(
+  const isCustodian = scalarClient.isCustodianDApp(
     hexStringWith0x(dApp.scAddress),
   );
 
@@ -40,8 +41,8 @@ export const DAppItem: React.FC<DAppProps> = ({
   const { address } = useWalletInfo();
   const { address: evmAddress } = useAccount();
   const { open: openMintTxModal } = useMintTxModal();
-  const { open: openStakeCustodialModal } = useStakeCustodialModal();
-  const { open: openUnstakeCustodialModal } = useUnstakeCustodialModal();
+  const { open: openStakeCustodianModal } = useStakeCustodianModal();
+  const { open: openUnstakeCustodianModal } = useUnstakeCustodianModal();
   const { tokenSymbol } = useERC20Contract(
     SBTC_ABI,
     dApp.tokenContractAddress,
@@ -83,7 +84,7 @@ export const DAppItem: React.FC<DAppProps> = ({
             Edit
             <PencilIcon size={12} />
           </button>
-          {!isCustodial && (
+          {!isCustodian && (
             <button
               className={`px-2 hover:text-green-600 flex items-center gap-2 justify-center text-green-700 ${
                 !address ? "opacity-50 pointer-events-none" : ""
@@ -95,13 +96,13 @@ export const DAppItem: React.FC<DAppProps> = ({
               <CircleArrowDown size={16} />
             </button>
           )}
-          {isCustodial && (
+          {isCustodian && (
             <>
               <button
                 className={`px-2 hover:text-green-600 flex items-center gap-2 justify-center text-green-700 ${
                   !address ? "opacity-50 pointer-events-none" : ""
                 }`}
-                onClick={() => openStakeCustodialModal(dApp)}
+                onClick={() => openStakeCustodianModal(dApp)}
                 disabled={!address}
               >
                 Stake
@@ -111,7 +112,7 @@ export const DAppItem: React.FC<DAppProps> = ({
                 className={`px-2 hover:text-cyan-600 flex items-center gap-2 justify-center text-cyan-700 ${
                   !address ? "opacity-50 pointer-events-none" : ""
                 }`}
-                onClick={() => openUnstakeCustodialModal(dApp)}
+                onClick={() => openUnstakeCustodianModal(dApp)}
                 disabled={!address}
               >
                 Unstake

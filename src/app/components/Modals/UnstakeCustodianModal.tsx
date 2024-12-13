@@ -25,14 +25,14 @@ import {
 import { Input } from "@/app/components/ui/input";
 import { TransactionRateSelect } from "@/app/components/ui/TransactionRateSelect";
 import { toast } from "@/app/components/ui/use-toast";
-import { useVault } from "@/app/context/VaultContext";
+import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import {
   useERC20Contract,
   useProtocolContract,
 } from "@/app/hooks/useContracts";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
-import { useUnstakeCustodialModal } from "@/app/stores/modal";
+import { useUnstakeCustodianModal } from "@/app/stores/modal";
 
 import { GeneralModal } from "./GeneralModal";
 
@@ -58,9 +58,9 @@ const FormSchema = z.object({
     .optional(),
 });
 
-export const UnstakeCustodialModal: React.FC = () => {
+export const UnstakeCustodianModal: React.FC = () => {
   const { address, isConnected } = useAccount();
-  const { isOpen, close, dApp } = useUnstakeCustodialModal();
+  const { isOpen, close, dApp } = useUnstakeCustodianModal();
   const { address: btcAddress, pubkey: stakerPubkey } = useWalletInfo();
 
   const { mempoolClient, walletProvider, btcNetwork, networkConfig } =
@@ -80,6 +80,7 @@ export const UnstakeCustodialModal: React.FC = () => {
 
   const { unstake } = useProtocolContract(PROTOCOL_ABI, dApp?.scAddress);
 
+  const scalarVaultModule = useScalarVaultModule();
   const vault = useVault();
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -121,7 +122,7 @@ export const UnstakeCustodialModal: React.FC = () => {
       const btcReturnAmount = Number(unstakeAmount);
 
       const addressUtxos = await walletProvider.getUtxos(
-        dApp.custodialGroup.TaprootAddress,
+        dApp.custodianGroup.TaprootAddress,
         btcReturnAmount,
       );
 
@@ -150,7 +151,7 @@ export const UnstakeCustodialModal: React.FC = () => {
       setIsProcessing(true);
       setStatus("Processing unstake request...");
 
-      // TODO: APPLY NEW UNSTAKING CUSTODIAL LOGIC HERE
+      // TODO: APPLY NEW UNSTAKING CUSTODIAN LOGIC HERE
       const btcUserPk = scalarVaultModule.hexToBytes(
         stakerPubkey.replace("0x", ""),
       );
@@ -158,15 +159,15 @@ export const UnstakeCustodialModal: React.FC = () => {
         dApp.btcPk.replace("0x", ""),
       );
 
-      const numberOfCustodialPubkeys = dApp.custodialGroup.Custodials.length;
-      const custodial_pubkeys_uint8array = new Uint8Array(
-        33 * numberOfCustodialPubkeys,
+      const numberOfCustodianPubkeys = dApp.custodianGroup.Custodians.length;
+      const custodian_pubkeys_uint8array = new Uint8Array(
+        33 * numberOfCustodianPubkeys,
       );
 
-      for (let i = 0; i < numberOfCustodialPubkeys; i++) {
-        custodial_pubkeys_uint8array.set(
+      for (let i = 0; i < numberOfCustodianPubkeys; i++) {
+        custodian_pubkeys_uint8array.set(
           scalarVaultModule.hexToBytes(
-            dApp.custodialGroup.Custodials[i].BtcPublicKeyHex!.replace(
+            dApp.custodianGroup.Custodians[i].BtcPublicKeyHex!.replace(
               "0x",
               "",
             ),
@@ -184,8 +185,8 @@ export const UnstakeCustodialModal: React.FC = () => {
           },
           stakerPubkey: btcUserPk,
           protocolPubkey: btcServicePk,
-          covenantPubkeys: custodial_pubkeys_uint8array,
-          covenantQuorum: dApp.custodialGroup.Quorum,
+          covenantPubkeys: custodian_pubkeys_uint8array,
+          covenantQuorum: dApp.custodianGroup.Quorum,
           haveOnlyCovenants: true,
           feeRate: BigInt(selectedFeeRate),
           rbf: true,
@@ -229,7 +230,7 @@ export const UnstakeCustodialModal: React.FC = () => {
   return (
     <GeneralModal open={isOpen} onClose={close}>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-bold">Unstake Custodial</h3>
+        <h3 className="font-bold">Unstake Custodian</h3>
         <button className="btn btn-circle btn-ghost btn-sm" onClick={close}>
           <IoMdClose size={24} />
         </button>
@@ -244,26 +245,26 @@ export const UnstakeCustodialModal: React.FC = () => {
                 <Input readOnly value={dApp?.tokenContractAddress || ""} />
               </div>
               <div className="space-y-2">
-                <FormLabel>Custodial Group Name</FormLabel>
-                <Input readOnly value={dApp?.custodialGroup.Name} />
+                <FormLabel>Custodian Group Name</FormLabel>
+                <Input readOnly value={dApp?.custodianGroup.Name} />
               </div>
               <div className="space-y-2">
                 <FormLabel>
-                  Custodials ({dApp?.custodialGroup.Quorum} of{" "}
-                  {dApp?.custodialGroup.Custodials.length} required)
+                  Custodians ({dApp?.custodianGroup.Quorum} of{" "}
+                  {dApp?.custodianGroup.Custodians.length} required)
                 </FormLabel>
                 <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-input bg-background p-2">
-                  {dApp?.custodialGroup.Custodials.map(
-                    (custodial: { BtcPublicKeyHex: string }, index: number) => (
+                  {dApp?.custodianGroup.Custodians.map(
+                    (custodian: { BtcPublicKeyHex: string }, index: number) => (
                       <div
                         key={index}
                         className="flex flex-col space-y-1 text-sm"
                       >
                         <div className="font-medium">
-                          Custodial #{index + 1}
+                          Custodian #{index + 1}
                         </div>
                         <div className="text-muted-foreground">
-                          BTC Public Key: {custodial.BtcPublicKeyHex}
+                          BTC Public Key: {custodian.BtcPublicKeyHex}
                         </div>
                       </div>
                     ),

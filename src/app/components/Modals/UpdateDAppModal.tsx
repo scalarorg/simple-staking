@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-import { getShortenCustodialGroups } from "@/app/api/custodial";
+import { getShortenCustodianGroups } from "@/app/api/custodian";
 import { updateDApp } from "@/app/api/dApp";
 import { useDAppModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
@@ -19,8 +19,8 @@ import { GeneralModal } from "./GeneralModal";
 export const UpdateDAppModal: React.FC<{}> = ({}) => {
   const { dApp, isOpen, close } = useDAppModal();
   const [updatedDApp, setUpdatedDApp] = useState<DApp | undefined>(dApp);
-  const [custodialGroupId, setCustodialGroupId] = useState<number | null>(
-    dApp?.custodialGroup.ID || null,
+  const [custodianGroupId, setCustodianGroupId] = useState<number | null>(
+    dApp?.custodianGroup.ID || null,
   );
 
   const [isCustomChain, setIsCustomChain] = useState(false);
@@ -28,14 +28,14 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
   const chains = config.chains;
 
   const {
-    data: shortenCustodialGroupsData,
-    isLoading: isShortenCustodialGroupsLoading,
-    error: shortenCustodialGroupsError,
-    isError: hasShortenCustodialGroupsError,
-    refetch: refetchShortenCustodialGroups,
+    data: shortenCustodianGroupsData,
+    isLoading: isShortenCustodianGroupsLoading,
+    error: shortenCustodianGroupsError,
+    isError: hasShortenCustodianGroupsError,
+    refetch: refetchShortenCustodianGroups,
   } = useQuery({
-    queryKey: ["getShortenCustodialGroups"],
-    queryFn: () => getShortenCustodialGroups(),
+    queryKey: ["getShortenCustodianGroups"],
+    queryFn: () => getShortenCustodianGroups(),
     refetchInterval: isOpen ? 60000 : false, // 1 minute
     enabled: isOpen,
     retry: (failureCount, error) => {
@@ -43,8 +43,8 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
     },
   });
 
-  const shortenCustodialGroups =
-    shortenCustodialGroupsData?.shortenCustodialGroups;
+  const shortenCustodianGroups =
+    shortenCustodianGroupsData?.shortenCustodianGroups;
 
   const handleChange = (key: keyof DApp, value: string) => {
     if (!updatedDApp) return;
@@ -55,11 +55,11 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
 
   const queryClient = useQueryClient();
 
-  const handleCustodialGroupChange = (groupName: string) => {
-    const selectedGroup = shortenCustodialGroups?.find(
+  const handleCustodianGroupChange = (groupName: string) => {
+    const selectedGroup = shortenCustodianGroups?.find(
       (group) => group.Name === groupName,
     );
-    setCustodialGroupId(selectedGroup?.ID || null);
+    setCustodianGroupId(selectedGroup?.ID || null);
   };
 
   const handleUpdate = useCallback(async () => {
@@ -75,7 +75,7 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
       !updatedDApp.btcPk ||
       !updatedDApp.scAddress ||
       !updatedDApp.tokenContractAddress ||
-      !custodialGroupId
+      !custodianGroupId
     ) {
       console.error("Missing required fields");
       setLoading(false);
@@ -92,7 +92,7 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
       updatedDApp.btcPk,
       updatedDApp.scAddress,
       updatedDApp.tokenContractAddress,
-      custodialGroupId,
+      custodianGroupId,
     )
       .then(() => {
         console.log("Successfully updated DApp");
@@ -105,7 +105,7 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
         setLoading(false);
         queryClient.invalidateQueries({ queryKey: ["getListDApps"] });
       });
-  }, [updatedDApp, setLoading, close, queryClient, custodialGroupId]);
+  }, [updatedDApp, setLoading, close, queryClient, custodianGroupId]);
 
   useEffect(() => {
     if (!updatedDApp) {
@@ -159,13 +159,13 @@ export const UpdateDAppModal: React.FC<{}> = ({}) => {
         </div>
         <div className="flex flex-1 flex-col">
           <SelectField
-            onChange={handleCustodialGroupChange}
+            onChange={handleCustodianGroupChange}
             reset={false}
-            initValue={dApp?.custodialGroup.Name || ""}
-            options={shortenCustodialGroups?.map((group) => group.Name) || []}
-            label="Custodial Group"
-            placeholder="Select Custodial Group"
-            errorMessage="Please select a custodial group"
+            initValue={dApp?.custodianGroup.Name || ""}
+            options={shortenCustodianGroups?.map((group) => group.Name) || []}
+            label="Custodian Group"
+            placeholder="Select Custodian Group"
+            errorMessage="Please select a custodian group"
           />
         </div>
         <div className="flex flex-1 flex-col">

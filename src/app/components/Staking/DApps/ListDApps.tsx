@@ -61,7 +61,7 @@ export const ListDApps: React.FC<{}> = ({}) => {
     <div className="flex flex-col gap-4 container mx-auto w-full">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">List of DApps</h1>
-        <button
+        {/* <button
           className={`bg-orange-500 px-4 py-2 rounded-lg my-4 hover:bg-orange-600 transition-all duration-150 ${
             !address ? "opacity-50 cursor-not-allowed" : ""
           }`}
@@ -69,7 +69,7 @@ export const ListDApps: React.FC<{}> = ({}) => {
           disabled={!address}
         >
           Add
-        </button>
+        </button> */}
       </div>
       <div className={`flex flex-col gap-4 ${fpTableStyles}`}>
         <div className="no-scrollbar max-h-[21rem] overflow-y-auto">

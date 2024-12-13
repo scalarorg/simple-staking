@@ -11,7 +11,7 @@ import { z } from "zod";
 
 import PROTOCOL_ABI from "@/abis/protocol";
 import SBTC_ABI from "@/abis/sbtc";
-import { useVault } from "@/app/context/VaultContext";
+import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import {
   useERC20Contract,
@@ -163,6 +163,7 @@ export const UnbondModal: React.FC = () => {
   const [status, setStatus] = useState<string>("");
   const [isBurning, setIsBurning] = useState<boolean>(false);
 
+  const scalarVaultModule = useScalarVaultModule();
   const vault = useVault();
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {

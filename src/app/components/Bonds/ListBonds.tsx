@@ -85,7 +85,7 @@ export const ListBonds: React.FC = () => {
                     <td>{getRelativeTime(bond.createdAt)}</td>
                     <td>
                       {!bond.executedAmount &&
-                      scalarClient.isCustodialDApp(
+                      scalarClient.isCustodianDApp(
                         hexStringWith0x(bond.destinationSmartContractAddress),
                       ) ? (
                         <div className="flex justify-center">
@@ -93,7 +93,7 @@ export const ListBonds: React.FC = () => {
                             className="btn btn-outline text-sm font-normal text-white p-1 px-2 flex items-center gap-2 border-white justify-center bg-gray-400 cursor-not-allowed"
                             disabled
                           >
-                            Custodial - Unstaked
+                            Custodian - Unstaked
                           </button>
                         </div>
                       ) : !bond.executedAmount ? (

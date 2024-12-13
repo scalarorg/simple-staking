@@ -23,7 +23,7 @@ import { toast } from "@/app/components/ui/use-toast";
 import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
-import { useStakeCustodialModal } from "@/app/stores/modal";
+import { useStakeCustodianModal } from "@/app/stores/modal";
 import { ExtendedProjectENV } from "@/env";
 
 import { GeneralModal } from "./GeneralModal";
@@ -49,7 +49,7 @@ const FormSchema = z.object({
     .optional(),
 });
 
-export const StakeCustodialModal = () => {
+export const StakeCustodianModal = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -60,7 +60,7 @@ export const StakeCustodialModal = () => {
     },
   });
 
-  const { isOpen, close, dApp } = useStakeCustodialModal();
+  const { isOpen, close, dApp } = useStakeCustodianModal();
   const { address, pubkey } = useWalletInfo();
   const { mempoolClient, walletProvider, btcNetwork, networkConfig } =
     useWalletProvider();
@@ -135,15 +135,15 @@ export const StakeCustodialModal = () => {
         dApp.scAddress.replace("0x", ""),
       );
 
-      const numberOfCustodialPubkeys = dApp.custodialGroup.Custodials.length;
-      const custodial_pubkeys_uint8array = new Uint8Array(
-        33 * numberOfCustodialPubkeys,
+      const numberOfCustodianPubkeys = dApp.custodianGroup.Custodians.length;
+      const custodian_pubkeys_uint8array = new Uint8Array(
+        33 * numberOfCustodianPubkeys,
       );
 
-      for (let i = 0; i < numberOfCustodialPubkeys; i++) {
-        custodial_pubkeys_uint8array.set(
+      for (let i = 0; i < numberOfCustodianPubkeys; i++) {
+        custodian_pubkeys_uint8array.set(
           scalarVaultModule.hexToBytes(
-            dApp.custodialGroup.Custodials[i].BtcPublicKeyHex!.replace(
+            dApp.custodianGroup.Custodians[i].BtcPublicKeyHex!.replace(
               "0x",
               "",
             ),
@@ -157,8 +157,8 @@ export const StakeCustodialModal = () => {
           stakingAmount: BigInt(stakingAmount),
           stakerPubkey: btcUserPk,
           stakerAddress: address,
-          custodialPubkeys: custodial_pubkeys_uint8array,
-          covenantQuorum: dApp.custodialGroup.Quorum,
+          custodialPubkeys: custodian_pubkeys_uint8array,
+          covenantQuorum: dApp.custodianGroup.Quorum,
           destinationChain: new scalarVaultModule.DestinationChain(
             scalarVaultModule.ChainType.EVM, // TODO: FIX HARD CODE
             BigInt(id),
@@ -219,7 +219,7 @@ export const StakeCustodialModal = () => {
   return (
     <GeneralModal open={isOpen} big onClose={close}>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-bold">Stake Custodial</h3>
+        <h3 className="font-bold">Stake Custodian</h3>
         <button
           className="btn btn-circle btn-ghost btn-sm"
           onClick={() => close()}
@@ -320,7 +320,7 @@ export const StakeCustodialModal = () => {
 
           <div className="space-y-2 py-3">
             <h3 className="text-base font-medium">
-              Custodial Group Information
+              Custodian Group Information
             </h3>
             <div className="flex flex-col gap-4">
               <div className="space-y-2">
@@ -328,23 +328,23 @@ export const StakeCustodialModal = () => {
                 <Input readOnly value={dApp?.scAddress || ""} />
               </div>
               <div className="space-y-2">
-                <FormLabel>Custodial Group Name</FormLabel>
-                <Input readOnly value={dApp?.custodialGroup.Name} />
+                <FormLabel>Custodian Group Name</FormLabel>
+                <Input readOnly value={dApp?.custodianGroup.Name} />
               </div>
               <div className="space-y-2">
                 <FormLabel>
-                  Custodials ({dApp?.custodialGroup.Quorum} of{" "}
-                  {dApp?.custodialGroup.Custodials.length} required)
+                  Custodians ({dApp?.custodianGroup.Quorum} of{" "}
+                  {dApp?.custodianGroup.Custodians.length} required)
                 </FormLabel>
                 <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-input bg-background p-2">
-                  {dApp?.custodialGroup.Custodials.map((custodial, index) => (
+                  {dApp?.custodianGroup.Custodians.map((custodian, index) => (
                     <div
                       key={index}
                       className="flex flex-col space-y-1 text-sm"
                     >
-                      <div className="font-medium">Custodial #{index + 1}</div>
+                      <div className="font-medium">Custodian #{index + 1}</div>
                       <div className="text-muted-foreground">
-                        BTC Public Key: {custodial.BtcPublicKeyHex}
+                        BTC Public Key: {custodian.BtcPublicKeyHex}
                       </div>
                     </div>
                   ))}

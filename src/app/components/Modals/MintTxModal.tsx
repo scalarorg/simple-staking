@@ -9,10 +9,10 @@ import { IoMdClose } from "react-icons/io";
 import { useAccount, useChainId } from "wagmi";
 import { z } from "zod";
 
-import { ExtendedProjectENV } from "@/env";
-import { useMintTxModal } from "@/app/stores/modal";
-import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
+import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
+import { useMintTxModal } from "@/app/stores/modal";
+import { ExtendedProjectENV } from "@/env";
 
 import { Button } from "../ui/button";
 import {
@@ -132,15 +132,15 @@ export const MintTxModal: React.FC<{}> = () => {
         dApp.scAddress.replace("0x", ""),
       );
 
-      const numberOfCustodialPubkeys = dApp.custodialGroup.Custodials.length;
-      const custodial_pubkeys_uint8array = new Uint8Array(
-        33 * numberOfCustodialPubkeys,
+      const numberOfCustodianPubkeys = dApp.custodianGroup.Custodians.length;
+      const custodian_pubkeys_uint8array = new Uint8Array(
+        33 * numberOfCustodianPubkeys,
       );
 
-      for (let i = 0; i < numberOfCustodialPubkeys; i++) {
-        custodial_pubkeys_uint8array.set(
+      for (let i = 0; i < numberOfCustodianPubkeys; i++) {
+        custodian_pubkeys_uint8array.set(
           scalarVaultModule.hexToBytes(
-            dApp.custodialGroup.Custodials[i].BtcPublicKeyHex!.replace(
+            dApp.custodianGroup.Custodians[i].BtcPublicKeyHex!.replace(
               "0x",
               "",
             ),
@@ -155,8 +155,8 @@ export const MintTxModal: React.FC<{}> = () => {
           stakerPubkey: btcUserPk,
           stakerAddress: address,
           protocolPubkey: btcServicePk,
-          custodialPubkeys: custodial_pubkeys_uint8array,
-          covenantQuorum: dApp.custodialGroup.Quorum,
+          custodialPubkeys: custodian_pubkeys_uint8array,
+          covenantQuorum: dApp.custodianGroup.Quorum,
           haveOnlyCovenants: false,
           destinationChain: new scalarVaultModule.DestinationChain(
             scalarVaultModule.ChainType.EVM,

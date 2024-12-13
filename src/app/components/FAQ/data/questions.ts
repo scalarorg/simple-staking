@@ -5,7 +5,7 @@ export const questions = (coinName: string) => [
   },
   {
     title: "How does Bitcoin Staking Work?",
-    content: `<p>${coinName} holders lock their ${coinName} using the trustless and self-custodial Bitcoin Staking script for a predetermined time (timelock) in exchange for voting power in an underlying PoS protocol. In return, Bitcoin holders will earn PoS staking rewards.</p><br />
+    content: `<p>${coinName} holders lock their ${coinName} using the trustless and self-custodian Bitcoin Staking script for a predetermined time (timelock) in exchange for voting power in an underlying PoS protocol. In return, Bitcoin holders will earn PoS staking rewards.</p><br />
       <p>Finality providers perform the voting. A ${coinName} staker can create a finality provider by itself and self-delegate or delegate its voting power to a third-party finality provider.</p><br />
       <p>If a finality provider attacks the PoS system, the ${coinName}s behind the voting powers delegated to it will be subject to protocol slashing. This deters ${coinName} stakers and finality providers from attacking the PoS system.</p>
       `,
@@ -20,11 +20,11 @@ export const questions = (coinName: string) => [
   },
   {
     title: `Does my ${coinName} leave my wallet once staked?`,
-    content: `<p>Yes, it leaves your wallet. Your wallet will not show it as your available balance because it is locked. However, it is not sent to any third party. It is locked in a self-custodial contract you control. This means that any subsequent movement of the ${coinName} will need your approval, and you are the only one who can unbond the stake and withdraw.</p>`,
+    content: `<p>Yes, it leaves your wallet. Your wallet will not show it as your available balance because it is locked. However, it is not sent to any third party. It is locked in a self-custodian contract you control. This means that any subsequent movement of the ${coinName} will need your approval, and you are the only one who can unbond the stake and withdraw.</p>`,
   },
   {
     title: `Is my ${coinName} Safe? Could I get slashed?`,
-    content: `<p>In this testnet, you are not required to sign any PoS slashing-related authorizations. Thus, in theory, the ${coinName} in your self-custodial contract cannot be slashed due to the absence of your authorization.</p><br />
+    content: `<p>In this testnet, you are not required to sign any PoS slashing-related authorizations. Thus, in theory, the ${coinName} in your self-custodian contract cannot be slashed due to the absence of your authorization.</p><br />
 
     <p>However, there are still risks associated with your ${coinName}:</p><br />
     
