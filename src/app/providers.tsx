@@ -11,10 +11,9 @@ import { ErrorProvider } from "./context/Error/ErrorContext";
 import NetworkProvicer from "./context/NetworkProvicer";
 import ScalarProvider from "./context/ScalarProvider";
 import { TermsProvider } from "./context/Terms/TermsContext";
-import WalletProvider from "./context/WalletProvider";
-import { AppLayout } from "./layout/AppLayout";
-import { getConfig } from "./wagmi";
 import VaultProvider from "./context/VaultContext";
+import WalletProvider from "./context/WalletProvider";
+import { getConfig } from "./wagmi";
 
 function Providers({ children }: React.PropsWithChildren) {
   const [config] = React.useState(getConfig());
@@ -31,7 +30,7 @@ function Providers({ children }: React.PropsWithChildren) {
                   <WalletProvider>
                     <VaultProvider>
                       <ReactQueryStreamedHydration>
-                        <AppLayout>{children}</AppLayout>
+                        {children}
                       </ReactQueryStreamedHydration>
                     </VaultProvider>
                   </WalletProvider>

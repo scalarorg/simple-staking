@@ -1,11 +1,11 @@
 import { useNetwork } from "../../context/NetworkProvicer";
 import { useWalletInfo } from "../../context/WalletProvider";
-import { ConnectButton } from "../Connect/ConnectButton";
+import { ScalarConnectButton } from "../Connect/ScalarConnectButton";
 
 import { Logo } from "./Logo";
 import { PageSelect } from "./PageSelect";
 
-export const Header: React.FC = () => {
+export const ProtocolHeader: React.FC = () => {
   const { network } = useNetwork();
   const { address } = useWalletInfo();
   return (
@@ -31,7 +31,7 @@ export const Header: React.FC = () => {
                 </button>
               </div>
             )}
-            <ConnectButton />
+            <ScalarConnectButton />
           </div>
         </div>
       </div>
