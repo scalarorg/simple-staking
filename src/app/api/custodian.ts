@@ -1,7 +1,7 @@
 import {
   ShortenCustodianGroup,
   ShortenCustodianGroupsAPIResponse,
-} from "../types/custodians";
+} from "../types/custodials";
 
 import { apiWrapper } from "./apiWrapper";
 
@@ -10,7 +10,7 @@ export const getShortenCustodianGroups = async (): Promise<{
 }> => {
   const response = await apiWrapper(
     "GET",
-    "/v1/custodian/groups/shorten",
+    "/v1/custodial/groups/shorten",
     "Error getting shorten custodian groups",
   );
   const shortenCustodianGroupsAPIResponse: ShortenCustodianGroupsAPIResponse =

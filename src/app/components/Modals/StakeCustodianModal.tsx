@@ -3,9 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Psbt } from "bitcoinjs-lib";
 import { XIcon } from "lucide-react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount } from "wagmi";
 import { z } from "zod";
 
 import { Button } from "@/app/components/ui/button";
@@ -18,17 +18,22 @@ import {
   FormMessage,
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
+import { Select } from "@/app/components/ui/select";
 import { TransactionRateSelect } from "@/app/components/ui/TransactionRateSelect";
 import { toast } from "@/app/components/ui/use-toast";
 import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useStakeCustodianModal } from "@/app/stores/modal";
-import { ExtendedProjectENV } from "@/env";
-
+import { DestinationChain } from "@/app/types/protocol";
+import { hexStringWith0x } from "@/utils/trim";
+import Link from "next/link";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
+  tokenName: z.string({
+    required_error: "Please select a token.",
+  }),
   destRecipientAddress: z
     .string({
       required_error: "Please enter your token receiver address.",
@@ -53,6 +58,7 @@ export const StakeCustodianModal = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
+      tokenName: "",
       destRecipientAddress: "",
       stakingAmount: 100000,
       mintFeeRate: "hourFee",
@@ -60,11 +66,10 @@ export const StakeCustodianModal = () => {
     },
   });
 
-  const { isOpen, close, dApp } = useStakeCustodianModal();
+  const { isOpen, close, protocol } = useStakeCustodianModal();
   const { address, pubkey } = useWalletInfo();
   const { mempoolClient, walletProvider, btcNetwork, networkConfig } =
     useWalletProvider();
-  const id = useChainId();
 
   const watchStakingAmount = useWatch({
     control: form.control,
@@ -79,8 +84,33 @@ export const StakeCustodianModal = () => {
   const scalarVaultModule = useScalarVaultModule();
   const vault = useVault();
 
+  const [selectedDestChain, setSelectedDestChain] =
+    useState<DestinationChain | null>(null);
+
+  const watchTokenName = useWatch({
+    control: form.control,
+    name: "tokenName",
+  });
+
+  useEffect(() => {
+    if (!protocol || !watchTokenName) {
+      setSelectedDestChain(null);
+      return;
+    }
+
+    const selectedChain = protocol.dest_chains.find(
+      (chain) => chain.token_name === watchTokenName,
+    );
+
+    if (selectedChain) {
+      setSelectedDestChain(selectedChain);
+    } else {
+      setSelectedDestChain(null);
+    }
+  }, [watchTokenName, protocol]);
+
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    if (!dApp) return;
+    if (!protocol) return;
 
     const { destRecipientAddress, stakingAmount, mintFeeRate, customFeeRate } =
       data;
@@ -94,8 +124,12 @@ export const StakeCustodianModal = () => {
         throw new Error("Wallet provider not found");
       }
 
-      if (!ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS) {
+      if (!protocol.custodian_group.Custodians) {
         throw new Error("Covenant pubkeys not found");
+      }
+
+      if (!selectedDestChain) {
+        throw new Error("Destination chain not found");
       }
 
       const addressUtxos = await walletProvider.getUtxos(
@@ -131,26 +165,33 @@ export const StakeCustodianModal = () => {
       const destAddress = scalarVaultModule.hexToBytes(
         destRecipientAddress.replace("0x", ""),
       );
-      const smartContractAddress = scalarVaultModule.hexToBytes(
-        dApp.scAddress.replace("0x", ""),
-      );
 
-      const numberOfCustodianPubkeys = dApp.custodianGroup.Custodians.length;
+      const numberOfCustodianPubkeys =
+        protocol.custodian_group.Custodians.length;
       const custodian_pubkeys_uint8array = new Uint8Array(
         33 * numberOfCustodianPubkeys,
       );
 
       for (let i = 0; i < numberOfCustodianPubkeys; i++) {
         custodian_pubkeys_uint8array.set(
-          scalarVaultModule.hexToBytes(
-            dApp.custodianGroup.Custodians[i].BtcPublicKeyHex!.replace(
-              "0x",
-              "",
-            ),
-          ),
+          protocol.custodian_group.Custodians[i].BtcPublicKey,
           i * 33,
         );
       }
+
+      const chainType =
+        scalarVaultModule.ChainType[
+          selectedDestChain.chain_type as keyof typeof scalarVaultModule.ChainType
+        ];
+      console.log(
+        "--- selectedDestChain.chain_type",
+        selectedDestChain.chain_type,
+      );
+      console.log("--- chainType", chainType);
+      const destinationChain = new scalarVaultModule.DestinationChain(
+        chainType,
+        BigInt(selectedDestChain.chain_id),
+      );
 
       const { psbt: unsignedVaultPsbt, fee: estimatedFee } =
         vault.buildStakingOutputWithOnlyCovenants({
@@ -158,12 +199,10 @@ export const StakeCustodianModal = () => {
           stakerPubkey: btcUserPk,
           stakerAddress: address,
           custodialPubkeys: custodian_pubkeys_uint8array,
-          covenantQuorum: dApp.custodianGroup.Quorum,
-          destinationChain: new scalarVaultModule.DestinationChain(
-            scalarVaultModule.ChainType.EVM, // TODO: FIX HARD CODE
-            BigInt(id),
-          ),
-          destinationContractAddress: smartContractAddress,
+          covenantQuorum: protocol.custodian_group.Quorum,
+          destinationChain,
+          destinationContractAddress:
+            selectedDestChain.chain_smart_contract_address,
           destinationRecipientAddress: destAddress,
           availableUTXOs: mappedAddressUtxos,
           feeRate: selectedFeeRate,
@@ -271,10 +310,29 @@ export const StakeCustodianModal = () => {
 
             <div className="space-y-4 w-full">
               <div className="space-y-2 -mt-2">
-                <FormLabel className="text-gray-500">
-                  Destination chain
-                </FormLabel>
-                <Input readOnly value={dApp?.chainName} />
+                <FormField
+                  control={form.control}
+                  name="tokenName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Token</FormLabel>
+                      <Select value={field.value} onChange={field.onChange}>
+                        <option value="" disabled>
+                          Select token
+                        </option>
+                        {protocol?.dest_chains.map((chain) => (
+                          <option
+                            key={chain.token_name}
+                            value={chain.token_name}
+                          >
+                            {chain.token_name}
+                          </option>
+                        ))}
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <FormField
@@ -325,29 +383,45 @@ export const StakeCustodianModal = () => {
             <div className="flex flex-col gap-4">
               <div className="space-y-2">
                 <FormLabel>Smart contract address</FormLabel>
-                <Input readOnly value={dApp?.scAddress || ""} />
+                <Input
+                  readOnly
+                  value={
+                    selectedDestChain
+                      ? hexStringWith0x(
+                          scalarVaultModule.bytesToHex(
+                            selectedDestChain.chain_smart_contract_address,
+                          ),
+                        )
+                      : ""
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <FormLabel>Custodian Group Name</FormLabel>
-                <Input readOnly value={dApp?.custodianGroup.Name} />
+                <Input readOnly value={protocol?.custodian_group.Name} />
               </div>
               <div className="space-y-2">
                 <FormLabel>
-                  Custodians ({dApp?.custodianGroup.Quorum} of{" "}
-                  {dApp?.custodianGroup.Custodians.length} required)
+                  Custodians ({protocol?.custodian_group.Quorum} of{" "}
+                  {protocol?.custodian_group.Custodians.length} required)
                 </FormLabel>
                 <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-input bg-background p-2">
-                  {dApp?.custodianGroup.Custodians.map((custodian, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-col space-y-1 text-sm"
-                    >
-                      <div className="font-medium">Custodian #{index + 1}</div>
-                      <div className="text-muted-foreground">
-                        BTC Public Key: {custodian.BtcPublicKeyHex}
+                  {protocol?.custodian_group.Custodians.map(
+                    (custodian, index) => (
+                      <div
+                        key={index}
+                        className="flex flex-col space-y-1 text-sm"
+                      >
+                        <div className="font-medium">
+                          Custodian #{index + 1}
+                        </div>
+                        <div className="text-muted-foreground">
+                          BTC Public Key:{" "}
+                          {scalarVaultModule.bytesToHex(custodian.BtcPublicKey)}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ),
+                  )}
                 </div>
               </div>
             </div>

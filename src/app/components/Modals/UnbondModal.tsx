@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
 import { Psbt, Transaction, address as bitcoinAddress } from "bitcoinjs-lib";
 import { parseUnits } from "ethers";
 import { Loader2, XIcon } from "lucide-react";
@@ -11,6 +10,7 @@ import { z } from "zod";
 
 import PROTOCOL_ABI from "@/abis/protocol";
 import SBTC_ABI from "@/abis/sbtc";
+import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import {
@@ -19,8 +19,6 @@ import {
 } from "@/app/hooks/useContracts";
 import { useRecommendedFees } from "@/app/hooks/useRecommendedFees";
 import { useUnbondModal } from "@/app/stores/modal";
-import { DApp } from "@/app/types/dApps";
-import { ExtendedProjectENV, ProjectENV } from "@/env";
 import { hexStringWithout0x } from "@/utils/trim";
 
 import { Button } from "../ui/button";
@@ -36,6 +34,7 @@ import {
 import { Input } from "../ui/input";
 import { toast } from "../ui/use-toast";
 
+import { DestinationChain, Protocol } from "@/app/types/protocol";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -115,35 +114,60 @@ const lookupErrorSignature = async (signature: string): Promise<string> => {
 };
 
 export const UnbondModal: React.FC = () => {
+  const scalarVaultModule = useScalarVaultModule();
+  const vault = useVault();
+
   const { address } = useAccount();
   const { isOpen, close, bond } = useUnbondModal();
   const { address: btcAddress, pubkey } = useWalletInfo();
   const { btcNetwork, walletProvider } = useWalletProvider();
+  const { protocols } = useScalarClient();
 
-  const queryClient = useQueryClient();
-
-  const data = queryClient.getQueryData<{ dApps: DApp[] }>(["getListDApps"]);
-  const dApp = useMemo(() => {
-    if (!data?.dApps) {
-      return null;
+  const { protocol, destinationChain } = useMemo<{
+    protocol: Protocol | null;
+    destinationChain: DestinationChain | null;
+  }>(() => {
+    if (!protocols.data?.protocols || !bond?.destinationSmartContractAddress) {
+      return { protocol: null, destinationChain: null };
     }
-    return data.dApps.find(
-      (dApp) =>
-        hexStringWithout0x(dApp.scAddress.toLocaleLowerCase()) ===
-        hexStringWithout0x(
-          bond?.destinationSmartContractAddress?.toLocaleLowerCase() ?? "",
-        ),
-    );
-  }, [data, bond]);
+
+    for (const p of protocols.data.protocols) {
+      // Check each chain's smart contract address
+      for (const chain of p.dest_chains) {
+        if (
+          hexStringWithout0x(
+            scalarVaultModule.bytesToHex(chain.chain_smart_contract_address),
+          ) ===
+          hexStringWithout0x(bond.destinationSmartContractAddress.toLowerCase())
+        ) {
+          // Return both protocol and the matching chain
+          return {
+            protocol: p,
+            destinationChain: chain,
+          };
+        }
+      }
+    }
+    return { protocol: null, destinationChain: null };
+  }, [protocols.data, bond?.destinationSmartContractAddress]);
 
   const { balance, allowance, approve } = useERC20Contract(
     SBTC_ABI,
-    dApp?.tokenContractAddress,
+    scalarVaultModule.bytesToHex(
+      destinationChain?.token_contract_address || new Uint8Array(),
+    ),
     address,
-    dApp?.scAddress,
+    scalarVaultModule.bytesToHex(
+      destinationChain?.chain_smart_contract_address || new Uint8Array(),
+    ),
   );
 
-  const { unstake } = useProtocolContract(PROTOCOL_ABI, dApp?.scAddress);
+  const { unstake } = useProtocolContract(
+    PROTOCOL_ABI,
+    scalarVaultModule.bytesToHex(
+      destinationChain?.chain_smart_contract_address || new Uint8Array(),
+    ),
+  );
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -163,16 +187,13 @@ export const UnbondModal: React.FC = () => {
   const [status, setStatus] = useState<string>("");
   const [isBurning, setIsBurning] = useState<boolean>(false);
 
-  const scalarVaultModule = useScalarVaultModule();
-  const vault = useVault();
-
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!bond) {
       throw new Error("Bond not found");
     }
 
-    if (!dApp) {
-      throw new Error("DApp not found");
+    if (!protocol) {
+      throw new Error("Protocol not found");
     }
 
     if (!pubkey) {
@@ -185,10 +206,6 @@ export const UnbondModal: React.FC = () => {
 
     if (!data.btcReceiverAddress) {
       throw new Error("BTC receiver address not found");
-    }
-
-    if (!ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS) {
-      throw new Error("Covenant pubkeys not found");
     }
 
     const tokenBurnAmount = bond.amount;
@@ -231,17 +248,28 @@ export const UnbondModal: React.FC = () => {
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
 
-      const btcProtocolPk = scalarVaultModule.hexToBytes(
-        dApp.btcPk.replace("0x", ""),
+      const btcProtocolPk = protocol.btc_chain.btc_signer_pk;
+
+      const numberOfCustodianPubkeys =
+        protocol.custodian_group.Custodians.length;
+      const custodian_pubkeys_uint8array = new Uint8Array(
+        33 * numberOfCustodianPubkeys,
       );
+
+      for (let i = 0; i < numberOfCustodianPubkeys; i++) {
+        custodian_pubkeys_uint8array.set(
+          protocol.custodian_group.Custodians[i].BtcPublicKey,
+          i * 33,
+        );
+      }
 
       const unsignedPsbtHex = vault.buildUnsignedUnstakingUserProtocolPsbt({
         input,
         output,
         stakerPubkey: btcUserPk,
         protocolPubkey: btcProtocolPk,
-        covenantPubkeys: ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS,
-        covenantQuorum: ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
+        covenantPubkeys: custodian_pubkeys_uint8array,
+        covenantQuorum: protocol.custodian_group.Quorum,
         haveOnlyCovenants: false,
         feeRate: txFee,
         rbf: false,
@@ -272,7 +300,12 @@ export const UnbondModal: React.FC = () => {
         setStatus("Approving the token");
         setIsBurning(true);
 
-        await approve(dApp.scAddress, burnAmount);
+        await approve(
+          scalarVaultModule.bytesToHex(
+            destinationChain?.chain_smart_contract_address || new Uint8Array(),
+          ),
+          burnAmount,
+        );
 
         setStatus("Approval transaction mined");
       }
@@ -331,8 +364,8 @@ export const UnbondModal: React.FC = () => {
     return <div>Bond not found</div>;
   }
 
-  if (!dApp && isOpen) {
-    return <div>DApp not found</div>;
+  if (!protocol && isOpen) {
+    return <div>Protocol not found</div>;
   }
 
   return (

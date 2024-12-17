@@ -1,37 +1,107 @@
 "use client";
 
+import { useError } from "@/app/context/Error/ErrorContext";
+import { ErrorState } from "@/app/types/errors";
+import { Protocol } from "@/app/types/protocol";
 import { ProjectENV } from "@/env";
 import { ScalarClient } from "@/utils/scalar/client";
-import { createContext, memo, useContext, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { createContext, memo, useContext, useEffect, useState } from "react";
 
-const ScalarContext = createContext<{
-  client: ScalarClient;
-  setClient: (client: ScalarClient) => void;
-} | null>(null);
+interface ScalarContextType {
+  client: any; // Replace with your actual client type
+  dApps: {
+    data: any;
+    isLoading: boolean;
+    error: Error | null;
+    refetch: () => void;
+  };
+  protocols: {
+    data: { protocols: Protocol[] } | undefined;
+    isLoading: boolean;
+    error: Error | null;
+    refetch: () => void;
+  };
+}
 
-export const useScalarClient = () => {
+const ScalarContext = createContext<ScalarContextType | undefined>(undefined);
+
+export function useScalarClient() {
   const context = useContext(ScalarContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useScalarClient must be used within a ScalarProvider");
   }
   return context;
-};
+}
 
-const ScalarProvider = ({ children }: { children: React.ReactNode }) => {
+export function ScalarProvider({ children }: { children: React.ReactNode }) {
+  const { isErrorOpen, showError } = useError();
   const [client, setClient] = useState<ScalarClient>(
     () => new ScalarClient(ProjectENV.NEXT_PUBLIC_SCALAR_NODE_URL),
   );
 
+  const dAppsQuery = useQuery({
+    queryKey: ["getListDApps"],
+    queryFn: () => client.getDAppsFromScalar(),
+    refetchInterval: 60000, // 1 minute
+    retry: (failureCount, error) => {
+      return !isErrorOpen && failureCount <= 3;
+    },
+  });
+
+  const protocolsQuery = useQuery({
+    queryKey: ["getListProtocols"],
+    queryFn: () => client.getProtocols(),
+    refetchInterval: 60000, // 1 minute
+    retry: (failureCount, error) => {
+      return !isErrorOpen && failureCount <= 3;
+    },
+  });
+
+  useEffect(() => {
+    if (dAppsQuery.isError && dAppsQuery.error) {
+      showError({
+        error: {
+          message: dAppsQuery.error.message,
+          errorState: ErrorState.SERVER_ERROR,
+          errorTime: new Date(),
+        },
+        retryAction: dAppsQuery.refetch,
+      });
+    }
+  }, [dAppsQuery.isError, dAppsQuery.error, showError]);
+
+  useEffect(() => {
+    if (protocolsQuery.isError && protocolsQuery.error) {
+      showError({
+        error: {
+          message: protocolsQuery.error.message,
+          errorState: ErrorState.SERVER_ERROR,
+          errorTime: new Date(),
+        },
+      });
+    }
+  }, [protocolsQuery.isError, protocolsQuery.error, showError]);
+
+  const value = {
+    client,
+    dApps: {
+      data: dAppsQuery.data,
+      isLoading: dAppsQuery.isLoading,
+      error: dAppsQuery.error,
+      refetch: dAppsQuery.refetch,
+    },
+    protocols: {
+      data: protocolsQuery.data,
+      isLoading: protocolsQuery.isLoading,
+      error: protocolsQuery.error,
+      refetch: protocolsQuery.refetch,
+    },
+  };
+
   return (
-    <ScalarContext.Provider
-      value={{
-        client,
-        setClient,
-      }}
-    >
-      {children}
-    </ScalarContext.Provider>
+    <ScalarContext.Provider value={value}>{children}</ScalarContext.Provider>
   );
-};
+}
 
 export default memo(ScalarProvider);

@@ -2,6 +2,7 @@ import { CustodianGroup } from "./custodians";
 
 export interface Protocol {
   name: string;
+  scalar_pk: Uint8Array;
   dest_chains: DestinationChain[];
   service_tag: string;
   btc_chain: BtcChain;
@@ -21,6 +22,7 @@ export interface DestinationChain {
   chain_id: number;
   chain_type: string;
   chain_smart_contract_address: Uint8Array;
+  token_name: string;
   token_contract_address: Uint8Array;
 }
 

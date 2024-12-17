@@ -5,7 +5,7 @@ import Image from "next/image";
 import earth from "@/app/assets/earth.webp";
 
 import { ListBonds } from "./components/Bonds/ListBonds";
-import { ListDApps } from "./components/Staking/DApps/ListDApps";
+import { ListProtocols } from "./components/Staking/Protocols/ListProtocols";
 import { Summary } from "./components/Summary/Summary";
 import { ModalLayout } from "./layout/ModalLayout";
 
@@ -37,7 +37,7 @@ const Home: React.FC<HomeProps> = () => {
           <Summary />
         </div>
       </div>
-      <ListDApps />
+      <ListProtocols />
       <ListBonds />
       <ModalLayout />
     </main>

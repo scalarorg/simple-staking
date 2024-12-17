@@ -1,66 +1,32 @@
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { LoadingView } from "@/app/components/Loading/Loading";
-import { useError } from "@/app/context/Error/ErrorContext";
 import { useWalletInfo } from "@/app/context/WalletProvider";
 import { fpTableStyles } from "@/app/scalar/theme";
 import { useAddDAppModal } from "@/app/stores/modal";
 import { DApp } from "@/app/types/dApps";
-import { ErrorState } from "@/app/types/errors";
 
 import { useScalarClient } from "@/app/context/ScalarProvider";
 import { DAppItem } from "./DAppItem";
 
-// Staking form finality providers
-export const ListDApps: React.FC<{}> = ({}) => {
-  const { isErrorOpen, showError } = useError();
+export const ListDApps: React.FC = () => {
   const [selectedDApp, setSelectedDApp] = useState<DApp | undefined>(undefined);
   const { open: openAddDAppModal } = useAddDAppModal();
   const { address } = useWalletInfo();
-  const { client: scalarClient } = useScalarClient();
+  const { dApps } = useScalarClient();
 
-  const {
-    data,
-    isLoading,
-    error: dAppsError,
-    isError: hasDAppsError,
-    refetch: refetchDApps,
-  } = useQuery({
-    queryKey: ["getListDApps"],
-    queryFn: () => scalarClient.getDAppsFromScalar(),
-    refetchInterval: 60000, // 1 minute
-    retry: (failureCount, error) => {
-      return !isErrorOpen && failureCount <= 3;
-    },
-  });
-
-  useEffect(() => {
-    if (hasDAppsError && dAppsError) {
-      showError({
-        error: {
-          message: dAppsError.message,
-          errorState: ErrorState.SERVER_ERROR,
-          errorTime: new Date(),
-        },
-        retryAction: refetchDApps,
-      });
-    }
-  }, [hasDAppsError, dAppsError, showError, refetchDApps]);
-
-  // If there are no dApps, show loading
-  if (isLoading) {
+  if (dApps.isLoading) {
     return <LoadingView />;
   }
 
-  if (!data?.dApps) {
+  if (!dApps.data?.dApps) {
     return <div>No dApps found</div>;
   }
 
   return (
     <div className="flex flex-col gap-4 container mx-auto w-full">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">List of DApps</h1>
+        <h1 className="text-2xl font-bold">List of dApps</h1>
         {/* <button
           className={`bg-orange-500 px-4 py-2 rounded-lg my-4 hover:bg-orange-600 transition-all duration-150 ${
             !address ? "opacity-50 cursor-not-allowed" : ""
@@ -85,7 +51,7 @@ export const ListDApps: React.FC<{}> = ({}) => {
               </tr>
             </thead>
             <tbody>
-              {data?.dApps?.map((da, index) => (
+              {dApps.data.dApps.map((da: DApp, index: number) => (
                 <DAppItem
                   index={index}
                   key={da.id}

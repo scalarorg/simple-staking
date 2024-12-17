@@ -14,6 +14,7 @@ import { TermsProvider } from "./context/Terms/TermsContext";
 import WalletProvider from "./context/WalletProvider";
 import { AppLayout } from "./layout/AppLayout";
 import { getConfig } from "./wagmi";
+import VaultProvider from "./context/VaultContext";
 
 function Providers({ children }: React.PropsWithChildren) {
   const [config] = React.useState(getConfig());
@@ -28,9 +29,11 @@ function Providers({ children }: React.PropsWithChildren) {
               <ScalarProvider>
                 <TermsProvider>
                   <WalletProvider>
-                    <ReactQueryStreamedHydration>
-                      <AppLayout>{children}</AppLayout>
-                    </ReactQueryStreamedHydration>
+                    <VaultProvider>
+                      <ReactQueryStreamedHydration>
+                        <AppLayout>{children}</AppLayout>
+                      </ReactQueryStreamedHydration>
+                    </VaultProvider>
                   </WalletProvider>
                 </TermsProvider>
               </ScalarProvider>

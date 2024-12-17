@@ -1,4 +1,4 @@
-import { CustodianGroup } from "./custodians";
+import { CustodianGroup } from "./custodials";
 
 export interface DApp {
   id: string;
