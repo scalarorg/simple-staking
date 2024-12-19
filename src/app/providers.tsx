@@ -7,13 +7,14 @@ import { ThemeProvider } from "next-themes";
 import React from "react";
 import { WagmiProvider } from "wagmi";
 
-import { ErrorProvider } from "./context/Error/ErrorContext";
-import NetworkProvicer from "./context/NetworkProvicer";
-import ScalarProvider from "./context/ScalarProvider";
-import { TermsProvider } from "./context/Terms/TermsContext";
-import VaultProvider from "./context/VaultContext";
-import WalletProvider from "./context/WalletProvider";
-import { getConfig } from "./wagmi";
+import { CosmosWalletProvider } from "@/app/context/CosmosWalletProvider";
+import { ErrorProvider } from "@/app/context/Error/ErrorContext";
+import NetworkProvicer from "@/app/context/NetworkProvicer";
+import ScalarProvider from "@/app/context/ScalarProvider";
+import { TermsProvider } from "@/app/context/Terms/TermsContext";
+import VaultProvider from "@/app/context/VaultContext";
+import WalletProvider from "@/app/context/WalletProvider";
+import { getConfig } from "@/app/wagmi";
 
 function Providers({ children }: React.PropsWithChildren) {
   const [config] = React.useState(getConfig());
@@ -28,11 +29,13 @@ function Providers({ children }: React.PropsWithChildren) {
               <ScalarProvider>
                 <TermsProvider>
                   <WalletProvider>
-                    <VaultProvider>
-                      <ReactQueryStreamedHydration>
-                        {children}
-                      </ReactQueryStreamedHydration>
-                    </VaultProvider>
+                    <CosmosWalletProvider>
+                      <VaultProvider>
+                        <ReactQueryStreamedHydration>
+                          {children}
+                        </ReactQueryStreamedHydration>
+                      </VaultProvider>
+                    </CosmosWalletProvider>
                   </WalletProvider>
                 </TermsProvider>
               </ScalarProvider>

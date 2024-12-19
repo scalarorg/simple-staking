@@ -8,6 +8,7 @@ interface SelectFieldProps {
   label: string;
   placeholder: string;
   errorMessage?: string;
+  disabled?: boolean;
 }
 
 export const SelectField: React.FC<SelectFieldProps> = ({
@@ -18,6 +19,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   label,
   placeholder,
   errorMessage = "Please make a selection",
+  disabled = false,
 }) => {
   const [value, setValue] = useState(initValue);
   const [error, setError] = useState("");
@@ -64,6 +66,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
         value={value}
         onChange={handleSelectChange}
         onBlur={handleBlur}
+        disabled={disabled}
       >
         <option value="">{placeholder}</option>
         {options.map((option, idx) => (

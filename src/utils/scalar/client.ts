@@ -1,6 +1,12 @@
+import { getShortenCustodianGroups } from "@/app/api/custodian";
 import { getDApps } from "@/app/api/dApp";
 import { DApp } from "@/app/types/dApps";
-import { Protocol, ProtocolStatus } from "@/app/types/protocol";
+import {
+  GetAvailableChainByChainTypeResponse,
+  GetAvailableCustodianGroupsByBtcNetworkNameResponse,
+  Protocol,
+  ProtocolStatus,
+} from "@/app/types/protocol";
 import { ProjectENV } from "@/env";
 import { hexStringWithout0x } from "@/utils/trim";
 
@@ -88,6 +94,62 @@ export class ScalarClient {
     return {
       version: ProjectENV.NEXT_PUBLIC_VERSION,
       tag: ProjectENV.NEXT_PUBLIC_TAG,
+    };
+  }
+
+  async getAvailableBtcNetworks(): Promise<string[]> {
+    return ["bitcoin-testnet4", "bitcoin-mainnet"];
+  }
+
+  async getAvailableCustodianGroupsByBtcNetworkName(
+    btcNetworkName: string,
+  ): Promise<GetAvailableCustodianGroupsByBtcNetworkNameResponse> {
+    const custodianGroups: Record<string, string[]> = {
+      "bitcoin-mainnet": ["custodian-group-3", "custodian-group-4"],
+    };
+    if (btcNetworkName === "bitcoin-testnet4") {
+      const shortenCustodianGroups = await getShortenCustodianGroups();
+      return {
+        custodian_groups_name:
+          shortenCustodianGroups.shortenCustodianGroups.map(
+            (custodianGroup) => custodianGroup.Name,
+          ),
+      };
+    }
+    return {
+      custodian_groups_name: custodianGroups[btcNetworkName] || [],
+    };
+  }
+
+  async getAvailableChainTypes(): Promise<string[]> {
+    return ["EVM", "Solana", "Cosmos"];
+  }
+
+  async getAvailableChainByChainType(
+    chainType: string,
+  ): Promise<GetAvailableChainByChainTypeResponse> {
+    const chains = {
+      EVM: [
+        {
+          chain_name: "ethereum-sepolia",
+          chain_id: 11155111,
+        },
+      ],
+      Solana: [
+        {
+          chain_name: "solana-mainnet",
+          chain_id: 101,
+        },
+      ],
+      Cosmos: [
+        {
+          chain_name: "cosmos-mainnet",
+          chain_id: 101,
+        },
+      ],
+    };
+    return {
+      chains: chains[chainType as keyof typeof chains],
     };
   }
 }

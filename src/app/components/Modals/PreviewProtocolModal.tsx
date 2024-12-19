@@ -125,7 +125,10 @@ export const PreviewProtocolModal: React.FC<{}> = ({}) => {
                     >
                       <div className="font-medium">Custodian #{index + 1}</div>
                       <div className="text-muted-foreground">
-                        BTC Public Key: {custodian.BtcPublicKeyHex}
+                        BTC Public Key:{" "}
+                        {custodian.BtcPublicKey
+                          ? Buffer.from(custodian.BtcPublicKey).toString("hex")
+                          : ""}
                       </div>
                     </div>
                   ),

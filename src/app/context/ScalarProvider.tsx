@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createContext, memo, useContext, useEffect, useState } from "react";
 
 interface ScalarContextType {
-  client: any; // Replace with your actual client type
+  client: ScalarClient;
   dApps: {
     data: any;
     isLoading: boolean;

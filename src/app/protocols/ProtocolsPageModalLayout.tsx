@@ -2,11 +2,12 @@
 
 import { Suspense } from "react";
 
-import { AddDAppModal } from "@/app/components/Modals/AddDAppModal";
+import { AddDestinationChainModal } from "@/app/components/Modals/AddDestinationChainModal";
+import { AddProtocolModal } from "@/app/components/Modals/AddProtocolModal";
 import { ConnectModal } from "@/app/components/Modals/ConnectModal";
+import { DeleteProtocolModal } from "@/app/components/Modals/DeleteProtocolModal";
 import { ErrorModal } from "@/app/components/Modals/ErrorModal";
-import { PreviewProtocolModal } from "@/app/components/Modals/PreviewProtocolModal";
-import { UpdateDAppModal } from "@/app/components/Modals/UpdateDAppModal";
+import { UpdateProtocolModal } from "@/app/components/Modals/UpdateProtocolModal";
 import { useError } from "@/app/context/Error/ErrorContext";
 
 export const ProtocolsPageModalLayout: React.FC<{}> = ({}) => {
@@ -23,9 +24,10 @@ export const ProtocolsPageModalLayout: React.FC<{}> = ({}) => {
         onClose={hideError}
         onRetry={retryErrorAction}
       />
-      <UpdateDAppModal />
-      <PreviewProtocolModal />
-      <AddDAppModal />
+      <UpdateProtocolModal />
+      <AddProtocolModal />
+      <DeleteProtocolModal />
+      <AddDestinationChainModal />
     </Suspense>
   );
 };

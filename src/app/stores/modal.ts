@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { DApp as DAppInterface } from "@/app/types/dApps";
 
 import { Bond } from "../types/bonds";
-import { Protocol } from "../types/protocol";
+import { DeleteProtocolRequest, Protocol } from "../types/protocol";
 
 interface IModalStore {
   isOpen: boolean;
@@ -16,6 +16,13 @@ interface IProtocolModalStore {
   isOpen: boolean;
   protocol?: Protocol;
   open: (protocol?: Protocol) => void;
+  close: () => void;
+}
+
+interface IDeleteProtocolModalStore {
+  isOpen: boolean;
+  protocolData?: DeleteProtocolRequest;
+  open: (protocolData?: DeleteProtocolRequest) => void;
   close: () => void;
 }
 
@@ -73,3 +80,28 @@ export const useUnstakeCustodianModal = create<IProtocolModalStore>((set) => ({
   open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
   close: () => set({ isOpen: false, protocol: undefined }),
 }));
+
+export const useAddProtocolModal = create<IProtocolModalStore>((set) => ({
+  isOpen: false,
+  open: () => set({ isOpen: true }),
+  close: () => set({ isOpen: false }),
+}));
+
+export const useDeleteProtocolModal = create<IDeleteProtocolModalStore>(
+  (set) => ({
+    isOpen: false,
+    protocolData: undefined,
+    open: (protocolData?: DeleteProtocolRequest) =>
+      set({ isOpen: true, protocolData }),
+    close: () => set({ isOpen: false, protocolData: undefined }),
+  }),
+);
+
+export const useAddDestinationChainModal = create<IProtocolModalStore>(
+  (set) => ({
+    isOpen: false,
+    protocol: undefined,
+    open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+    close: () => set({ isOpen: false, protocol: undefined }),
+  }),
+);
