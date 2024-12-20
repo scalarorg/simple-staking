@@ -94,7 +94,7 @@ export const MintTxModal: React.FC<{}> = () => {
     }
 
     const selectedChain = protocol.dest_chains.find(
-      (chain) => chain.token_name === watchTokenName,
+      (chain) => chain.token.details.symbol === watchTokenName,
     );
 
     if (selectedChain) {
@@ -365,10 +365,10 @@ export const MintTxModal: React.FC<{}> = () => {
                           </option>
                           {protocol?.dest_chains.map((chain) => (
                             <option
-                              key={chain.token_name}
-                              value={chain.token_name}
+                              key={chain.token.details.symbol}
+                              value={chain.token.details.symbol}
                             >
-                              {chain.token_name}
+                              {chain.token.details.symbol}
                             </option>
                           ))}
                         </Select>

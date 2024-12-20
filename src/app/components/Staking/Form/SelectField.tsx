@@ -62,7 +62,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
         <span className="label-text-alt text-base">{label}</span>
       </div>
       <select
-        className={`select select-bordered w-full mt-2 ${error && "input-error"}`}
+        className={`select select-bordered w-full ${error && "input-error"}`}
         value={value}
         onChange={handleSelectChange}
         onBlur={handleBlur}

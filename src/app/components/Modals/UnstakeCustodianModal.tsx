@@ -82,10 +82,8 @@ export const UnstakeCustodianModal: React.FC = () => {
 
   const feeRates = useFeeRates(isOpen, address, mempoolClient);
 
-  const tokenContractAddress =
-    selectedDestChain?.token_contract_address ?? new Uint8Array();
   const tokenContractAddressHex = hexStringWith0x(
-    scalarVaultModule.bytesToHex(tokenContractAddress),
+    selectedDestChain?.token.token_address ?? "",
   );
   const chainSmartContractAddress =
     selectedDestChain?.chain_smart_contract_address ?? new Uint8Array();
@@ -134,7 +132,7 @@ export const UnstakeCustodianModal: React.FC = () => {
     }
 
     const selectedChain = protocol.dest_chains.find(
-      (chain) => chain.token_name === watchTokenName,
+      (chain) => chain.token.details.symbol === watchTokenName,
     );
 
     if (selectedChain) {
@@ -294,8 +292,11 @@ export const UnstakeCustodianModal: React.FC = () => {
                         Select token
                       </option>
                       {protocol?.dest_chains.map((chain) => (
-                        <option key={chain.token_name} value={chain.token_name}>
-                          {chain.token_name}
+                        <option
+                          key={chain.token.details.symbol}
+                          value={chain.token.details.symbol}
+                        >
+                          {chain.token.details.symbol}
                         </option>
                       ))}
                     </Select>

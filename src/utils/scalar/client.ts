@@ -2,10 +2,17 @@ import { getShortenCustodianGroups } from "@/app/api/custodian";
 import { getDApps } from "@/app/api/dApp";
 import { DApp } from "@/app/types/dApps";
 import {
+  DeleteDestinationChainRequest,
+  DeleteProtocolRequest,
   GetAvailableChainByChainTypeResponse,
   GetAvailableCustodianGroupsByBtcNetworkNameResponse,
   Protocol,
   ProtocolStatus,
+  SetCustodianGroupRequest,
+  TokenStatus,
+  UpdateBtcChainRequest,
+  UpdateProtocolBasicsRequest,
+  UpdateProtocolStatusRequest,
 } from "@/app/types/protocol";
 import { ProjectENV } from "@/env";
 import { hexStringWithout0x } from "@/utils/trim";
@@ -48,15 +55,28 @@ export class ScalarClient {
 
       return {
         name: dapp.chainName,
-        scalar_pk: new Uint8Array(),
+        pubkey: new Uint8Array(),
         dest_chains: [
           {
             chain_name: dapp.chainName,
             chain_id: Number(dapp.chainId),
             chain_type: "EVM",
             chain_smart_contract_address: contractAddressBytes,
-            token_name: destinationChainTokenNameMap[dapp.scAddress],
-            token_contract_address: tokenAddressBytes,
+            token: {
+              asset: destinationChainTokenNameMap[dapp.scAddress],
+              chain_id: new Uint8Array(),
+              details: {
+                token_name: destinationChainTokenNameMap[dapp.scAddress],
+                symbol: destinationChainTokenNameMap[dapp.scAddress],
+                decimals: 14,
+                capacity: new Uint8Array(),
+              },
+              token_address: dapp.tokenContractAddress,
+              tx_hash: "",
+              status: TokenStatus.STATUS_CONFIRMED,
+              is_external: false,
+              burner_code: new Uint8Array(),
+            },
           },
         ],
         service_tag: ProjectENV.NEXT_PUBLIC_SERVICE_TAG,
@@ -125,7 +145,7 @@ export class ScalarClient {
     return ["EVM", "Solana", "Cosmos"];
   }
 
-  async getAvailableChainByChainType(
+  async getAvailableChainsByChainType(
     chainType: string,
   ): Promise<GetAvailableChainByChainTypeResponse> {
     const chains = {
@@ -137,13 +157,13 @@ export class ScalarClient {
       ],
       Solana: [
         {
-          chain_name: "solana-mainnet",
+          chain_name: "solana-testnet",
           chain_id: 101,
         },
       ],
       Cosmos: [
         {
-          chain_name: "cosmos-mainnet",
+          chain_name: "cosmos-testnet",
           chain_id: 101,
         },
       ],
@@ -151,5 +171,41 @@ export class ScalarClient {
     return {
       chains: chains[chainType as keyof typeof chains],
     };
+  }
+
+  async deleteDestinationChain(
+    request: DeleteDestinationChainRequest,
+  ): Promise<void> {
+    // TODO: Implement delete destination chain logic
+    console.log("Deleting destination chain", request);
+  }
+
+  async setCustodianGroup(request: SetCustodianGroupRequest): Promise<void> {
+    // TODO: Implement set custodian group logic
+    console.log("Setting custodian group", request);
+  }
+
+  async updateBtcChain(request: UpdateBtcChainRequest): Promise<void> {
+    // TODO: Implement update BTC chain logic
+    console.log("Updating BTC chain", request);
+  }
+
+  async deleteProtocol(request: DeleteProtocolRequest): Promise<void> {
+    // TODO: Implement delete protocol logic
+    console.log("Deleting protocol", request);
+  }
+
+  async updateProtocolBasics(
+    request: UpdateProtocolBasicsRequest,
+  ): Promise<void> {
+    // TODO: Implement update protocol basics logic
+    console.log("Updating protocol basics", request);
+  }
+
+  async updateProtocolStatus(
+    request: UpdateProtocolStatusRequest,
+  ): Promise<void> {
+    // TODO: Implement update protocol status logic
+    console.log("Updating protocol status", request);
   }
 }

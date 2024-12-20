@@ -2,7 +2,7 @@ import { CustodianGroup } from "./custodians";
 
 export interface Protocol {
   name: string;
-  scalar_pk: Uint8Array;
+  pubkey: Uint8Array;
   dest_chains: DestinationChain[];
   service_tag: string;
   btc_chain: BtcChain;
@@ -22,8 +22,32 @@ export interface DestinationChain {
   chain_id: number;
   chain_type: string;
   chain_smart_contract_address: Uint8Array;
+  token: ERC20TokenMetadata;
+}
+
+export interface ERC20TokenMetadata {
+  asset: string;
+  chain_id: Uint8Array;
+  details: TokenDetails;
+  token_address: string;
+  tx_hash: string;
+  status: TokenStatus;
+  is_external: boolean;
+  burner_code: Uint8Array;
+}
+
+export interface TokenDetails {
   token_name: string;
-  token_contract_address: Uint8Array;
+  symbol: string;
+  decimals: number;
+  capacity: Uint8Array;
+}
+
+export enum TokenStatus {
+  STATUS_UNSPECIFIED = 0,
+  STATUS_INITIALIZED = 1,
+  STATUS_PENDING = 2,
+  STATUS_CONFIRMED = 4,
 }
 
 export interface BtcChain {
@@ -36,7 +60,7 @@ export interface BtcChain {
 
 export interface CreateProtocolRequest {
   name: string;
-  scalar_pk: Uint8Array;
+  pubkey: Uint8Array;
   service_tag: string;
 
   btc_signer_endpoint: string;
@@ -60,11 +84,36 @@ export interface GetAvailableCustodianGroupsByBtcNetworkNameResponse {
 
 export interface AddDestinationChainRequest {
   protocol_name: string;
+
+  // Chain details
   chain_name: string;
+  chain_id: number;
   chain_type: string;
   chain_smart_contract_address: Uint8Array;
-  token_name: string;
-  token_contract_address: Uint8Array;
+
+  // Token details
+  token: ERC20TokenMetadata;
+}
+
+export interface SetCustodianGroupRequest {
+  protocol_name: string;
+  btc_network: string;
+  custodian_group_name: string;
+}
+
+export interface UpdateBtcChainRequest {
+  protocol_name: string;
+  btc_signer_endpoint: string;
+  btc_signer_access_token: string;
+  btc_signer_address: string;
+  btc_signer_pk: Uint8Array;
+}
+
+export interface DeleteDestinationChainRequest {
+  protocol_name: string;
+  chain_id: number;
+  chain_type: string;
+  chain_smart_contract_address: Uint8Array;
 }
 
 export interface GetAvailableChainByChainTypeResponse {
@@ -72,4 +121,14 @@ export interface GetAvailableChainByChainTypeResponse {
     chain_name: string;
     chain_id: number;
   }[];
+}
+
+export interface UpdateProtocolBasicsRequest {
+  protocol_name: string;
+  service_tag: string;
+}
+
+export interface UpdateProtocolStatusRequest {
+  protocol_name: string;
+  status: ProtocolStatus;
 }

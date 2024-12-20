@@ -4,7 +4,7 @@ import { SelectField } from "@/app/components/Staking/Form/SelectField";
 import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useScalarVaultModule } from "@/app/context/VaultContext";
 import { useAddDestinationChainModal } from "@/app/stores/modal";
-import { AddDestinationChainRequest } from "@/app/types/protocol";
+import { AddDestinationChainRequest, TokenStatus } from "@/app/types/protocol";
 import { hexStringWithout0x } from "@/utils/trim";
 import { useQuery } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
@@ -19,9 +19,19 @@ export const AddDestinationChainModal: React.FC<{}> = () => {
   const [chainName, setChainName] = useState("");
   const [chainType, setChainType] = useState("");
   const [smartContractAddress, setSmartContractAddress] = useState("");
+  const [asset, setAsset] = useState("");
+  const [tokenTxHash, setTokenTxHash] = useState("");
+  const [tokenStatus, setTokenStatus] = useState(
+    TokenStatus.STATUS_UNSPECIFIED,
+  );
+  const [isExternal, setIsExternal] = useState(false);
+  const [burnerCode, setBurnerCode] = useState("");
   const [tokenName, setTokenName] = useState("");
   const [tokenContractAddress, setTokenContractAddress] = useState("");
   const [selectedChainId, setSelectedChainId] = useState<string>("");
+  const [tokenSymbol, setTokenSymbol] = useState("");
+  const [tokenDecimals, setTokenDecimals] = useState("");
+  const [tokenCapacity, setTokenCapacity] = useState<string>("");
 
   const { data: availableChainTypes } = useQuery({
     queryKey: ["getAvailableChainTypes"],
@@ -35,12 +45,22 @@ export const AddDestinationChainModal: React.FC<{}> = () => {
 
   const { data: availableChains } = useQuery({
     queryKey: ["getAvailableChains", chainType],
-    queryFn: () => scalarClient.client.getAvailableChainByChainType(chainType),
+    queryFn: () => scalarClient.client.getAvailableChainsByChainType(chainType),
     enabled: isOpen && chainType !== "",
     retry: (failureCount, error) => {
       return failureCount <= 3;
     },
   });
+
+  const tokenStatusOptions = Object.entries(TokenStatus)
+    .filter(([key]) => isNaN(Number(key)))
+    .map(([key, value]) => ({
+      label: key
+        .replace("STATUS_", "")
+        .toLowerCase()
+        .replace(/^./, (str) => str.toUpperCase()),
+      value: value.toString(),
+    }));
 
   const handleAdd = async () => {
     // Validate required fields
@@ -49,6 +69,8 @@ export const AddDestinationChainModal: React.FC<{}> = () => {
       { value: chainType, name: "Chain Type" },
       { value: smartContractAddress, name: "Smart Contract Address" },
       { value: tokenName, name: "Token Name" },
+      { value: tokenSymbol, name: "Token Symbol" },
+      { value: tokenDecimals, name: "Token Decimals" },
       { value: tokenContractAddress, name: "Token Contract Address" },
     ];
 
@@ -65,14 +87,32 @@ export const AddDestinationChainModal: React.FC<{}> = () => {
       const request: AddDestinationChainRequest = {
         protocol_name: protocol?.name || "",
         chain_name: chainName,
+        chain_id: parseInt(selectedChainId),
         chain_type: chainType,
         chain_smart_contract_address: scalarVaultModule.hexToBytes(
           hexStringWithout0x(smartContractAddress),
         ),
-        token_name: tokenName,
-        token_contract_address: scalarVaultModule.hexToBytes(
-          hexStringWithout0x(tokenContractAddress),
-        ),
+        token: {
+          asset: asset,
+          chain_id: new Uint8Array(
+            Buffer.from(Number(selectedChainId).toString(16), "hex"),
+          ),
+          details: {
+            token_name: tokenName,
+            symbol: tokenSymbol,
+            decimals: parseInt(tokenDecimals),
+            capacity: new Uint8Array(
+              Buffer.from(Number(tokenCapacity).toString(16), "hex"),
+            ),
+          },
+          token_address: hexStringWithout0x(tokenContractAddress),
+          tx_hash: tokenTxHash,
+          status: tokenStatus,
+          is_external: isExternal,
+          burner_code: scalarVaultModule.hexToBytes(
+            hexStringWithout0x(burnerCode),
+          ),
+        },
       };
 
       // TODO: Replace with actual API call
@@ -147,27 +187,112 @@ export const AddDestinationChainModal: React.FC<{}> = () => {
             disabled={false}
           />
         </div>
-        <div className="flex flex-1 flex-col">
-          <InputField
-            onChange={setTokenName}
-            reset={false}
-            initValue=""
-            label="Token Name"
-            placeholder="Token Name"
-            generalErrorMessage="Please input a token name"
-            disabled={false}
-          />
-        </div>
-        <div className="flex flex-1 flex-col">
-          <InputField
-            onChange={setTokenContractAddress}
-            reset={false}
-            initValue=""
-            label="Token Contract Address"
-            placeholder="0x"
-            generalErrorMessage="Please input a token contract address"
-            disabled={false}
-          />
+
+        <hr className="my-4 border-gray-200" />
+        <h3 className="mb-4 font-semibold">Token Information</h3>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4">
+            <InputField
+              onChange={setAsset}
+              reset={false}
+              initValue=""
+              label="Asset"
+              placeholder="Asset"
+              generalErrorMessage="Please input an asset"
+              disabled={false}
+            />
+            <InputField
+              onChange={setTokenContractAddress}
+              reset={false}
+              initValue=""
+              label="Token Contract Address"
+              placeholder="0x"
+              generalErrorMessage="Please input a token contract address"
+              disabled={false}
+            />
+            <InputField
+              onChange={setTokenTxHash}
+              reset={false}
+              initValue=""
+              label="Token Tx Hash"
+              placeholder="Token Tx Hash"
+              generalErrorMessage="Please input a token tx hash"
+              disabled={false}
+            />
+            <SelectField
+              onChange={(value) => setTokenStatus(parseInt(value))}
+              reset={false}
+              initValue={TokenStatus.STATUS_UNSPECIFIED.toString()}
+              options={tokenStatusOptions.map((option) => option.label)}
+              label="Token Status"
+              placeholder="Select Token Status"
+              errorMessage="Please select a token status"
+              disabled={false}
+            />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <InputField
+              onChange={setTokenName}
+              reset={false}
+              initValue=""
+              label="Token Name"
+              placeholder="Token Name"
+              generalErrorMessage="Please input a token name"
+              disabled={false}
+            />
+            <InputField
+              onChange={setTokenSymbol}
+              reset={false}
+              initValue=""
+              label="Token Symbol"
+              placeholder="Token Symbol"
+              generalErrorMessage="Please input a token symbol"
+              disabled={false}
+            />
+            <InputField
+              onChange={setTokenDecimals}
+              reset={false}
+              initValue=""
+              label="Token Decimals"
+              placeholder="18"
+              generalErrorMessage="Please input token decimals"
+              disabled={false}
+            />
+            <InputField
+              onChange={setTokenCapacity}
+              reset={false}
+              initValue=""
+              label="Token Capacity"
+              placeholder="Token Capacity"
+              generalErrorMessage="Please input token capacity"
+              disabled={false}
+            />
+          </div>
+
+          <div className="col-span-2">
+            <InputField
+              onChange={setBurnerCode}
+              reset={false}
+              initValue=""
+              label="Burner Code"
+              placeholder="Burner Code"
+              generalErrorMessage="Please input a burner code"
+              disabled={false}
+            />
+            <div className="form-control mt-4">
+              <label className="label">
+                <span className="label-text">Is External</span>
+              </label>
+              <input
+                type="checkbox"
+                className="checkbox"
+                checked={isExternal}
+                onChange={(e) => setIsExternal(e.target.checked)}
+              />
+            </div>
+          </div>
         </div>
       </div>
       <div className="flex justify-center">

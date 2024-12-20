@@ -1,9 +1,25 @@
 import { GeneralModal } from "@/app/components/Modals/GeneralModal";
+import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useDeleteProtocolModal } from "@/app/stores/modal";
+import { DeleteProtocolRequest } from "@/app/types/protocol";
 import { XIcon } from "lucide-react";
 
 export const DeleteProtocolModal: React.FC<{}> = ({}) => {
   const { protocolData, isOpen, close } = useDeleteProtocolModal();
+
+  const scalarClient = useScalarClient();
+
+  const handleDeleteProtocol = async () => {
+    if (!protocolData) return;
+
+    const deleteProtocolRequest: DeleteProtocolRequest = {
+      name: protocolData.name,
+    };
+
+    await scalarClient.client.deleteProtocol(deleteProtocolRequest);
+
+    console.log("Successfully deleted protocol", deleteProtocolRequest);
+  };
 
   return (
     <GeneralModal open={isOpen} onClose={close} big>
@@ -34,7 +50,7 @@ export const DeleteProtocolModal: React.FC<{}> = ({}) => {
         <button
           className="btn btn-error"
           onClick={() => {
-            // TODO: Add delete protocol logic here
+            handleDeleteProtocol();
             close();
           }}
         >

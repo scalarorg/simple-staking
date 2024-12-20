@@ -106,7 +106,7 @@ export const AddProtocolModal: React.FC<{}> = () => {
     try {
       const createProtocolRequest: CreateProtocolRequest = {
         name: protocolName,
-        scalar_pk: scalarPubKey,
+        pubkey: scalarPubKey,
         service_tag: serviceTag,
 
         // BTC Chain related fields

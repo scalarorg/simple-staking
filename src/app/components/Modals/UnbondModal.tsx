@@ -153,9 +153,7 @@ export const UnbondModal: React.FC = () => {
 
   const { balance, allowance, approve } = useERC20Contract(
     SBTC_ABI,
-    scalarVaultModule.bytesToHex(
-      destinationChain?.token_contract_address || new Uint8Array(),
-    ),
+    hexStringWithout0x(destinationChain?.token.token_address || ""),
     address,
     scalarVaultModule.bytesToHex(
       destinationChain?.chain_smart_contract_address || new Uint8Array(),
