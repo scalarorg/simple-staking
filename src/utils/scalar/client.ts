@@ -1,5 +1,6 @@
 import { getShortenCustodianGroups } from "@/app/api/custodian";
 import { getDApps } from "@/app/api/dApp";
+import { CustodianGroupsAPIResponse } from "@/app/types/custodians";
 import { DApp } from "@/app/types/dApps";
 import {
   DeleteDestinationChainRequest,
@@ -207,5 +208,25 @@ export class ScalarClient {
   ): Promise<void> {
     // TODO: Implement update protocol status logic
     console.log("Updating protocol status", request);
+  }
+
+  async getCustodianGroups(): Promise<CustodianGroupsAPIResponse> {
+    const dapps = await getDApps();
+    return {
+      data: dapps.dApps.map((dapp) => ({
+        Name: dapp.custodianGroup.Name,
+        BtcNetwork: dapp.btcNetwork,
+        TaprootAddress: dapp.custodianGroup.TaprootAddress,
+        Quorum: dapp.custodianGroup.Quorum,
+        Custodians: dapp.custodianGroup.Custodians.map((custodian) => ({
+          Name: custodian.Name,
+          Status: ProtocolStatus.Activated,
+          BtcPublicKey: new Uint8Array(
+            Buffer.from(hexStringWithout0x(custodian.BtcPublicKeyHex), "hex"),
+          ),
+          Description: "",
+        })),
+      })),
+    };
   }
 }

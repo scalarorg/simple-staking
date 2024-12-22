@@ -35,6 +35,7 @@ import { Input } from "../ui/input";
 import { toast } from "../ui/use-toast";
 
 import { DestinationChain, Protocol } from "@/app/types/protocol";
+import { useQuery } from "@tanstack/react-query";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -114,9 +115,6 @@ const lookupErrorSignature = async (signature: string): Promise<string> => {
 };
 
 export const UnbondModal: React.FC = () => {
-  const scalarVaultModule = useScalarVaultModule();
-  const vault = useVault();
-
   const { address } = useAccount();
   const { isOpen, close, bond } = useUnbondModal();
   const { address: btcAddress, pubkey } = useWalletInfo();
@@ -150,6 +148,24 @@ export const UnbondModal: React.FC = () => {
     }
     return { protocol: null, destinationChain: null };
   }, [protocols.data, bond?.destinationSmartContractAddress]);
+
+  const scalarClient = useScalarClient();
+
+  const { data } = useQuery({
+    enabled: !!scalarClient,
+    queryKey: ["getVersionAndTag"],
+    queryFn: () => scalarClient.client.getVersionAndTag(),
+    refetchInterval: 60000, // 1 minute
+    retry: (failureCount, error) => {
+      return failureCount <= 3;
+    },
+  });
+
+  const publicVersion = String(data?.version);
+  const publicTag = data?.tag;
+
+  const scalarVaultModule = useScalarVaultModule();
+  const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
 
   const { balance, allowance, approve } = useERC20Contract(
     SBTC_ABI,

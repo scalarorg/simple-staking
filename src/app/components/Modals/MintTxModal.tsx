@@ -27,8 +27,10 @@ import { Input } from "../ui/input";
 import { Select } from "../ui/select";
 import { toast } from "../ui/use-toast";
 
+import { useScalarClient } from "@/app/context/ScalarProvider";
 import { DestinationChain } from "@/app/types/protocol";
 import { hexStringWith0x } from "@/utils/trim";
+import { useQuery } from "@tanstack/react-query";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -76,8 +78,23 @@ export const MintTxModal: React.FC<{}> = () => {
 
   const id = useChainId();
 
+  const scalarClient = useScalarClient();
+
+  const { data } = useQuery({
+    enabled: !!scalarClient,
+    queryKey: ["getVersionAndTag"],
+    queryFn: () => scalarClient.client.getVersionAndTag(),
+    refetchInterval: 60000, // 1 minute
+    retry: (failureCount, error) => {
+      return failureCount <= 3;
+    },
+  });
+
+  const publicVersion = String(data?.version);
+  const publicTag = data?.tag;
+
   const scalarVaultModule = useScalarVaultModule();
-  const vault = useVault();
+  const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
 
   const [selectedDestChain, setSelectedDestChain] =
     useState<DestinationChain | null>(null);

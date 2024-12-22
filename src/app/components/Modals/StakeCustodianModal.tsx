@@ -21,12 +21,14 @@ import { Input } from "@/app/components/ui/input";
 import { Select } from "@/app/components/ui/select";
 import { TransactionRateSelect } from "@/app/components/ui/TransactionRateSelect";
 import { toast } from "@/app/components/ui/use-toast";
+import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useStakeCustodianModal } from "@/app/stores/modal";
 import { DestinationChain } from "@/app/types/protocol";
 import { hexStringWith0x } from "@/utils/trim";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { GeneralModal } from "./GeneralModal";
 
@@ -81,8 +83,23 @@ export const StakeCustodianModal = () => {
     form.setValue("destRecipientAddress", account.address?.toString() || "");
   }
 
+  const scalarClient = useScalarClient();
+
+  const { data } = useQuery({
+    enabled: !!scalarClient,
+    queryKey: ["getVersionAndTag"],
+    queryFn: () => scalarClient.client.getVersionAndTag(),
+    refetchInterval: 60000, // 1 minute
+    retry: (failureCount, error) => {
+      return failureCount <= 3;
+    },
+  });
+
+  const publicVersion = String(data?.version);
+  const publicTag = data?.tag;
+
   const scalarVaultModule = useScalarVaultModule();
-  const vault = useVault();
+  const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
 
   const [selectedDestChain, setSelectedDestChain] =
     useState<DestinationChain | null>(null);

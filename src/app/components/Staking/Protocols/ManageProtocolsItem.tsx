@@ -1,4 +1,4 @@
-import { BookOpen, Trash2 } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 
 import { useWalletInfo } from "@/app/context/WalletProvider";
@@ -53,7 +53,7 @@ export const ManageProtocolsItem: React.FC<ManageProtocolProps> = ({
             Edit
             <BookOpen size={12} />
           </button>
-          <button
+          {/* <button
             onClick={(e) => {
               e.stopPropagation();
               openDeleteProtocolModal({ name: protocol.name });
@@ -65,7 +65,7 @@ export const ManageProtocolsItem: React.FC<ManageProtocolProps> = ({
           >
             Delete
             <Trash2 size={12} />
-          </button>
+          </button> */}
         </div>
         <Tooltip
           id={`tooltip-delegation-${protocol.btc_chain.btc_signer_pk}`}

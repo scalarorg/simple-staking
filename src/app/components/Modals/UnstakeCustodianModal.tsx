@@ -36,7 +36,9 @@ import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useUnstakeCustodianModal } from "@/app/stores/modal";
 import { DestinationChain } from "@/app/types/protocol";
 
+import { useScalarClient } from "@/app/context/ScalarProvider";
 import { hexStringWith0x } from "@/utils/trim";
+import { useQuery } from "@tanstack/react-query";
 import { GeneralModal } from "./GeneralModal";
 
 const MOCK_ZERO_BYTES = "0x0000000000000000000000000000000000000000";
@@ -65,9 +67,6 @@ const FormSchema = z.object({
 });
 
 export const UnstakeCustodianModal: React.FC = () => {
-  const scalarVaultModule = useScalarVaultModule();
-  const vault = useVault();
-
   const { address, isConnected } = useAccount();
   const { isOpen, close, protocol } = useUnstakeCustodianModal();
   const { address: btcAddress, pubkey: stakerPubkey } = useWalletInfo();
@@ -79,6 +78,24 @@ export const UnstakeCustodianModal: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [selectedDestChain, setSelectedDestChain] =
     useState<DestinationChain | null>(null);
+
+  const scalarClient = useScalarClient();
+
+  const { data } = useQuery({
+    enabled: !!scalarClient,
+    queryKey: ["getVersionAndTag"],
+    queryFn: () => scalarClient.client.getVersionAndTag(),
+    refetchInterval: 60000, // 1 minute
+    retry: (failureCount, error) => {
+      return failureCount <= 3;
+    },
+  });
+
+  const publicVersion = String(data?.version);
+  const publicTag = data?.tag;
+
+  const scalarVaultModule = useScalarVaultModule();
+  const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
 
   const feeRates = useFeeRates(isOpen, address, mempoolClient);
 

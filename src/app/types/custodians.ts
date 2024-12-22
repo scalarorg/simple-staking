@@ -1,4 +1,4 @@
-import { ProtocolStatus } from "./protocol";
+import { ProtocolStatus } from "@/app/types/protocol";
 
 export interface Custodian {
   Name: string;

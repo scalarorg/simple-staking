@@ -9,11 +9,11 @@ import { BtcAddress } from "@/app/components/Staking/Form/BtcAddress";
 import { InputField } from "@/app/components/Staking/Form/InputField";
 import { SelectField } from "@/app/components/Staking/Form/SelectField";
 
+import { GeneralModal } from "@/app/components/Modals/GeneralModal";
 import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useScalarVaultModule } from "@/app/context/VaultContext";
 import { CreateProtocolRequest, ProtocolStatus } from "@/app/types/protocol";
 import { hexStringWithout0x } from "@/utils/trim";
-import { GeneralModal } from "./GeneralModal";
 
 export const AddProtocolModal: React.FC<{}> = () => {
   const scalarVaultModule = useScalarVaultModule();
