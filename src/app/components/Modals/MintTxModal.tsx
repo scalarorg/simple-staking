@@ -28,14 +28,14 @@ import { Select } from "../ui/select";
 import { toast } from "../ui/use-toast";
 
 import { useScalarClient } from "@/app/context/ScalarProvider";
-import { DestinationChain } from "@/app/types/protocol";
+import { ProtocolChain } from "@/app/types/protocol";
 import { hexStringWith0x } from "@/utils/trim";
 import { useQuery } from "@tanstack/react-query";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
-  tokenName: z.string({
-    required_error: "Please select a token.",
+  chainName: z.string({
+    required_error: "Please select a chain.",
   }),
   destRecipientAddress: z
     .string({
@@ -61,7 +61,7 @@ export const MintTxModal: React.FC<{}> = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      tokenName: "",
+      chainName: "",
       destRecipientAddress: "",
       stakingAmount: 100000,
       mintFeeRate: "hourFee",
@@ -96,22 +96,26 @@ export const MintTxModal: React.FC<{}> = () => {
   const scalarVaultModule = useScalarVaultModule();
   const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
 
-  const [selectedDestChain, setSelectedDestChain] =
-    useState<DestinationChain | null>(null);
+  const btc_chain = protocol?.chains.find(
+    (chain) => chain.chain_type === "BTC",
+  );
 
-  const watchTokenName = useWatch({
+  const [selectedDestChain, setSelectedDestChain] =
+    useState<ProtocolChain | null>(null);
+
+  const watchChainName = useWatch({
     control: form.control,
-    name: "tokenName",
+    name: "chainName",
   });
 
   useEffect(() => {
-    if (!protocol || !watchTokenName) {
+    if (!protocol || !watchChainName) {
       setSelectedDestChain(null);
       return;
     }
 
-    const selectedChain = protocol.dest_chains.find(
-      (chain) => chain.token.details.symbol === watchTokenName,
+    const selectedChain = protocol.chains.find(
+      (chain) => chain.chain_name === watchChainName,
     );
 
     if (selectedChain) {
@@ -119,7 +123,7 @@ export const MintTxModal: React.FC<{}> = () => {
     } else {
       setSelectedDestChain(null);
     }
-  }, [watchTokenName, protocol]);
+  }, [watchChainName, protocol]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!protocol) return;
@@ -174,7 +178,7 @@ export const MintTxModal: React.FC<{}> = () => {
       })();
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
-      const btcServicePk = protocol.btc_chain.btc_signer_pk;
+      const btcServicePk = btc_chain?.btc_signer_pk || new Uint8Array();
 
       const destAddress = scalarVaultModule.hexToBytes(
         destRecipientAddress.replace("0x", ""),
@@ -183,14 +187,15 @@ export const MintTxModal: React.FC<{}> = () => {
         selectedDestChain.chain_smart_contract_address;
 
       const numberOfCustodianPubkeys =
-        protocol.custodian_group.Custodians.length;
+        protocol?.custodian_group?.Custodians.length || 0;
       const custodian_pubkeys_uint8array = new Uint8Array(
         33 * numberOfCustodianPubkeys,
       );
 
       for (let i = 0; i < numberOfCustodianPubkeys; i++) {
         custodian_pubkeys_uint8array.set(
-          protocol.custodian_group.Custodians[i].BtcPublicKey,
+          protocol?.custodian_group?.Custodians[i]?.BtcPublicKey ||
+            new Uint8Array(),
           i * 33,
         );
       }
@@ -216,7 +221,7 @@ export const MintTxModal: React.FC<{}> = () => {
           stakerAddress: address,
           protocolPubkey: btcServicePk,
           custodialPubkeys: custodian_pubkeys_uint8array,
-          covenantQuorum: protocol.custodian_group.Quorum,
+          covenantQuorum: protocol?.custodian_group?.Quorum || 0,
           haveOnlyCovenants: false,
           destinationChain,
           destinationContractAddress: smartContractAddress,
@@ -372,22 +377,27 @@ export const MintTxModal: React.FC<{}> = () => {
                 <div className="space-y-2 -mt-2">
                   <FormField
                     control={form.control}
-                    name="tokenName"
+                    name="chainName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Token</FormLabel>
+                        <FormLabel>Chain</FormLabel>
                         <Select value={field.value} onChange={field.onChange}>
                           <option value="" disabled>
-                            Select token
+                            Select chain
                           </option>
-                          {protocol?.dest_chains.map((chain) => (
-                            <option
-                              key={chain.token.details.symbol}
-                              value={chain.token.details.symbol}
-                            >
-                              {chain.token.details.symbol}
-                            </option>
-                          ))}
+                          {protocol?.chains.map((chain) => {
+                            if (chain.chain_type === "BTC") {
+                              return null;
+                            }
+                            return (
+                              <option
+                                key={chain.chain_name}
+                                value={chain.chain_name}
+                              >
+                                {chain.chain_name}
+                              </option>
+                            );
+                          })}
                         </Select>
                         <FormMessage />
                       </FormItem>
@@ -526,7 +536,8 @@ export const MintTxModal: React.FC<{}> = () => {
                   <Input
                     readOnly
                     value={scalarVaultModule.bytesToHex(
-                      protocol.btc_chain.btc_signer_pk,
+                      // btc_chain?.btc_signer_pk ?? new Uint8Array(),
+                      new Uint8Array(),
                     )}
                   />
                 </div>
@@ -538,8 +549,7 @@ export const MintTxModal: React.FC<{}> = () => {
                       selectedDestChain?.chain_smart_contract_address
                         ? hexStringWith0x(
                             scalarVaultModule.bytesToHex(
-                              selectedDestChain?.chain_smart_contract_address ??
-                                new Uint8Array(),
+                              selectedDestChain?.chain_smart_contract_address,
                             ),
                           )
                         : ""
@@ -548,15 +558,18 @@ export const MintTxModal: React.FC<{}> = () => {
                 </div>
                 <div className="space-y-2">
                   <FormLabel>Custodian Group Name</FormLabel>
-                  <Input readOnly value={protocol?.custodian_group.Name} />
+                  <Input
+                    readOnly
+                    value={protocol?.custodian_group?.Name || ""}
+                  />
                 </div>
                 <div className="space-y-2">
                   <FormLabel>
-                    Custodians ({protocol?.custodian_group.Quorum} of{" "}
-                    {protocol?.custodian_group.Custodians.length} required)
+                    Custodians ({protocol?.custodian_group?.Quorum} of{" "}
+                    {protocol?.custodian_group?.Custodians.length} required)
                   </FormLabel>
                   <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-input bg-background p-2">
-                    {protocol?.custodian_group.Custodians.map(
+                    {protocol?.custodian_group?.Custodians.map(
                       (custodian, index) => (
                         <div
                           key={index}

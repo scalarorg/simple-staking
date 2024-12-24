@@ -34,7 +34,7 @@ import {
 import { Input } from "../ui/input";
 import { toast } from "../ui/use-toast";
 
-import { DestinationChain, Protocol } from "@/app/types/protocol";
+import { Protocol, ProtocolChain } from "@/app/types/protocol";
 import { useQuery } from "@tanstack/react-query";
 import { GeneralModal } from "./GeneralModal";
 
@@ -121,17 +121,17 @@ export const UnbondModal: React.FC = () => {
   const { btcNetwork, walletProvider } = useWalletProvider();
   const { protocols } = useScalarClient();
 
-  const { protocol, destinationChain } = useMemo<{
+  const { protocol, protocolChain } = useMemo<{
     protocol: Protocol | null;
-    destinationChain: DestinationChain | null;
+    protocolChain: ProtocolChain | null;
   }>(() => {
     if (!protocols.data?.protocols || !bond?.destinationSmartContractAddress) {
-      return { protocol: null, destinationChain: null };
+      return { protocol: null, protocolChain: null };
     }
 
     for (const p of protocols.data.protocols) {
       // Check each chain's smart contract address
-      for (const chain of p.dest_chains) {
+      for (const chain of p.chains) {
         if (
           hexStringWithout0x(
             scalarVaultModule.bytesToHex(chain.chain_smart_contract_address),
@@ -141,13 +141,17 @@ export const UnbondModal: React.FC = () => {
           // Return both protocol and the matching chain
           return {
             protocol: p,
-            destinationChain: chain,
+            protocolChain: chain,
           };
         }
       }
     }
-    return { protocol: null, destinationChain: null };
+    return { protocol: null, protocolChain: null };
   }, [protocols.data, bond?.destinationSmartContractAddress]);
+
+  const btc_chain = protocol?.chains.find(
+    (chain) => chain.chain_type === "BTC",
+  );
 
   const scalarClient = useScalarClient();
 
@@ -169,17 +173,21 @@ export const UnbondModal: React.FC = () => {
 
   const { balance, allowance, approve } = useERC20Contract(
     SBTC_ABI,
-    hexStringWithout0x(destinationChain?.token.token_address || ""),
+    hexStringWithout0x(
+      protocolChain?.supported_chain.token.oneofKind === "erc20"
+        ? protocolChain.supported_chain.token.erc20.tokenAddress
+        : "",
+    ),
     address,
     scalarVaultModule.bytesToHex(
-      destinationChain?.chain_smart_contract_address || new Uint8Array(),
+      protocolChain?.chain_smart_contract_address || new Uint8Array(),
     ),
   );
 
   const { unstake } = useProtocolContract(
     PROTOCOL_ABI,
     scalarVaultModule.bytesToHex(
-      destinationChain?.chain_smart_contract_address || new Uint8Array(),
+      protocolChain?.chain_smart_contract_address || new Uint8Array(),
     ),
   );
 
@@ -262,17 +270,18 @@ export const UnbondModal: React.FC = () => {
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
 
-      const btcProtocolPk = protocol.btc_chain.btc_signer_pk;
+      const btcProtocolPk = btc_chain?.btc_signer_pk || new Uint8Array();
 
       const numberOfCustodianPubkeys =
-        protocol.custodian_group.Custodians.length;
+        protocol?.custodian_group?.Custodians.length || 0;
       const custodian_pubkeys_uint8array = new Uint8Array(
         33 * numberOfCustodianPubkeys,
       );
 
       for (let i = 0; i < numberOfCustodianPubkeys; i++) {
         custodian_pubkeys_uint8array.set(
-          protocol.custodian_group.Custodians[i].BtcPublicKey,
+          protocol?.custodian_group?.Custodians[i]?.BtcPublicKey ||
+            new Uint8Array(),
           i * 33,
         );
       }
@@ -283,7 +292,7 @@ export const UnbondModal: React.FC = () => {
         stakerPubkey: btcUserPk,
         protocolPubkey: btcProtocolPk,
         covenantPubkeys: custodian_pubkeys_uint8array,
-        covenantQuorum: protocol.custodian_group.Quorum,
+        covenantQuorum: protocol?.custodian_group?.Quorum || 0,
         haveOnlyCovenants: false,
         feeRate: txFee,
         rbf: false,
@@ -316,7 +325,7 @@ export const UnbondModal: React.FC = () => {
 
         await approve(
           scalarVaultModule.bytesToHex(
-            destinationChain?.chain_smart_contract_address || new Uint8Array(),
+            protocolChain?.chain_smart_contract_address || new Uint8Array(),
           ),
           burnAmount,
         );

@@ -1,39 +1,27 @@
-import { CustodianGroup } from "./custodians";
+import { CustodianGroup } from "@/app/types/custodians";
+import {
+  ProtocolAttribute,
+  ProtocolStatus,
+  SupportedChain,
+} from "scalarjs-sdk/dist/types";
 
 export interface Protocol {
-  name: string;
   pubkey: Uint8Array;
-  dest_chains: DestinationChain[];
+  address: Uint8Array;
+  name: string;
   service_tag: string;
-  btc_chain: BtcChain;
-  custodian_group: CustodianGroup;
-  is_custodian_only: boolean;
+  attribute?: ProtocolAttribute;
   status: ProtocolStatus;
+  custodian_group?: CustodianGroup;
+  chains: ProtocolChain[];
 }
 
-export enum ProtocolStatus {
-  StatusUnspecified = 0,
-  Activated = 1,
-  Deactivated = 2,
-}
-
-export interface DestinationChain {
+export interface ProtocolChain {
   chain_name: string;
   chain_id: number;
   chain_type: string;
   chain_smart_contract_address: Uint8Array;
-  token: ERC20TokenMetadata;
-}
-
-export interface ERC20TokenMetadata {
-  asset: string;
-  chain_id: Uint8Array;
-  details: TokenDetails;
-  token_address: string;
-  tx_hash: string;
-  status: TokenStatus;
-  is_external: boolean;
-  burner_code: Uint8Array;
+  supported_chain: SupportedChain;
 }
 
 export interface TokenDetails {

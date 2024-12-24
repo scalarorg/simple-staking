@@ -37,7 +37,7 @@ export function useScalarClient() {
 export function ScalarProvider({ children }: { children: React.ReactNode }) {
   const { isErrorOpen, showError } = useError();
   const [client, setClient] = useState<ScalarClient>(
-    () => new ScalarClient(ProjectENV.NEXT_PUBLIC_SCALAR_NODE_URL),
+    () => new ScalarClient(ProjectENV.NEXT_PUBLIC_SCALAR_GRPC_URL),
   );
 
   const dAppsQuery = useQuery({

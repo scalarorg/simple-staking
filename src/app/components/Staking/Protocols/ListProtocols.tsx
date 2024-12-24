@@ -29,7 +29,7 @@ export const ListProtocols: React.FC = () => {
                 <th className="p-4 w-12">No</th>
                 <th className="p-4 w-[200px]">Protocol Name</th>
                 <th className="p-4 w-[150px]">Tag</th>
-                <th className="p-4">Custodian Group BTC Address</th>
+                {/* <th className="p-4">Custodian Group BTC Address</th> */}
                 <th className="p-4">Status</th>
                 <th className="p-4 w-20">Actions</th>
               </tr>

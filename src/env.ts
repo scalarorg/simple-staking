@@ -18,7 +18,7 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_APP_URL: z
     .string()
     .default("https://btc-staking.testnet.scalar.org"),
-  NEXT_PUBLIC_SCALAR_NODE_URL: z.string().default("http://localhost:26656"),
+  NEXT_PUBLIC_SCALAR_GRPC_URL: z.string().default("http://localhost:9090"),
 });
 
 /**
@@ -50,7 +50,7 @@ export const ProjectENV = ProjectENVSchema.parse({
   NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS:
     process.env.NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  NEXT_PUBLIC_SCALAR_NODE_URL: process.env.NEXT_PUBLIC_SCALAR_NODE_URL,
+  NEXT_PUBLIC_SCALAR_GRPC_URL: process.env.NEXT_PUBLIC_SCALAR_GRPC_URL,
 });
 
 export const ExtendedProjectENVSchema = z.object({

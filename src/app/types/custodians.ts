@@ -1,17 +1,19 @@
-import { ProtocolStatus } from "@/app/types/protocol";
+import { CustodianStatus } from "scalarjs-sdk/dist/types";
 
 export interface Custodian {
   Name: string;
-  Status: ProtocolStatus;
+  Status: CustodianStatus;
   BtcPublicKey: Uint8Array;
   Description: string;
 }
 
 export interface CustodianGroup {
+  UID: string;
   Name: string;
-  BtcNetwork: string;
-  TaprootAddress: string;
+  BtcPublicKey: string;
   Quorum: number;
+  Status: CustodianStatus;
+  Description: string;
   Custodians: Custodian[];
 }
 

@@ -34,19 +34,17 @@ import {
 } from "@/app/hooks/useContracts";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useUnstakeCustodianModal } from "@/app/stores/modal";
-import { DestinationChain } from "@/app/types/protocol";
+import { ProtocolChain } from "@/app/types/protocol";
 
 import { useScalarClient } from "@/app/context/ScalarProvider";
 import { hexStringWith0x } from "@/utils/trim";
 import { useQuery } from "@tanstack/react-query";
 import { GeneralModal } from "./GeneralModal";
 
-const MOCK_ZERO_BYTES = "0x0000000000000000000000000000000000000000";
-
 // Define your form schema
 const FormSchema = z.object({
-  tokenName: z.string({
-    required_error: "Please select a token.",
+  chainName: z.string({
+    required_error: "Please select a chain.",
   }),
   btcReceiverAddress: z
     .string({
@@ -77,7 +75,7 @@ export const UnstakeCustodianModal: React.FC = () => {
   const [status, setStatus] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [selectedDestChain, setSelectedDestChain] =
-    useState<DestinationChain | null>(null);
+    useState<ProtocolChain | null>(null);
 
   const scalarClient = useScalarClient();
 
@@ -97,10 +95,14 @@ export const UnstakeCustodianModal: React.FC = () => {
   const scalarVaultModule = useScalarVaultModule();
   const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
 
+  const btc_chain = protocol?.chains.find(
+    (chain) => chain.chain_type === "BTC",
+  );
+
   const feeRates = useFeeRates(isOpen, address, mempoolClient);
 
   const tokenContractAddressHex = hexStringWith0x(
-    selectedDestChain?.token.token_address ?? "",
+    selectedDestChain?.supported_chain.token.token_address ?? "",
   );
   const chainSmartContractAddress =
     selectedDestChain?.chain_smart_contract_address ?? new Uint8Array();
@@ -123,7 +125,7 @@ export const UnstakeCustodianModal: React.FC = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      tokenName: "",
+      chainName: "",
       btcReceiverAddress: btcAddress,
       unstakeAmount: "",
       unstakeFeeRate: "hourFee",
@@ -131,9 +133,9 @@ export const UnstakeCustodianModal: React.FC = () => {
     },
   });
 
-  const watchTokenName = useWatch({
+  const watchChainName = useWatch({
     control: form.control,
-    name: "tokenName",
+    name: "chainName",
   });
 
   useEffect(() => {
@@ -143,13 +145,13 @@ export const UnstakeCustodianModal: React.FC = () => {
   }, [btcAddress, form]);
 
   useEffect(() => {
-    if (!protocol || !watchTokenName) {
+    if (!protocol || !watchChainName) {
       setSelectedDestChain(null);
       return;
     }
 
-    const selectedChain = protocol.dest_chains.find(
-      (chain) => chain.token.details.symbol === watchTokenName,
+    const selectedChain = protocol.chains.find(
+      (chain) => chain.chain_name === watchChainName,
     );
 
     if (selectedChain) {
@@ -157,7 +159,7 @@ export const UnstakeCustodianModal: React.FC = () => {
     } else {
       setSelectedDestChain(null);
     }
-  }, [watchTokenName, protocol]);
+  }, [watchChainName, protocol]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!protocol || !selectedDestChain) return;
@@ -182,7 +184,7 @@ export const UnstakeCustodianModal: React.FC = () => {
       const btcReturnAmount = Number(unstakeAmount);
 
       const addressUtxos = await walletProvider.getUtxos(
-        protocol.custodian_group.TaprootAddress,
+        protocol?.custodian_group?.TaprootAddress || "",
         btcReturnAmount,
       );
 
@@ -215,17 +217,18 @@ export const UnstakeCustodianModal: React.FC = () => {
       const btcUserPk = scalarVaultModule.hexToBytes(
         stakerPubkey.replace("0x", ""),
       );
-      const btcServicePk = protocol.btc_chain.btc_signer_pk;
+      const btcServicePk = btc_chain?.btc_signer_pk || new Uint8Array();
 
       const numberOfCustodianPubkeys =
-        protocol.custodian_group.Custodians.length;
+        protocol?.custodian_group?.Custodians.length || 0;
       const custodian_pubkeys_uint8array = new Uint8Array(
         33 * numberOfCustodianPubkeys,
       );
 
       for (let i = 0; i < numberOfCustodianPubkeys; i++) {
         custodian_pubkeys_uint8array.set(
-          protocol.custodian_group.Custodians[i].BtcPublicKey,
+          protocol?.custodian_group?.Custodians[i]?.BtcPublicKey ||
+            new Uint8Array(),
           i * 33,
         );
       }
@@ -240,7 +243,7 @@ export const UnstakeCustodianModal: React.FC = () => {
           stakerPubkey: btcUserPk,
           protocolPubkey: btcServicePk,
           covenantPubkeys: custodian_pubkeys_uint8array,
-          covenantQuorum: protocol.custodian_group.Quorum,
+          covenantQuorum: protocol?.custodian_group?.Quorum || 0,
           haveOnlyCovenants: true,
           feeRate: BigInt(selectedFeeRate),
           rbf: true,
@@ -263,9 +266,10 @@ export const UnstakeCustodianModal: React.FC = () => {
       setStatus("Unstaking the token");
 
       // TODO: Remove prefix when server is updated
+      // btc_chain?.btc_network has value of 'bitcoin-testnet4'
       const psbt_base64_with_prefix = `40${psbt}`;
       await unstake(
-        protocol.btc_chain.btc_network,
+        btc_chain?.btc_network || "",
         burnAmount,
         psbt_base64_with_prefix,
       );
@@ -300,22 +304,27 @@ export const UnstakeCustodianModal: React.FC = () => {
             <div className="flex flex-col gap-4">
               <FormField
                 control={form.control}
-                name="tokenName"
+                name="chainName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Token</FormLabel>
+                    <FormLabel>Chain</FormLabel>
                     <Select value={field.value} onChange={field.onChange}>
                       <option value="" disabled>
-                        Select token
+                        Select chain
                       </option>
-                      {protocol?.dest_chains.map((chain) => (
-                        <option
-                          key={chain.token.details.symbol}
-                          value={chain.token.details.symbol}
-                        >
-                          {chain.token.details.symbol}
-                        </option>
-                      ))}
+                      {protocol?.chains.map((chain) => {
+                        if (chain.chain_type === "BTC") {
+                          return null;
+                        }
+                        return (
+                          <option
+                            key={chain.chain_name}
+                            value={chain.chain_name}
+                          >
+                            {chain.chain_name}
+                          </option>
+                        );
+                      })}
                     </Select>
                     <FormMessage />
                   </FormItem>
@@ -323,15 +332,15 @@ export const UnstakeCustodianModal: React.FC = () => {
               />
               <div className="space-y-2">
                 <FormLabel>Custodian Group Name</FormLabel>
-                <Input readOnly value={protocol?.custodian_group.Name} />
+                <Input readOnly value={protocol?.custodian_group?.Name || ""} />
               </div>
               <div className="space-y-2">
                 <FormLabel>
-                  Custodians ({protocol?.custodian_group.Quorum} of{" "}
-                  {protocol?.custodian_group.Custodians.length} required)
+                  Custodians ({protocol?.custodian_group?.Quorum} of{" "}
+                  {protocol?.custodian_group?.Custodians.length} required)
                 </FormLabel>
                 <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-input bg-background p-2">
-                  {protocol?.custodian_group.Custodians.map(
+                  {protocol?.custodian_group?.Custodians.map(
                     (
                       custodian: { BtcPublicKey: Uint8Array },
                       index: number,

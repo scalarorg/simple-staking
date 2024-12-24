@@ -26,14 +26,14 @@ import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useStakeCustodianModal } from "@/app/stores/modal";
-import { DestinationChain } from "@/app/types/protocol";
+import { ProtocolChain } from "@/app/types/protocol";
 import { hexStringWith0x } from "@/utils/trim";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
-  tokenName: z.string({
+  chainName: z.string({
     required_error: "Please select a token.",
   }),
   destRecipientAddress: z
@@ -60,7 +60,7 @@ export const StakeCustodianModal = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      tokenName: "",
+      chainName: "",
       destRecipientAddress: "",
       stakingAmount: 100000,
       mintFeeRate: "hourFee",
@@ -102,21 +102,21 @@ export const StakeCustodianModal = () => {
   const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
 
   const [selectedDestChain, setSelectedDestChain] =
-    useState<DestinationChain | null>(null);
+    useState<ProtocolChain | null>(null);
 
-  const watchTokenName = useWatch({
+  const watchChainName = useWatch({
     control: form.control,
-    name: "tokenName",
+    name: "chainName",
   });
 
   useEffect(() => {
-    if (!protocol || !watchTokenName) {
+    if (!protocol || !watchChainName) {
       setSelectedDestChain(null);
       return;
     }
 
-    const selectedChain = protocol.dest_chains.find(
-      (chain) => chain.token.details.symbol === watchTokenName,
+    const selectedChain = protocol.chains.find(
+      (chain) => chain.chain_name === watchChainName,
     );
 
     if (selectedChain) {
@@ -124,7 +124,7 @@ export const StakeCustodianModal = () => {
     } else {
       setSelectedDestChain(null);
     }
-  }, [watchTokenName, protocol]);
+  }, [watchChainName, protocol]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!protocol) return;
@@ -141,7 +141,7 @@ export const StakeCustodianModal = () => {
         throw new Error("Wallet provider not found");
       }
 
-      if (!protocol.custodian_group.Custodians) {
+      if (!protocol.custodian_group) {
         throw new Error("Covenant pubkeys not found");
       }
 
@@ -184,7 +184,7 @@ export const StakeCustodianModal = () => {
       );
 
       const numberOfCustodianPubkeys =
-        protocol.custodian_group.Custodians.length;
+        protocol.custodian_group?.Custodians.length || 0;
       const custodian_pubkeys_uint8array = new Uint8Array(
         33 * numberOfCustodianPubkeys,
       );
@@ -329,22 +329,27 @@ export const StakeCustodianModal = () => {
               <div className="space-y-2 -mt-2">
                 <FormField
                   control={form.control}
-                  name="tokenName"
+                  name="chainName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Token</FormLabel>
+                      <FormLabel>Chain</FormLabel>
                       <Select value={field.value} onChange={field.onChange}>
                         <option value="" disabled>
-                          Select token
+                          Select chain
                         </option>
-                        {protocol?.dest_chains.map((chain) => (
-                          <option
-                            key={chain.token.details.symbol}
-                            value={chain.token.details.symbol}
-                          >
-                            {chain.token.details.symbol}
-                          </option>
-                        ))}
+                        {protocol?.chains.map((chain) => {
+                          if (chain.chain_type === "BTC") {
+                            return null;
+                          }
+                          return (
+                            <option
+                              key={chain.chain_name}
+                              value={chain.chain_name}
+                            >
+                              {chain.chain_name}
+                            </option>
+                          );
+                        })}
                       </Select>
                       <FormMessage />
                     </FormItem>
@@ -415,15 +420,15 @@ export const StakeCustodianModal = () => {
               </div>
               <div className="space-y-2">
                 <FormLabel>Custodian Group Name</FormLabel>
-                <Input readOnly value={protocol?.custodian_group.Name} />
+                <Input readOnly value={protocol?.custodian_group?.Name || ""} />
               </div>
               <div className="space-y-2">
                 <FormLabel>
-                  Custodians ({protocol?.custodian_group.Quorum} of{" "}
-                  {protocol?.custodian_group.Custodians.length} required)
+                  Custodians ({protocol?.custodian_group?.Quorum} of{" "}
+                  {protocol?.custodian_group?.Custodians.length} required)
                 </FormLabel>
                 <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-input bg-background p-2">
-                  {protocol?.custodian_group.Custodians.map(
+                  {protocol?.custodian_group?.Custodians.map(
                     (custodian, index) => (
                       <div
                         key={index}

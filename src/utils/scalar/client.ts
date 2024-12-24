@@ -1,6 +1,10 @@
 import { getShortenCustodianGroups } from "@/app/api/custodian";
 import { getDApps } from "@/app/api/dApp";
-import { CustodianGroupsAPIResponse } from "@/app/types/custodians";
+import {
+  Custodian,
+  CustodianGroup,
+  CustodianGroupsAPIResponse,
+} from "@/app/types/custodians";
 import { DApp } from "@/app/types/dApps";
 import {
   DeleteDestinationChainRequest,
@@ -8,15 +12,21 @@ import {
   GetAvailableChainByChainTypeResponse,
   GetAvailableCustodianGroupsByBtcNetworkNameResponse,
   Protocol,
-  ProtocolStatus,
+  ProtocolChain,
   SetCustodianGroupRequest,
-  TokenStatus,
   UpdateBtcChainRequest,
   UpdateProtocolBasicsRequest,
   UpdateProtocolStatusRequest,
 } from "@/app/types/protocol";
 import { ProjectENV } from "@/env";
-import { hexStringWithout0x } from "@/utils/trim";
+import { hexStringWith0x, hexStringWithout0x } from "@/utils/trim";
+import axios from "axios";
+import {
+  CustodianStatus,
+  LiquidityModel,
+  ProtocolStatus,
+  Protocol as ScalarProtocol,
+} from "scalarjs-sdk/dist/types";
 
 // TODO: Handle this information in scalar-chains
 const custodianDAppMap: Record<string, boolean> = {
@@ -30,7 +40,7 @@ const destinationChainTokenNameMap: Record<string, string> = {
 };
 
 export class ScalarClient {
-  constructor(private readonly rpcEndpoint: string) {}
+  constructor(private readonly grpcUrl: string) {}
 
   async getDAppsFromScalar(): Promise<{ dApps: DApp[] }> {
     return getDApps();
@@ -41,73 +51,166 @@ export class ScalarClient {
   }
 
   async getProtocols(): Promise<{ protocols: Protocol[] }> {
-    const dapps = await getDApps();
-    const protocols = dapps.dApps.map((dapp) => {
-      // Convert hex strings to Uint8Array by removing '0x' prefix and converting to bytes
-      const contractAddressBytes = new Uint8Array(
-        Buffer.from(hexStringWithout0x(dapp.scAddress), "hex"),
-      );
-      const tokenAddressBytes = new Uint8Array(
-        Buffer.from(hexStringWithout0x(dapp.tokenContractAddress), "hex"),
-      );
-      const btcSignerPk = new Uint8Array(
-        Buffer.from(hexStringWithout0x(dapp.btcPk), "hex"),
-      );
-
-      return {
-        name: dapp.chainName,
-        pubkey: new Uint8Array(),
-        dest_chains: [
-          {
-            chain_name: dapp.chainName,
-            chain_id: Number(dapp.chainId),
-            chain_type: "EVM",
-            chain_smart_contract_address: contractAddressBytes,
-            token: {
-              asset: destinationChainTokenNameMap[dapp.scAddress],
-              chain_id: new Uint8Array(),
-              details: {
-                token_name: destinationChainTokenNameMap[dapp.scAddress],
-                symbol: destinationChainTokenNameMap[dapp.scAddress],
-                decimals: 14,
-                capacity: new Uint8Array(),
+    // Get from core
+    const url = window.location.origin;
+    const scalarProtocolsResponse = await axios.post(
+      `${url}/api/get-protocols`,
+      {
+        grpcUrl: this.grpcUrl,
+        status: ProtocolStatus.ACTIVATED,
+      },
+    );
+    const { data } = scalarProtocolsResponse.data;
+    const scalarProtocols = data.protocols;
+    console.log("--- scalarProtocols ---", scalarProtocols);
+    const protocols: Protocol[] = scalarProtocols.map(
+      (scalarProtocol: ScalarProtocol) => {
+        const custodianGroup: CustodianGroup | undefined =
+          scalarProtocol.custodianGroup
+            ? {
+                UID: scalarProtocol.custodianGroup.uid,
+                Name: scalarProtocol.custodianGroup.name,
+                BtcPublicKey: scalarProtocol.custodianGroup.btcPubkey,
+                Quorum: scalarProtocol.custodianGroup.quorum,
+                Status: scalarProtocol.custodianGroup.status,
+                Description: scalarProtocol.custodianGroup.description,
+                Custodians: scalarProtocol.custodianGroup.custodians.map(
+                  (custodian) => ({
+                    Name: custodian.name,
+                    Status: custodian.status,
+                    BtcPublicKey: custodian.btcPubkey,
+                    Description: custodian.description,
+                  }),
+                ),
+              }
+            : undefined;
+        return {
+          pubkey: scalarProtocol.pubkey,
+          address: scalarProtocol.address,
+          name: scalarProtocol.name,
+          service_tag: scalarProtocol.tag,
+          attribute: scalarProtocol.attribute
+            ? scalarProtocol.attribute
+            : {
+                model: LiquidityModel.POOLING,
               },
-              token_address: dapp.tokenContractAddress,
-              tx_hash: "",
-              status: TokenStatus.STATUS_CONFIRMED,
-              is_external: false,
-              burner_code: new Uint8Array(),
-            },
-          },
-        ],
-        service_tag: ProjectENV.NEXT_PUBLIC_SERVICE_TAG,
-        btc_chain: {
-          btc_signer_endpoint: dapp.dappBtcSignerEndpoint,
-          btc_signer_access_token: dapp.accessToken,
-          btc_signer_address: dapp.btcAddress,
-          btc_signer_pk: btcSignerPk,
-          btc_network: dapp.btcNetwork || "bitcoin-testnet4",
-        },
-        custodian_group: {
-          Name: dapp.custodianGroup.Name,
-          TaprootAddress: dapp.custodianGroup.TaprootAddress,
-          Quorum: dapp.custodianGroup.Quorum,
-          BtcNetwork: "bitcoin-testnet4",
-          Custodians: dapp.custodianGroup.Custodians.map((custodian) => ({
+          status: scalarProtocol.status,
+          custodian_group: custodianGroup,
+          chains: scalarProtocol.chains.map((chain) => {
+            const chain_name =
+              chain.token.oneofKind === "erc20"
+                ? chain.token.erc20.asset
+                : "BTC"; // TODO: Handle for BTC
+            const chain_id = Number(chain.params?.chain.split("|")[1]) || 0;
+            const chain_type = chain.params?.chain.split("|")[0] || "evm";
+            const chain_smart_contract_address =
+              chain.token.oneofKind === "erc20"
+                ? new Uint8Array(
+                    Buffer.from(hexStringWithout0x(chain.address), "hex"),
+                  )
+                : new Uint8Array();
+            return {
+              chain_name: chain_name,
+              chain_id: chain_id,
+              chain_type: chain_type,
+              chain_smart_contract_address: chain_smart_contract_address,
+              supported_chain: chain,
+            };
+          }),
+        };
+      },
+    );
+
+    // --- Get from old api
+    const { dApps }: { dApps: DApp[] } = await getDApps();
+    const oldProtocols: Protocol[] = dApps.map((dapp) => {
+      const attribute = this.isCustodianDApp(hexStringWith0x(dapp.scAddress))
+        ? {
+            model: LiquidityModel.POOLING,
+          }
+        : {
+            model: LiquidityModel.TRANSACTIONAL,
+          };
+
+      const custodianGroup: CustodianGroup = {
+        UID: dapp.custodianGroup.ID.toString(),
+        Name: dapp.custodianGroup.Name,
+        BtcPublicKey: dapp.custodianGroup.TaprootAddress,
+        Quorum: dapp.custodianGroup.Quorum,
+        Status: CustodianStatus.ACTIVATED,
+        Description: "",
+        Custodians: dapp.custodianGroup.Custodians.map((custodian) => {
+          return {
             Name: custodian.Name,
-            Status: ProtocolStatus.Activated,
+            Status: CustodianStatus.ACTIVATED,
             BtcPublicKey: new Uint8Array(
               Buffer.from(hexStringWithout0x(custodian.BtcPublicKeyHex), "hex"),
             ),
             Description: "",
-          })),
+          };
+        }),
+      };
+
+      const chains: ProtocolChain[] = [
+        {
+          chain_name: dapp.chainName,
+          chain_id: 0,
+          chain_type: "EVM",
+          chain_smart_contract_address: new Uint8Array(
+            Buffer.from(hexStringWithout0x(dapp.tokenContractAddress), "hex"),
+          ),
+          supported_chain: {
+            address: dapp.scAddress,
+            token: {
+              oneofKind: "erc20",
+              erc20: {
+                asset: dapp.chainName,
+                chainId: new Uint8Array(),
+                details: {
+                  tokenName: dapp.chainName,
+                  symbol: dapp.chainName,
+                  decimals: 18,
+                  capacity: new Uint8Array(),
+                },
+                tokenAddress: dapp.tokenContractAddress,
+                txHash: "",
+                status: 4,
+                isExternal: false,
+                burnerCode: new Uint8Array(),
+              },
+            },
+          },
         },
-        is_custodian_only: this.isCustodianDApp(
-          dapp.scAddress as `0x${string}`,
-        ),
-        status: ProtocolStatus.Activated,
+      ];
+
+      chains.push({
+        chain_name: "BTC",
+        chain_id: 0,
+        chain_type: "BTC",
+        chain_smart_contract_address: new Uint8Array(),
+        supported_chain: {
+          address: "",
+          token: {
+            oneofKind: "btc",
+            btc: {},
+          },
+        },
+      });
+
+      return {
+        pubkey: new Uint8Array(), // Scalar pubkey
+        address: new Uint8Array(), // Scalar address
+        name: dapp.chainName,
+        service_tag: ProjectENV.NEXT_PUBLIC_SERVICE_TAG,
+        attribute: attribute,
+        status: ProtocolStatus.ACTIVATED,
+        custodian_group: custodianGroup,
+        chains: chains,
       };
     });
+
+    // Merge protocols
+    protocols.push(...oldProtocols);
     return { protocols };
   }
 
@@ -143,26 +246,26 @@ export class ScalarClient {
   }
 
   async getAvailableChainTypes(): Promise<string[]> {
-    return ["EVM", "Solana", "Cosmos"];
+    return ["evm", "solana", "cosmos"];
   }
 
   async getAvailableChainsByChainType(
     chainType: string,
   ): Promise<GetAvailableChainByChainTypeResponse> {
     const chains = {
-      EVM: [
+      evm: [
         {
           chain_name: "ethereum-sepolia",
           chain_id: 11155111,
         },
       ],
-      Solana: [
+      solana: [
         {
           chain_name: "solana-testnet",
           chain_id: 101,
         },
       ],
-      Cosmos: [
+      cosmos: [
         {
           chain_name: "cosmos-testnet",
           chain_id: 101,
@@ -227,6 +330,19 @@ export class ScalarClient {
           Description: "",
         })),
       })),
+    };
+  }
+
+  async getCustodians(): Promise<{ data: Custodian[] }> {
+    return {
+      data: [
+        {
+          Name: "custodian-1",
+          Status: ProtocolStatus.Activated,
+          BtcPublicKey: new Uint8Array(),
+          Description: "",
+        },
+      ],
     };
   }
 }
