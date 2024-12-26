@@ -1,16 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { Psbt } from "bitcoinjs-lib";
 import { toOutputScript } from "bitcoinjs-lib/src/address";
 import { parseUnits } from "ethers";
 import { XIcon } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 
 import PROTOCOL_ABI from "@/abis/protocol";
 import SBTC_ABI from "@/abis/sbtc";
@@ -38,6 +38,7 @@ import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useStakeCustodianModal } from "@/app/stores/modal";
 import { ProtocolChain } from "@/app/types/protocol";
 import { getTaprootAddressFromLockingScript } from "@/utils/bitcoin";
+import { getBitcoinVaultChainType } from "@/utils/tool";
 import { hexStringWith0x } from "@/utils/trim";
 
 import { GeneralModal } from "./GeneralModal";
@@ -239,28 +240,55 @@ export const StakeCustodianModal = () => {
         destRecipientAddress.replace("0x", ""),
       );
 
+      if (!protocol.custodian_group) {
+        throw new Error("Custodian group not found");
+      }
+
       const numberOfCustodianPubkeys =
-        protocol.custodian_group?.Custodians.length || 0;
+        protocol.custodian_group.Custodians.length;
       const custodian_pubkeys_uint8array = new Uint8Array(
         33 * numberOfCustodianPubkeys,
       );
 
       for (let i = 0; i < numberOfCustodianPubkeys; i++) {
-        custodian_pubkeys_uint8array.set(
-          protocol.custodian_group.Custodians[i].BtcPublicKey,
-          i * 33,
+        const custodianPubKey =
+          protocol.custodian_group.Custodians[i].BtcPublicKey;
+        const custodianPubKeyConv01 =
+          scalarVaultModule.bytesToHex(custodianPubKey);
+        const custodianPubKeyConv02 = scalarVaultModule.hexToBytes(
+          custodianPubKeyConv01,
+        );
+        if (!custodianPubKey) {
+          throw new Error(`Missing BTC public key for custodian ${i}`);
+        }
+        if (custodianPubKeyConv02.length !== 33) {
+          throw new Error(
+            `Invalid public key length for custodian ${i}: expected 33 bytes, got ${custodianPubKeyConv02.length}`,
+          );
+        }
+
+        custodian_pubkeys_uint8array.set(custodianPubKeyConv02, i * 33);
+      }
+
+      if (
+        custodian_pubkeys_uint8array.length !==
+        33 * numberOfCustodianPubkeys
+      ) {
+        throw new Error(
+          `Invalid final array length: expected ${33 * numberOfCustodianPubkeys} bytes, got ${custodian_pubkeys_uint8array.length}`,
         );
       }
 
+      const chainTypeKeys = Object.keys(scalarVaultModule.ChainType).filter(
+        (key) => isNaN(Number(key)),
+      );
       const chainType =
         scalarVaultModule.ChainType[
-          selectedDestChain.chain_type as keyof typeof scalarVaultModule.ChainType
+          getBitcoinVaultChainType(
+            selectedDestChain.chain_type,
+            chainTypeKeys,
+          ) as keyof typeof scalarVaultModule.ChainType
         ];
-      console.log(
-        "--- selectedDestChain.chain_type",
-        selectedDestChain.chain_type,
-      );
-      console.log("--- chainType", chainType);
       const destinationChain = new scalarVaultModule.DestinationChain(
         chainType,
         BigInt(selectedDestChain.chain_id),
