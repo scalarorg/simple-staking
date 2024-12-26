@@ -37,7 +37,7 @@ export const getDApps = async (): Promise<{ dApps: DApp[] }> => {
       : {
           ID: 0,
           Name: "All",
-          TaprootAddress: ProjectENV.NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS,
+          TaprootAddress: "",
           Quorum: ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
           Custodians: ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS!.map(
             (pubkey: string, index: number) => ({
