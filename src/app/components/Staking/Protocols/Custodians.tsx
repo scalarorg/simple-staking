@@ -1,8 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
+
 import { LoadingView } from "@/app/components/Loading/Loading";
 import { useScalarClient } from "@/app/context/ScalarProvider";
 import { fpTableStyles } from "@/app/scalar/theme";
 import { Custodian } from "@/app/types/custodians";
-import { useQuery } from "@tanstack/react-query";
 
 export const Custodians: React.FC = () => {
   const scalarClient = useScalarClient();

@@ -1,3 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
+import { XIcon } from "lucide-react";
+import { useState } from "react";
+
 import { GeneralModal } from "@/app/components/Modals/GeneralModal";
 import { InputField } from "@/app/components/Staking/Form/InputField";
 import { SelectField } from "@/app/components/Staking/Form/SelectField";
@@ -6,9 +10,6 @@ import { useScalarVaultModule } from "@/app/context/VaultContext";
 import { useAddDestinationChainModal } from "@/app/stores/modal";
 import { AddDestinationChainRequest, TokenStatus } from "@/app/types/protocol";
 import { hexStringWithout0x } from "@/utils/trim";
-import { useQuery } from "@tanstack/react-query";
-import { XIcon } from "lucide-react";
-import { useState } from "react";
 
 export const AddDestinationChainModal: React.FC<{}> = () => {
   const { isOpen, close, protocol } = useAddDestinationChainModal();
@@ -94,22 +95,22 @@ export const AddDestinationChainModal: React.FC<{}> = () => {
         ),
         token: {
           asset: asset,
-          chain_id: new Uint8Array(
+          chainId: new Uint8Array(
             Buffer.from(Number(selectedChainId).toString(16), "hex"),
           ),
           details: {
-            token_name: tokenName,
+            tokenName: tokenName,
             symbol: tokenSymbol,
             decimals: parseInt(tokenDecimals),
             capacity: new Uint8Array(
               Buffer.from(Number(tokenCapacity).toString(16), "hex"),
             ),
           },
-          token_address: hexStringWithout0x(tokenContractAddress),
-          tx_hash: tokenTxHash,
-          status: tokenStatus,
-          is_external: isExternal,
-          burner_code: scalarVaultModule.hexToBytes(
+          tokenAddress: hexStringWithout0x(tokenContractAddress),
+          txHash: tokenTxHash,
+          status: 4,
+          isExternal: isExternal,
+          burnerCode: scalarVaultModule.hexToBytes(
             hexStringWithout0x(burnerCode),
           ),
         },

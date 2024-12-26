@@ -1,18 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ProtocolStatus } from "scalarjs-sdk/dist/types";
 
-import { useAddProtocolModal } from "@/app/stores/modal";
-import { getConfig } from "@/app/wagmi";
-
+import { GeneralModal } from "@/app/components/Modals/GeneralModal";
 import { BtcAddress } from "@/app/components/Staking/Form/BtcAddress";
 import { InputField } from "@/app/components/Staking/Form/InputField";
 import { SelectField } from "@/app/components/Staking/Form/SelectField";
-
-import { GeneralModal } from "@/app/components/Modals/GeneralModal";
 import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useScalarVaultModule } from "@/app/context/VaultContext";
-import { CreateProtocolRequest, ProtocolStatus } from "@/app/types/protocol";
+import { useAddProtocolModal } from "@/app/stores/modal";
+import { CreateProtocolRequest } from "@/app/types/protocol";
+import { getConfig } from "@/app/wagmi";
 import { hexStringWithout0x } from "@/utils/trim";
 
 export const AddProtocolModal: React.FC<{}> = () => {
@@ -119,7 +118,7 @@ export const AddProtocolModal: React.FC<{}> = () => {
         // Custodian group related fields
         custodian_group_name: custodianGroupName,
         is_custodian_only: isCustodianOnly,
-        status: ProtocolStatus.Activated, // Default to activated
+        status: ProtocolStatus.ACTIVATED, // Default to activated
       };
 
       // TODO: Replace with actual API call

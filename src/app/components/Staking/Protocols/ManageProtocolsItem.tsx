@@ -1,10 +1,10 @@
 import { BookOpen } from "lucide-react";
-import { Tooltip } from "react-tooltip";
+import { LiquidityModel, ProtocolStatus } from "scalarjs-sdk/dist/types";
 
 import { useWalletInfo } from "@/app/context/WalletProvider";
 import { fpStyles } from "@/app/scalar/theme";
-import { useDeleteProtocolModal, useProtocolModal } from "@/app/stores/modal";
-import { Protocol, ProtocolStatus } from "@/app/types/protocol";
+import { useProtocolModal } from "@/app/stores/modal";
+import { Protocol } from "@/app/types/protocol";
 
 interface ManageProtocolProps {
   index: number;
@@ -18,8 +18,9 @@ export const ManageProtocolsItem: React.FC<ManageProtocolProps> = ({
 
   const dAppHasData = protocol.name;
   const { open } = useProtocolModal();
-  const { open: openDeleteProtocolModal } = useDeleteProtocolModal();
   const { address } = useWalletInfo();
+
+  const isCustodian = protocol.attribute?.model === LiquidityModel.POOLING;
 
   return (
     <tr
@@ -32,12 +33,12 @@ export const ManageProtocolsItem: React.FC<ManageProtocolProps> = ({
       <td className="p-4">{index + 1}</td>
       <td className="p-4">{protocol.name}</td>
       <td className="p-4">{protocol.service_tag}</td>
-      <td className="p-4">
+      {/* <td className="p-4">
         {protocol.custodian_group.TaprootAddress.slice(0, 8)}...
         {protocol.custodian_group.TaprootAddress.slice(-4)}
-      </td>
+      </td> */}
       <td className="p-4">{ProtocolStatus[protocol.status]}</td>
-      <td className="p-4">{protocol.is_custodian_only ? "Yes" : "No"}</td>
+      <td className="p-4">{isCustodian ? "Yes" : "No"}</td>
       <td className="p-4">
         <div className="flex gap-2 items-center">
           <button
@@ -67,9 +68,6 @@ export const ManageProtocolsItem: React.FC<ManageProtocolProps> = ({
             <Trash2 size={12} />
           </button> */}
         </div>
-        <Tooltip
-          id={`tooltip-delegation-${protocol.btc_chain.btc_signer_pk}`}
-        />
       </td>
     </tr>
   );

@@ -1,16 +1,15 @@
-import { useScalarClient } from "@/app/context/ScalarProvider";
 import { Trash2Icon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-
-import { useCustodianGroupModal } from "@/app/stores/modal";
+import { CustodianStatus } from "scalarjs-sdk/dist/types";
 
 import { GeneralModal } from "@/app/components/Modals/GeneralModal";
 import { InputField } from "@/app/components/Staking/Form/InputField";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Switch } from "@/app/components/ui/switch";
+import { useScalarClient } from "@/app/context/ScalarProvider";
+import { useCustodianGroupModal } from "@/app/stores/modal";
 import { Custodian } from "@/app/types/custodians";
-import { ProtocolStatus } from "@/app/types/protocol";
 
 export const UpdateCustodianGroupModal: React.FC<{}> = ({}) => {
   const { custodianGroup, isOpen, close } = useCustodianGroupModal();
@@ -21,7 +20,7 @@ export const UpdateCustodianGroupModal: React.FC<{}> = ({}) => {
   const [quorum, setQuorum] = useState<number>(0);
   const [newCustodian, setNewCustodian] = useState<Custodian>({
     Name: "",
-    Status: ProtocolStatus.Activated,
+    Status: CustodianStatus.ACTIVATED,
     BtcPublicKey: new Uint8Array(),
     Description: "",
   });
@@ -31,8 +30,7 @@ export const UpdateCustodianGroupModal: React.FC<{}> = ({}) => {
   useEffect(() => {
     if (custodianGroup) {
       setName(custodianGroup.Name || "");
-      setBtcNetwork(custodianGroup.BtcNetwork || "");
-      setTaprootAddress(custodianGroup.TaprootAddress || "");
+      setTaprootAddress(custodianGroup.BtcPublicKey || "");
       setQuorum(custodianGroup.Quorum || 0);
     }
   }, [custodianGroup]);
@@ -73,7 +71,7 @@ export const UpdateCustodianGroupModal: React.FC<{}> = ({}) => {
     // Reset form
     setNewCustodian({
       Name: "",
-      Status: ProtocolStatus.Activated,
+      Status: CustodianStatus.ACTIVATED,
       BtcPublicKey: new Uint8Array(),
       Description: "",
     });
@@ -95,9 +93,9 @@ export const UpdateCustodianGroupModal: React.FC<{}> = ({}) => {
     updatedCustodians[index] = {
       ...updatedCustodians[index],
       Status:
-        updatedCustodians[index].Status === ProtocolStatus.Activated
-          ? ProtocolStatus.Deactivated
-          : ProtocolStatus.Activated,
+        updatedCustodians[index].Status === CustodianStatus.ACTIVATED
+          ? CustodianStatus.DEACTIVATED
+          : CustodianStatus.ACTIVATED,
     };
     custodianGroup.Custodians = updatedCustodians;
   };
@@ -181,11 +179,11 @@ export const UpdateCustodianGroupModal: React.FC<{}> = ({}) => {
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
                       <Switch
-                        checked={custodian.Status === ProtocolStatus.Activated}
+                        checked={custodian.Status === CustodianStatus.ACTIVATED}
                         onCheckedChange={() => handleToggleStatus(index)}
                       />
                       <span className="text-sm text-muted-foreground">
-                        {custodian.Status === ProtocolStatus.Activated
+                        {custodian.Status === CustodianStatus.ACTIVATED
                           ? "Active"
                           : "Inactive"}
                       </span>

@@ -1,12 +1,13 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { createContext, memo, useContext, useEffect, useState } from "react";
+
 import { useError } from "@/app/context/Error/ErrorContext";
 import { ErrorState } from "@/app/types/errors";
 import { Protocol } from "@/app/types/protocol";
 import { ProjectENV } from "@/env";
 import { ScalarClient } from "@/utils/scalar/client";
-import { useQuery } from "@tanstack/react-query";
-import { createContext, memo, useContext, useEffect, useState } from "react";
 
 interface ScalarContextType {
   client: ScalarClient;

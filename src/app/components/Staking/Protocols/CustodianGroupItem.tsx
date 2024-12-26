@@ -1,5 +1,4 @@
 import { BookOpen } from "lucide-react";
-import { Tooltip } from "react-tooltip";
 
 import { useWalletInfo } from "@/app/context/WalletProvider";
 import { fpStyles } from "@/app/scalar/theme";
@@ -31,11 +30,11 @@ export const CustodianGroupItem: React.FC<CustodianGroupProps> = ({
     >
       <td className="p-4">{index + 1}</td>
       <td className="p-4">{custodianGroup.Name}</td>
-      <td className="p-4">{custodianGroup.BtcNetwork}</td>
+      {/* <td className="p-4">{custodianGroup.BtcNetwork}</td>
       <td className="p-4">
         {custodianGroup.TaprootAddress.slice(0, 8)}...
         {custodianGroup.TaprootAddress.slice(-4)}
-      </td>
+      </td> */}
       <td className="p-4">{custodianGroup.Quorum}</td>
       <td className="p-4">{custodianGroup.Custodians.length}</td>
       <td className="p-4">
@@ -54,7 +53,6 @@ export const CustodianGroupItem: React.FC<CustodianGroupProps> = ({
             <BookOpen size={12} />
           </button>
         </div>
-        <Tooltip id={`tooltip-delegation-${custodianGroup.TaprootAddress}`} />
       </td>
     </tr>
   );

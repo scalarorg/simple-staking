@@ -1,8 +1,9 @@
+import { XIcon } from "lucide-react";
+
 import { GeneralModal } from "@/app/components/Modals/GeneralModal";
 import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useDeleteProtocolModal } from "@/app/stores/modal";
 import { DeleteProtocolRequest } from "@/app/types/protocol";
-import { XIcon } from "lucide-react";
 
 export const DeleteProtocolModal: React.FC<{}> = ({}) => {
   const { protocolData, isOpen, close } = useDeleteProtocolModal();
@@ -35,8 +36,8 @@ export const DeleteProtocolModal: React.FC<{}> = ({}) => {
 
       <div className="mb-6">
         <p className="text-white">
-          Are you sure you want to delete protocol "
-          <span className="font-semibold">{protocolData?.name}</span>"?
+          Are you sure you want to delete protocol
+          <span className="font-semibold">{protocolData?.name}</span>?
         </p>
         <p className="mt-2 text-sm text-gray-500">
           This action cannot be undone.

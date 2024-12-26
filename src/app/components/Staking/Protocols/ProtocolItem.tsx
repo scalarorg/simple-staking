@@ -1,6 +1,7 @@
-import { BookOpen, CircleArrowDown, CircleArrowUp } from "lucide-react";
+import { ArrowLeftRight, BookOpen, CircleArrowDown } from "lucide-react";
 // import { Tooltip } from "react-tooltip";
 import { useAccount } from "wagmi";
+import { LiquidityModel, ProtocolStatus } from "scalarjs-sdk/dist/types";
 
 import { useWalletInfo } from "@/app/context/WalletProvider";
 import { fpStyles } from "@/app/scalar/theme";
@@ -11,7 +12,6 @@ import {
   useUnstakeCustodianModal,
 } from "@/app/stores/modal";
 import { Protocol } from "@/app/types/protocol";
-import { LiquidityModel, ProtocolStatus } from "scalarjs-sdk/dist/types";
 
 interface ProtocolProps {
   index: number;
@@ -19,7 +19,6 @@ interface ProtocolProps {
 }
 
 export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
-  console.log("--- protocol ---", protocol);
   const isCustodian = protocol.attribute?.model === LiquidityModel.POOLING;
 
   const generalStyles = "cursor-pointer transition-shadow hover:shadow-md";
@@ -43,10 +42,7 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
       <td className="p-4">{index + 1}</td>
       <td className="p-4">{protocol.name}</td>
       <td className="p-4">{protocol.service_tag}</td>
-      {/* <td className="p-4">
-        {protocol.custodian_group.TaprootAddress.slice(0, 8)}...
-        {protocol.custodian_group.TaprootAddress.slice(-4)}
-      </td> */}
+      <td className="p-4">{isCustodian ? "Pooling" : "Transactional"}</td>
       <td className="p-4">{ProtocolStatus[protocol.status]}</td>
       <td className="p-4">
         <div className="flex gap-2 items-center">
@@ -65,7 +61,7 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
           </button>
           {!isCustodian && (
             <button
-              className={`px-2 hover:text-green-600 flex items-center gap-2 justify-center text-green-700 ${
+              className={`px-2 hover:text-red-600 flex items-center gap-2 justify-center text-red-700 ${
                 !address ? "opacity-50 pointer-events-none" : ""
               }`}
               onClick={() => openMintTxModal(protocol)}
@@ -84,10 +80,10 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
                 onClick={() => openStakeCustodianModal(protocol)}
                 disabled={!address}
               >
-                Stake
-                <CircleArrowDown size={16} />
+                Transfer
+                <ArrowLeftRight size={16} />
               </button>
-              <button
+              {/* <button
                 className={`px-2 hover:text-cyan-600 flex items-center gap-2 justify-center text-cyan-700 ${
                   !address ? "opacity-50 pointer-events-none" : ""
                 }`}
@@ -96,7 +92,7 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
               >
                 Unstake
                 <CircleArrowUp size={16} />
-              </button>
+              </button> */}
             </>
           )}
         </div>

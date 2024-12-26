@@ -1,18 +1,16 @@
+import { Label } from "@radix-ui/react-label";
 import { useQuery } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
-
-import { useAddCustodianGroupModal } from "@/app/stores/modal";
-
-import { InputField } from "@/app/components/Staking/Form/InputField";
-import { SelectField } from "@/app/components/Staking/Form/SelectField";
+import { CustodianStatus } from "scalarjs-sdk/dist/types";
 
 import { GeneralModal } from "@/app/components/Modals/GeneralModal";
+import { InputField } from "@/app/components/Staking/Form/InputField";
+import { SelectField } from "@/app/components/Staking/Form/SelectField";
 import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useScalarVaultModule } from "@/app/context/VaultContext";
+import { useAddCustodianGroupModal } from "@/app/stores/modal";
 import { Custodian, CustodianGroup } from "@/app/types/custodians";
-import { ProtocolStatus } from "@/app/types/protocol";
-import { Label } from "@radix-ui/react-label";
 
 export const AddCustodianGroupModal: React.FC<{}> = () => {
   const scalarVaultModule = useScalarVaultModule();
@@ -26,7 +24,7 @@ export const AddCustodianGroupModal: React.FC<{}> = () => {
   const [custodians, setCustodians] = useState<Custodian[]>([]);
   const [currentCustodian, setCurrentCustodian] = useState<Custodian>({
     Name: "",
-    Status: ProtocolStatus.Activated,
+    Status: CustodianStatus.ACTIVATED,
     BtcPublicKey: new Uint8Array(),
     Description: "",
   });
@@ -59,7 +57,7 @@ export const AddCustodianGroupModal: React.FC<{}> = () => {
     // Reset the form fields
     setCurrentCustodian({
       Name: "",
-      Status: ProtocolStatus.Activated,
+      Status: CustodianStatus.ACTIVATED,
       BtcPublicKey: new Uint8Array(),
       Description: "",
     });
@@ -89,10 +87,12 @@ export const AddCustodianGroupModal: React.FC<{}> = () => {
 
     try {
       const newCustodianGroup: CustodianGroup = {
+        UID: "",
         Name: custodianGroupName,
-        BtcNetwork: btcNetwork,
-        TaprootAddress: taprootAddress,
+        BtcPublicKey: taprootAddress,
         Quorum: quorum,
+        Status: CustodianStatus.ACTIVATED,
+        Description: "",
         Custodians: custodians,
       };
 

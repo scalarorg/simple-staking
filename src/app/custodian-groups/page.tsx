@@ -3,9 +3,9 @@
 import Image from "next/image";
 
 import earth from "@/app/assets/earth.webp";
-
 import { CustodianGroups } from "@/app/components/Staking/Protocols/CustodianGroups";
 import { CustodianGroupsPageModalLayout } from "@/app/protocols/CustodianGroupsPageModalLayout";
+
 import { Custodians } from "../components/Staking/Protocols/Custodians";
 
 interface CustodianGroupsProps {}

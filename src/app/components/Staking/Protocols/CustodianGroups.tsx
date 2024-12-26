@@ -1,10 +1,11 @@
-import { LoadingView } from "@/app/components/Loading/Loading";
-import { fpTableStyles } from "@/app/scalar/theme";
+import { useQuery } from "@tanstack/react-query";
 
+import { LoadingView } from "@/app/components/Loading/Loading";
 import { useScalarClient } from "@/app/context/ScalarProvider";
+import { fpTableStyles } from "@/app/scalar/theme";
 import { useAddCustodianGroupModal } from "@/app/stores/modal";
 import { CustodianGroup } from "@/app/types/custodians";
-import { useQuery } from "@tanstack/react-query";
+
 import { CustodianGroupItem } from "./CustodianGroupItem";
 
 export const CustodianGroups: React.FC = () => {
@@ -46,8 +47,8 @@ export const CustodianGroups: React.FC = () => {
               <tr className="text-left">
                 <th className="p-4 w-12">No</th>
                 <th className="p-4 w-[200px]">Custodian Group Name</th>
-                <th className="p-4 w-[150px]">BTC Network</th>
-                <th className="p-4">Taproot Address</th>
+                {/* <th className="p-4 w-[150px]">BTC Network</th>
+                <th className="p-4">Taproot Address</th> */}
                 <th className="p-4">Quorum</th>
                 <th className="p-4">Number of Custodians</th>
                 <th className="p-4 w-20">Actions</th>
@@ -57,6 +58,7 @@ export const CustodianGroups: React.FC = () => {
               {custodianGroups.data.map(
                 (custodianGroup: CustodianGroup, index: number) => (
                   <CustodianGroupItem
+                    key={index}
                     index={index}
                     custodianGroup={custodianGroup}
                   />

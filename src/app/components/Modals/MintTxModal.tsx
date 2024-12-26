@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { Psbt } from "bitcoinjs-lib";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -9,10 +10,13 @@ import { IoMdClose } from "react-icons/io";
 import { useAccount, useChainId } from "wagmi";
 import { z } from "zod";
 
+import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useMintTxModal } from "@/app/stores/modal";
+import { ProtocolChain } from "@/app/types/protocol";
 import { ExtendedProjectENV } from "@/env";
+import { hexStringWith0x } from "@/utils/trim";
 
 import { Button } from "../ui/button";
 import {
@@ -27,10 +31,6 @@ import { Input } from "../ui/input";
 import { Select } from "../ui/select";
 import { toast } from "../ui/use-toast";
 
-import { useScalarClient } from "@/app/context/ScalarProvider";
-import { ProtocolChain } from "@/app/types/protocol";
-import { hexStringWith0x } from "@/utils/trim";
-import { useQuery } from "@tanstack/react-query";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -178,7 +178,9 @@ export const MintTxModal: React.FC<{}> = () => {
       })();
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
-      const btcServicePk = btc_chain?.btc_signer_pk || new Uint8Array();
+      // TODO: add btc_signer_pk to btc support chain in Scalar-core, then replace the new Uint8Array() with btc_signer_pk
+      // const btcServicePk = btc_chain?.btc_signer_pk || new Uint8Array();
+      const btcServicePk = new Uint8Array();
 
       const destAddress = scalarVaultModule.hexToBytes(
         destRecipientAddress.replace("0x", ""),
@@ -324,7 +326,7 @@ export const MintTxModal: React.FC<{}> = () => {
     <>
       <GeneralModal open={isOpen} big onClose={close}>
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-bold">Mint Token</h3>
+          <h3 className="font-bold">Stake Token</h3>
           <button
             className="btn btn-circle btn-ghost btn-sm"
             onClick={() => close()}

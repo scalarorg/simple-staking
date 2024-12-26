@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { Psbt, Transaction, address as bitcoinAddress } from "bitcoinjs-lib";
 import { parseUnits } from "ethers";
 import { Loader2, XIcon } from "lucide-react";
@@ -19,6 +20,7 @@ import {
 } from "@/app/hooks/useContracts";
 import { useRecommendedFees } from "@/app/hooks/useRecommendedFees";
 import { useUnbondModal } from "@/app/stores/modal";
+import { Protocol, ProtocolChain } from "@/app/types/protocol";
 import { hexStringWithout0x } from "@/utils/trim";
 
 import { Button } from "../ui/button";
@@ -34,8 +36,6 @@ import {
 import { Input } from "../ui/input";
 import { toast } from "../ui/use-toast";
 
-import { Protocol, ProtocolChain } from "@/app/types/protocol";
-import { useQuery } from "@tanstack/react-query";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -270,7 +270,9 @@ export const UnbondModal: React.FC = () => {
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
 
-      const btcProtocolPk = btc_chain?.btc_signer_pk || new Uint8Array();
+      // TODO: add btc_signer_pk to btc support chain in Scalar-core, then replace the new Uint8Array() with btc_signer_pk
+      // const btcProtocolPk = btc_chain?.btc_signer_pk || new Uint8Array();
+      const btcProtocolPk = new Uint8Array();
 
       const numberOfCustodianPubkeys =
         protocol?.custodian_group?.Custodians.length || 0;

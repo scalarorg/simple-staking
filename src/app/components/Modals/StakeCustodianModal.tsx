@@ -2,12 +2,18 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Psbt } from "bitcoinjs-lib";
+import { toOutputScript } from "bitcoinjs-lib/src/address";
+import { parseUnits } from "ethers";
 import { XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 
+import PROTOCOL_ABI from "@/abis/protocol";
+import SBTC_ABI from "@/abis/sbtc";
 import { Button } from "@/app/components/ui/button";
 import {
   Form,
@@ -24,31 +30,38 @@ import { toast } from "@/app/components/ui/use-toast";
 import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
+import {
+  useERC20Contract,
+  useProtocolContract,
+} from "@/app/hooks/useContracts";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useStakeCustodianModal } from "@/app/stores/modal";
 import { ProtocolChain } from "@/app/types/protocol";
+import { getTaprootAddressFromLockingScript } from "@/utils/bitcoin";
 import { hexStringWith0x } from "@/utils/trim";
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
+
 import { GeneralModal } from "./GeneralModal";
 
+type TransactionType = "stake" | "unstake" | "transfer" | "none";
+
 const FormSchema = z.object({
-  chainName: z.string({
-    required_error: "Please select a token.",
+  sourceChain: z.string({
+    required_error: "Please select a source chain.",
+  }),
+  destinationChain: z.string({
+    required_error: "Please select a destination chain.",
   }),
   destRecipientAddress: z
     .string({
       required_error: "Please enter your token receiver address.",
     })
     .regex(/^0x[a-fA-F0-9]{40}$/, "Please enter a valid Ethereum address."),
-  stakingAmount: z.coerce
-    .number({
+  transferAmount: z.coerce
+    .string({
       required_error: "Please enter the amount.",
     })
-    .positive({
-      message: "Please enter a positive number.",
-    }),
-  mintFeeRate: z.string().default("hourFee"),
+    .min(1, "Amount must be greater than 0"),
+  btcFeeRate: z.string().default("hourFee"),
   customFeeRate: z.coerce
     .number()
     .int("Please enter a whole number.")
@@ -60,10 +73,11 @@ export const StakeCustodianModal = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      chainName: "",
+      sourceChain: "",
+      destinationChain: "",
       destRecipientAddress: "",
-      stakingAmount: 100000,
-      mintFeeRate: "hourFee",
+      transferAmount: "100000",
+      btcFeeRate: "hourFee",
       customFeeRate: undefined,
     },
   });
@@ -72,16 +86,15 @@ export const StakeCustodianModal = () => {
   const { address, pubkey } = useWalletInfo();
   const { mempoolClient, walletProvider, btcNetwork, networkConfig } =
     useWalletProvider();
+  const [status, setStatus] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
-  const watchStakingAmount = useWatch({
+  const watchTransferAmount = useWatch({
     control: form.control,
-    name: "stakingAmount",
+    name: "transferAmount",
   });
 
   const account = useAccount();
-  if (account.status === "connected") {
-    form.setValue("destRecipientAddress", account.address?.toString() || "");
-  }
 
   const scalarClient = useScalarClient();
 
@@ -104,19 +117,19 @@ export const StakeCustodianModal = () => {
   const [selectedDestChain, setSelectedDestChain] =
     useState<ProtocolChain | null>(null);
 
-  const watchChainName = useWatch({
+  const watchDestinationChain = useWatch({
     control: form.control,
-    name: "chainName",
+    name: "destinationChain",
   });
 
   useEffect(() => {
-    if (!protocol || !watchChainName) {
+    if (!protocol || !watchDestinationChain) {
       setSelectedDestChain(null);
       return;
     }
 
     const selectedChain = protocol.chains.find(
-      (chain) => chain.chain_name === watchChainName,
+      (chain) => chain.chain_name === watchDestinationChain,
     );
 
     if (selectedChain) {
@@ -124,12 +137,55 @@ export const StakeCustodianModal = () => {
     } else {
       setSelectedDestChain(null);
     }
-  }, [watchChainName, protocol]);
+  }, [watchDestinationChain, protocol]);
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  const [selectedSourceChain, setSelectedSourceChain] =
+    useState<ProtocolChain | null>(null);
+
+  const watchSourceChain = useWatch({
+    control: form.control,
+    name: "sourceChain",
+  });
+
+  useEffect(() => {
+    if (!protocol || !watchSourceChain) {
+      setSelectedSourceChain(null);
+      return;
+    }
+
+    const selectedChain = protocol.chains.find(
+      (chain) => chain.chain_name === watchSourceChain,
+    );
+
+    if (selectedChain) {
+      setSelectedSourceChain(selectedChain);
+    } else {
+      setSelectedSourceChain(null);
+    }
+  }, [watchSourceChain, protocol]);
+
+  const [transactionType, setTransactionType] =
+    useState<TransactionType>("none");
+
+  useEffect(() => {
+    if (!selectedSourceChain || !selectedDestChain) {
+      setTransactionType("none");
+      return;
+    }
+
+    if (selectedSourceChain.supported_chain.token.oneofKind === "btc") {
+      setTransactionType("stake");
+    } else if (selectedDestChain.supported_chain.token.oneofKind === "btc") {
+      setTransactionType("unstake");
+    } else {
+      setTransactionType("transfer");
+    }
+  }, [selectedSourceChain, selectedDestChain]);
+
+  async function onStakeSubmit(data: z.infer<typeof FormSchema>) {
     if (!protocol) return;
 
-    const { destRecipientAddress, stakingAmount, mintFeeRate, customFeeRate } =
+    const { destRecipientAddress, transferAmount, btcFeeRate, customFeeRate } =
       data;
 
     try {
@@ -151,7 +207,7 @@ export const StakeCustodianModal = () => {
 
       const addressUtxos = await walletProvider.getUtxos(
         address,
-        stakingAmount,
+        Number(transferAmount),
       );
 
       if (!addressUtxos) {
@@ -164,7 +220,7 @@ export const StakeCustodianModal = () => {
       }));
 
       const selectedFeeRate = (() => {
-        switch (mintFeeRate) {
+        switch (btcFeeRate) {
           case "fastestFee":
             return feeRates.fastestFee;
           case "hourFee":
@@ -210,9 +266,9 @@ export const StakeCustodianModal = () => {
         BigInt(selectedDestChain.chain_id),
       );
 
-      const { psbt: unsignedVaultPsbt, fee: estimatedFee } =
+      const { psbt: unsignedVaultPsbt } =
         vault.buildStakingOutputWithOnlyCovenants({
-          stakingAmount: BigInt(stakingAmount),
+          stakingAmount: BigInt(transferAmount),
           stakerPubkey: btcUserPk,
           stakerAddress: address,
           custodialPubkeys: custodian_pubkeys_uint8array,
@@ -270,12 +326,205 @@ export const StakeCustodianModal = () => {
     }
   }
 
+  // -- Unstake --
+  const sourceTokenContractAddressHex = hexStringWith0x(
+    selectedSourceChain?.supported_chain.token.oneofKind === "erc20"
+      ? selectedSourceChain?.supported_chain.token.erc20.tokenAddress
+      : "",
+  );
+  const sourceChainSmartContractAddress =
+    selectedSourceChain?.chain_smart_contract_address ?? new Uint8Array();
+  const sourceChainSmartContractAddressHex = hexStringWith0x(
+    scalarVaultModule.bytesToHex(sourceChainSmartContractAddress),
+  );
+  const { balance, allowance, approve } = useERC20Contract(
+    SBTC_ABI,
+    sourceTokenContractAddressHex,
+    account.address,
+    sourceChainSmartContractAddressHex,
+  );
+  const { unstake } = useProtocolContract(
+    PROTOCOL_ABI,
+    sourceChainSmartContractAddressHex,
+  );
+  async function onUnstakeSubmit(data: z.infer<typeof FormSchema>) {
+    if (!protocol || !selectedSourceChain) return;
+    const { destRecipientAddress, transferAmount, btcFeeRate, customFeeRate } =
+      data;
+    try {
+      if (!walletProvider) {
+        throw new Error("Wallet provider not found");
+      }
+
+      if (Number(balance) <= 0 || Number(balance) < Number(transferAmount)) {
+        throw new Error("Insufficient balance");
+      }
+
+      if (!btcNetwork) {
+        throw new Error("Unsupported network or network not found");
+      }
+
+      const burnAmount = parseUnits(transferAmount, 0);
+      if (!burnAmount) {
+        throw new Error("Invalid burn amount");
+      }
+
+      const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
+      // TODO: check if we
+      const btcServicePk = new Uint8Array();
+
+      const numberOfCustodianPubkeys =
+        protocol?.custodian_group?.Custodians.length || 0;
+      const custodian_pubkeys_uint8array = new Uint8Array(
+        33 * numberOfCustodianPubkeys,
+      );
+
+      for (let i = 0; i < numberOfCustodianPubkeys; i++) {
+        custodian_pubkeys_uint8array.set(
+          protocol?.custodian_group?.Custodians[i]?.BtcPublicKey ||
+            new Uint8Array(),
+          i * 33,
+        );
+      }
+
+      // TODO: Implement exchange rate
+      // const btcReturnAmount = useExchangeRate(dApp, unstakeAmount);
+      const btcReturnAmount = Number(transferAmount);
+
+      const onlyCovenantsLockingScript = vault.onlyCovenantsLockingScript({
+        covenantPubkeys: custodian_pubkeys_uint8array,
+        covenantQuorum: protocol?.custodian_group?.Quorum || 0,
+      });
+
+      const taprootAddress = getTaprootAddressFromLockingScript(
+        onlyCovenantsLockingScript,
+        btcNetwork,
+      );
+
+      const addressUtxos = await walletProvider.getUtxos(
+        taprootAddress,
+        btcReturnAmount,
+      );
+
+      const mappedAddressUtxos = addressUtxos.map((utxo) => ({
+        script_pubkey: Uint8Array.from(Buffer.from(utxo.scriptPubKey, "hex")),
+        txid: utxo.txid,
+        vout: utxo.vout,
+        value: BigInt(utxo.value),
+      }));
+
+      const selectedFeeRate = (() => {
+        switch (btcFeeRate) {
+          case "fastestFee":
+            return feeRates.fastestFee;
+          case "hourFee":
+            return feeRates.hourFee;
+          case "minimumFee":
+            return feeRates.minimumFee;
+          case "custom":
+            return customFeeRate ?? feeRates.fastestFee;
+          default:
+            return feeRates.fastestFee;
+        }
+      })();
+
+      setIsProcessing(true);
+      setStatus("Processing unstake request...");
+
+      const unsignedVaultPsbt =
+        vault.buildUnsignedUnstakingWithOnlyCovenantsPsbt({
+          inputs: mappedAddressUtxos,
+          output: {
+            value: BigInt(btcReturnAmount),
+            script: toOutputScript(destRecipientAddress, btcNetwork),
+          },
+          stakerPubkey: btcUserPk,
+          protocolPubkey: btcServicePk,
+          covenantPubkeys: custodian_pubkeys_uint8array,
+          covenantQuorum: protocol?.custodian_group?.Quorum || 0,
+          haveOnlyCovenants: true,
+          feeRate: BigInt(selectedFeeRate),
+          rbf: true,
+        });
+
+      const hexPsbt = scalarVaultModule.bytesToHex(unsignedVaultPsbt);
+
+      if (!allowance || Number(allowance) < Number(burnAmount)) {
+        setStatus("Approving the token");
+
+        await approve(sourceChainSmartContractAddressHex, burnAmount);
+
+        setStatus("Approval transaction mined");
+      }
+
+      setStatus("Burning the token");
+
+      const psbt = Psbt.fromHex(hexPsbt).toBase64();
+
+      setStatus("Unstaking the token");
+
+      // btc_chain?.btc_network has value of 'bitcoin-testnet4'
+      const btcNetworkType =
+        scalarClient.client.getBtcChainName(selectedSourceChain);
+      await unstake(btcNetworkType, burnAmount, psbt);
+
+      setStatus("Token unstaked successfully");
+      // close();
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+      setStatus("");
+    }
+  }
+
+  async function onTransferSubmit(data: z.infer<typeof FormSchema>) {
+    if (!protocol) return;
+
+    try {
+      // Add your transfer logic here
+      toast({
+        title: "Transfer transaction successfully",
+        // Add your success message
+      });
+      close();
+    } catch (error) {
+      console.error({ error });
+      toast({
+        title: "Error",
+        // @ts-ignore
+        description: error?.message || "An error occurred",
+      });
+    }
+  }
+
+  const handleSubmit = async (data: z.infer<typeof FormSchema>) => {
+    switch (transactionType) {
+      case "stake":
+        return onStakeSubmit(data);
+      case "unstake":
+        return onUnstakeSubmit(data);
+      case "transfer":
+        return onTransferSubmit(data);
+      default:
+        toast({
+          title: "Error",
+          description: "Invalid transaction type",
+        });
+    }
+  };
+
   const feeRates = useFeeRates(isOpen, address, mempoolClient);
 
   return (
     <GeneralModal open={isOpen} big onClose={close}>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-bold">Stake Custodian</h3>
+        <h3 className="font-bold">Transfer token</h3>
         <button
           className="btn btn-circle btn-ghost btn-sm"
           onClick={() => close()}
@@ -285,31 +534,67 @@ export const StakeCustodianModal = () => {
       </div>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(handleSubmit)}
           className="space-y-4 w-full"
         >
           <div className="flex gap-4 w-full">
             <div className="space-y-4 w-full">
               <div className="space-y-2 -mt-2">
-                <FormLabel className="text-gray-500">Source chain</FormLabel>
-                <Input readOnly value={"Bitcoin"} />
+                <FormField
+                  control={form.control}
+                  name="sourceChain"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Source chain</FormLabel>
+                      <Select value={field.value} onChange={field.onChange}>
+                        <option value="" disabled>
+                          Select chain
+                        </option>
+                        {protocol?.chains.map((chain) => (
+                          <option
+                            key={chain.chain_name}
+                            value={chain.chain_name}
+                          >
+                            {chain.chain_name}
+                          </option>
+                        ))}
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="space-y-2">
-                <FormLabel className="text-gray-500">
-                  Source chain address
-                </FormLabel>
+                <FormLabel>Source chain address</FormLabel>
                 <FormControl>
-                  <Input readOnly value={address} />
+                  <Input
+                    readOnly
+                    value={
+                      selectedSourceChain?.supported_chain.token.oneofKind ===
+                      "erc20"
+                        ? account.address
+                        : selectedSourceChain?.supported_chain.token
+                              .oneofKind === "btc"
+                          ? address
+                          : ""
+                    }
+                  />
                 </FormControl>
               </div>
 
               <FormField
                 control={form.control}
-                name="stakingAmount"
+                name="transferAmount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Staking amount (sats)</FormLabel>
+                    <FormLabel>
+                      {transactionType === "stake"
+                        ? "Staking amount (sats)"
+                        : transactionType === "unstake"
+                          ? "Unstaking amount"
+                          : "Transfer amount"}
+                    </FormLabel>
                     <FormControl>
                       <Input
                         inputMode="numeric"
@@ -323,33 +608,53 @@ export const StakeCustodianModal = () => {
                   </FormItem>
                 )}
               />
+
+              {selectedSourceChain?.supported_chain.token.oneofKind ===
+                "erc20" && (
+                <div className="space-y-2">
+                  <FormLabel>Smart contract address</FormLabel>
+                  <Input
+                    readOnly
+                    value={
+                      selectedSourceChain
+                        ? hexStringWith0x(
+                            scalarVaultModule.bytesToHex(
+                              selectedSourceChain.chain_smart_contract_address,
+                            ),
+                          )
+                        : ""
+                    }
+                  />
+                </div>
+              )}
             </div>
 
             <div className="space-y-4 w-full">
               <div className="space-y-2 -mt-2">
                 <FormField
                   control={form.control}
-                  name="chainName"
+                  name="destinationChain"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Chain</FormLabel>
+                      <FormLabel>Destination chain</FormLabel>
                       <Select value={field.value} onChange={field.onChange}>
                         <option value="" disabled>
                           Select chain
                         </option>
-                        {protocol?.chains.map((chain) => {
-                          if (chain.chain_type === "BTC") {
-                            return null;
-                          }
-                          return (
+                        {protocol?.chains
+                          .filter(
+                            (chain) =>
+                              chain.chain_name !==
+                              form.getValues("sourceChain"),
+                          )
+                          .map((chain) => (
                             <option
                               key={chain.chain_name}
                               value={chain.chain_name}
                             >
                               {chain.chain_name}
                             </option>
-                          );
-                        })}
+                          ))}
                       </Select>
                       <FormMessage />
                     </FormItem>
@@ -363,95 +668,149 @@ export const StakeCustodianModal = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Token receiver address</FormLabel>
-                    <FormControl>
-                      <Input placeholder="" {...field} />
-                    </FormControl>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input placeholder="" {...field} />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          if (
+                            selectedDestChain?.supported_chain.token
+                              .oneofKind === "erc20"
+                          ) {
+                            form.setValue(
+                              "destRecipientAddress",
+                              account.address || "",
+                            );
+                          } else if (
+                            selectedDestChain?.supported_chain.token
+                              .oneofKind === "btc"
+                          ) {
+                            form.setValue(
+                              "destRecipientAddress",
+                              address || "",
+                            );
+                          }
+                        }}
+                      >
+                        Use Wallet
+                      </Button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="space-y-2">
-                <FormLabel>Minting amount</FormLabel>
-                <Input
-                  inputMode="numeric"
-                  type="number"
-                  placeholder=""
-                  readOnly
-                  value={watchStakingAmount}
-                />
-              </div>
+              {transactionType === "unstake" ? (
+                <div className="space-y-2">
+                  <FormLabel>Available Token Balance</FormLabel>
+                  <Input readOnly value={balance?.toString() || "0"} />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <FormLabel>Receive amount</FormLabel>
+                  <Input
+                    inputMode="numeric"
+                    type="number"
+                    placeholder=""
+                    readOnly
+                    value={watchTransferAmount}
+                  />
+                </div>
+              )}
+
+              {selectedDestChain?.supported_chain.token.oneofKind ===
+                "erc20" && (
+                <div className="space-y-2">
+                  <FormLabel>Smart contract address</FormLabel>
+                  <Input
+                    readOnly
+                    value={
+                      selectedDestChain
+                        ? hexStringWith0x(
+                            scalarVaultModule.bytesToHex(
+                              selectedDestChain.chain_smart_contract_address,
+                            ),
+                          )
+                        : ""
+                    }
+                  />
+                </div>
+              )}
             </div>
           </div>
 
           <FormField
             control={form.control}
-            name="mintFeeRate"
+            name="btcFeeRate"
             render={() => (
               <FormItem>
-                <FormLabel>Minting fee rate</FormLabel>
-                <TransactionRateSelect
-                  control={form.control}
-                  feeRates={feeRates}
-                />
+                {transactionType !== "none" &&
+                  transactionType !== "transfer" && (
+                    <>
+                      <FormLabel>BTC fee rate</FormLabel>
+                      <TransactionRateSelect
+                        control={form.control}
+                        feeRates={feeRates}
+                      />
+                    </>
+                  )}
               </FormItem>
             )}
           />
 
-          <div className="space-y-2 py-3">
-            <h3 className="text-base font-medium">
-              Custodian Group Information
-            </h3>
-            <div className="flex flex-col gap-4">
-              <div className="space-y-2">
-                <FormLabel>Smart contract address</FormLabel>
-                <Input
-                  readOnly
-                  value={
-                    selectedDestChain
-                      ? hexStringWith0x(
-                          scalarVaultModule.bytesToHex(
-                            selectedDestChain.chain_smart_contract_address,
-                          ),
-                        )
-                      : ""
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <FormLabel>Custodian Group Name</FormLabel>
-                <Input readOnly value={protocol?.custodian_group?.Name || ""} />
-              </div>
-              <div className="space-y-2">
-                <FormLabel>
-                  Custodians ({protocol?.custodian_group?.Quorum} of{" "}
-                  {protocol?.custodian_group?.Custodians.length} required)
-                </FormLabel>
-                <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-input bg-background p-2">
-                  {protocol?.custodian_group?.Custodians.map(
-                    (custodian, index) => (
-                      <div
-                        key={index}
-                        className="flex flex-col space-y-1 text-sm"
-                      >
-                        <div className="font-medium">
-                          Custodian #{index + 1}
+          {transactionType !== "none" && transactionType !== "transfer" && (
+            <div className="space-y-2 py-3">
+              <h3 className="text-base font-medium">
+                Custodian Group Information
+              </h3>
+              <div className="flex flex-col gap-4">
+                <div className="space-y-2">
+                  <FormLabel>Custodian Group Name</FormLabel>
+                  <Input
+                    readOnly
+                    value={protocol?.custodian_group?.Name || ""}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>
+                    Custodians ({protocol?.custodian_group?.Quorum} of{" "}
+                    {protocol?.custodian_group?.Custodians.length} required)
+                  </FormLabel>
+                  <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-input bg-background p-2">
+                    {protocol?.custodian_group?.Custodians.map(
+                      (custodian, index) => (
+                        <div
+                          key={index}
+                          className="flex flex-col space-y-1 text-sm"
+                        >
+                          <div className="font-medium">
+                            Custodian #{index + 1}
+                          </div>
+                          <div className="text-muted-foreground">
+                            BTC Public Key:{" "}
+                            {scalarVaultModule.bytesToHex(
+                              custodian.BtcPublicKey,
+                            )}
+                          </div>
                         </div>
-                        <div className="text-muted-foreground">
-                          BTC Public Key:{" "}
-                          {scalarVaultModule.bytesToHex(custodian.BtcPublicKey)}
-                        </div>
-                      </div>
-                    ),
-                  )}
+                      ),
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div className="flex justify-end">
             <Button variant="outline" type="submit">
-              Stake
+              {transactionType === "stake"
+                ? "Stake"
+                : transactionType === "unstake"
+                  ? "Unstake"
+                  : "Transfer"}
             </Button>
           </div>
         </form>

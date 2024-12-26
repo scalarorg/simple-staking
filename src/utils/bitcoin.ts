@@ -1,3 +1,4 @@
+import { bech32m } from "bech32";
 import { Network, networks, Transaction } from "bitcoinjs-lib";
 
 export function getBtcNetwork(network?: networks.Network): string {
@@ -53,4 +54,16 @@ export function getBondValueStringFromStakingTxHex(
   const output = tx.outs[0];
   const value = output.value;
   return value.toLocaleString();
+}
+
+// TODO: refactor this to use bitcoinjs-lib
+export function getTaprootAddressFromLockingScript(
+  lockingScript: Uint8Array,
+  network: Network,
+): string {
+  const witnessProgram = lockingScript.slice(2);
+  const hrp = getBtcNetwork(network) === "mainnet" ? "bc" : "tb";
+  const words = bech32m.toWords(witnessProgram);
+  const taprootAddress = bech32m.encode(hrp, [1, ...words]);
+  return taprootAddress;
 }

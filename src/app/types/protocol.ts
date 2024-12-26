@@ -1,9 +1,11 @@
-import { CustodianGroup } from "@/app/types/custodians";
 import {
   ProtocolAttribute,
   ProtocolStatus,
   SupportedChain,
 } from "scalarjs-sdk/dist/types";
+import { ERC20TokenMetadata } from "scalarjs-sdk/dist/types";
+
+import { CustodianGroup } from "@/app/types/custodians";
 
 export interface Protocol {
   pubkey: Uint8Array;

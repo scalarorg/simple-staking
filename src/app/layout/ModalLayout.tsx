@@ -8,7 +8,6 @@ import { MintTxModal } from "../components/Modals/MintTxModal";
 import { PreviewProtocolModal } from "../components/Modals/PreviewProtocolModal";
 import { StakeCustodianModal } from "../components/Modals/StakeCustodianModal";
 import { UnbondModal } from "../components/Modals/UnbondModal";
-import { UnstakeCustodianModal } from "../components/Modals/UnstakeCustodianModal";
 import { useError } from "../context/Error/ErrorContext";
 
 export const ModalLayout: React.FC<{}> = ({}) => {
@@ -29,7 +28,7 @@ export const ModalLayout: React.FC<{}> = ({}) => {
       <PreviewProtocolModal />
       <UnbondModal />
       <StakeCustodianModal />
-      <UnstakeCustodianModal />
+      {/* <UnstakeCustodianModal /> */}
     </Suspense>
   );
 };

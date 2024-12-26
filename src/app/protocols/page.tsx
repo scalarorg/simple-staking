@@ -3,7 +3,6 @@
 import Image from "next/image";
 
 import earth from "@/app/assets/earth.webp";
-
 import { ManageProtocols } from "@/app/components/Staking/Protocols/ManageProtocols";
 import { ProtocolsPageModalLayout } from "@/app/protocols/ProtocolsPageModalLayout";
 

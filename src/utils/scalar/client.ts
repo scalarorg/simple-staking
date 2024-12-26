@@ -1,3 +1,12 @@
+import axios from "axios";
+import {
+  CustodianStatus,
+  LiquidityModel,
+  NetworkKind,
+  ProtocolStatus,
+  Protocol as ScalarProtocol,
+} from "scalarjs-sdk/dist/types";
+
 import { getShortenCustodianGroups } from "@/app/api/custodian";
 import { getDApps } from "@/app/api/dApp";
 import {
@@ -20,13 +29,6 @@ import {
 } from "@/app/types/protocol";
 import { ProjectENV } from "@/env";
 import { hexStringWith0x, hexStringWithout0x } from "@/utils/trim";
-import axios from "axios";
-import {
-  CustodianStatus,
-  LiquidityModel,
-  ProtocolStatus,
-  Protocol as ScalarProtocol,
-} from "scalarjs-sdk/dist/types";
 
 // TODO: Handle this information in scalar-chains
 const custodianDAppMap: Record<string, boolean> = {
@@ -48,6 +50,26 @@ export class ScalarClient {
 
   isCustodianDApp(address: `0x${string}`): boolean {
     return custodianDAppMap[address] || false; // Returns false if the address is not found
+  }
+
+  getBtcChainName(chain: ProtocolChain): string {
+    if (chain.supported_chain.token.oneofKind !== "btc") {
+      return "";
+    }
+    const [btcNetworkName, networkId] =
+      chain.supported_chain.params?.chain.split("|") ?? ["", ""];
+    let btcNetworkType = "";
+    switch (chain.supported_chain.params?.networkKind) {
+      case NetworkKind.MAINNET:
+        btcNetworkType = "mainnet";
+        break;
+      case NetworkKind.TESTNET:
+        btcNetworkType = "testnet";
+        break;
+      default:
+        btcNetworkType = "";
+    }
+    return `${btcNetworkName}-${btcNetworkType}${networkId ? `${networkId}` : ""}`;
   }
 
   async getProtocols(): Promise<{ protocols: Protocol[] }> {
@@ -99,7 +121,9 @@ export class ScalarClient {
           chains: scalarProtocol.chains.map((chain) => {
             const chain_name =
               chain.token.oneofKind === "erc20"
-                ? chain.token.erc20.asset
+                ? chain.token.erc20.asset +
+                  "-" +
+                  chain.params?.chain.split("|")[1]
                 : "BTC"; // TODO: Handle for BTC
             const chain_id = Number(chain.params?.chain.split("|")[1]) || 0;
             const chain_type = chain.params?.chain.split("|")[0] || "evm";
@@ -317,13 +341,15 @@ export class ScalarClient {
     const dapps = await getDApps();
     return {
       data: dapps.dApps.map((dapp) => ({
+        UID: dapp.custodianGroup.ID.toString(),
         Name: dapp.custodianGroup.Name,
-        BtcNetwork: dapp.btcNetwork,
-        TaprootAddress: dapp.custodianGroup.TaprootAddress,
+        BtcPublicKey: dapp.custodianGroup.TaprootAddress,
         Quorum: dapp.custodianGroup.Quorum,
+        Status: CustodianStatus.ACTIVATED,
+        Description: "",
         Custodians: dapp.custodianGroup.Custodians.map((custodian) => ({
           Name: custodian.Name,
-          Status: ProtocolStatus.Activated,
+          Status: CustodianStatus.ACTIVATED,
           BtcPublicKey: new Uint8Array(
             Buffer.from(hexStringWithout0x(custodian.BtcPublicKeyHex), "hex"),
           ),
@@ -338,7 +364,7 @@ export class ScalarClient {
       data: [
         {
           Name: "custodian-1",
-          Status: ProtocolStatus.Activated,
+          Status: CustodianStatus.ACTIVATED,
           BtcPublicKey: new Uint8Array(),
           Description: "",
         },

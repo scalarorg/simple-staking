@@ -1,8 +1,7 @@
 import { LoadingView } from "@/app/components/Loading/Loading";
-import { fpTableStyles } from "@/app/scalar/theme";
-
 import { ManageProtocolsItem } from "@/app/components/Staking/Protocols/ManageProtocolsItem";
 import { useScalarClient } from "@/app/context/ScalarProvider";
+import { fpTableStyles } from "@/app/scalar/theme";
 import { useAddProtocolModal } from "@/app/stores/modal";
 import { Protocol } from "@/app/types/protocol";
 
@@ -46,7 +45,11 @@ export const ManageProtocols: React.FC = () => {
             <tbody>
               {protocols.data.protocols.map(
                 (protocol: Protocol, index: number) => (
-                  <ManageProtocolsItem index={index} protocol={protocol} />
+                  <ManageProtocolsItem
+                    key={index}
+                    index={index}
+                    protocol={protocol}
+                  />
                 ),
               )}
             </tbody>
