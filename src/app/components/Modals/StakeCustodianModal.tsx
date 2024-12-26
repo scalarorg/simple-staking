@@ -398,20 +398,46 @@ export const StakeCustodianModal = () => {
       }
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
-      // TODO: check if we
+      // TODO: btcServicePk is not needed, but the bitcoin-vault lib still requires it, so we need to check if this dummy is right
       const btcServicePk = new Uint8Array();
 
+      if (!protocol.custodian_group) {
+        throw new Error("Custodian group not found");
+      }
+
       const numberOfCustodianPubkeys =
-        protocol?.custodian_group?.Custodians.length || 0;
+        protocol.custodian_group.Custodians.length;
       const custodian_pubkeys_uint8array = new Uint8Array(
         33 * numberOfCustodianPubkeys,
       );
 
       for (let i = 0; i < numberOfCustodianPubkeys; i++) {
-        custodian_pubkeys_uint8array.set(
-          protocol?.custodian_group?.Custodians[i]?.BtcPublicKey ||
-            new Uint8Array(),
-          i * 33,
+        const custodianPubKey =
+          protocol.custodian_group.Custodians[i].BtcPublicKey;
+        const custodianPubKeyConv01 =
+          scalarVaultModule.bytesToHex(custodianPubKey);
+        const custodianPubKeyConv02 = scalarVaultModule.hexToBytes(
+          custodianPubKeyConv01,
+        );
+
+        if (!custodianPubKey) {
+          throw new Error(`Missing BTC public key for custodian ${i}`);
+        }
+        if (custodianPubKeyConv02.length !== 33) {
+          throw new Error(
+            `Invalid public key length for custodian ${i}: expected 33 bytes, got ${custodianPubKeyConv02.length}`,
+          );
+        }
+
+        custodian_pubkeys_uint8array.set(custodianPubKeyConv02, i * 33);
+      }
+
+      if (
+        custodian_pubkeys_uint8array.length !==
+        33 * numberOfCustodianPubkeys
+      ) {
+        throw new Error(
+          `Invalid final array length: expected ${33 * numberOfCustodianPubkeys} bytes, got ${custodian_pubkeys_uint8array.length}`,
         );
       }
 
