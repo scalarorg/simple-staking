@@ -4,10 +4,10 @@ import Image from "next/image";
 
 import stone from "@/app/assets/stone.webp";
 import { Toaster } from "@/app/components/ui/toaster";
+import { ProjectENV } from "@/env";
 
 import Providers from "./providers";
 
-import { ProjectENV } from "@/env";
 import "react-responsive-modal/styles.css";
 import "react-tooltip/dist/react-tooltip.css";
 import "./globals.css";

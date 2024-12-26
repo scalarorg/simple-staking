@@ -11,7 +11,6 @@ const ProjectENVSchema = z.object({
 
   NEXT_PUBLIC_VERSION: z.number().default(0),
   NEXT_PUBLIC_TAG: z.string(),
-  NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL: z.boolean().default(false),
   NEXT_PUBLIC_COVENANT_QUORUM: z.number().min(1),
   NEXT_PUBLIC_COVENANT_PUBKEYS: z.array(z.string().min(5)).optional(),
   NEXT_PUBLIC_SERVICE_TAG: z.string().default("pools"),
@@ -19,6 +18,7 @@ const ProjectENVSchema = z.object({
   NEXT_PUBLIC_APP_URL: z
     .string()
     .default("https://btc-staking.testnet.scalar.org"),
+  NEXT_PUBLIC_SCALAR_GRPC_URL: z.string().default("http://localhost:9090"),
 });
 
 /**
@@ -36,8 +36,6 @@ export const ProjectENV = ProjectENVSchema.parse({
     ? 0
     : Number(process.env.NEXT_PUBLIC_VERSION),
 
-  NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL:
-    process.env.NEXT_PUBLIC_HAVE_ONLY_CUSTODIAL === "true",
   NEXT_PUBLIC_COVENANT_QUORUM: isNaN(
     Number(process.env.NEXT_PUBLIC_COVENANT_QUORUM),
   )
@@ -52,7 +50,7 @@ export const ProjectENV = ProjectENVSchema.parse({
   NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS:
     process.env.NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  // NEXT_PUBLIC_APP_URL: "https://btc-staking.testnet.scalar.org",
+  NEXT_PUBLIC_SCALAR_GRPC_URL: process.env.NEXT_PUBLIC_SCALAR_GRPC_URL,
 });
 
 export const ExtendedProjectENVSchema = z.object({
@@ -64,20 +62,20 @@ export const ExtendedProjectENV = ExtendedProjectENVSchema.parse({
     if (!ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS) return undefined;
 
     try {
-      const numberOfCustodialPubkeys =
+      const numberOfCustodianPubkeys =
         ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS.length;
-      const custodialPubkeysBuffer = new Uint8Array(
-        33 * numberOfCustodialPubkeys,
+      const custodianPubkeysBuffer = new Uint8Array(
+        33 * numberOfCustodianPubkeys,
       );
 
-      for (let i = 0; i < numberOfCustodialPubkeys; i++) {
-        custodialPubkeysBuffer.set(
+      for (let i = 0; i < numberOfCustodianPubkeys; i++) {
+        custodianPubkeysBuffer.set(
           hexToBytes(`0x${ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS[i]}`),
           i * 33,
         );
       }
 
-      return custodialPubkeysBuffer;
+      return custodianPubkeysBuffer;
     } catch (error) {
       return undefined;
     }

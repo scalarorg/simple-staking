@@ -1,27 +1,27 @@
-export interface Custodial {
+export interface Custodian {
   ID: number;
   Name: string;
   BtcPublicKeyHex: string;
 }
 
-export interface CustodialGroup {
+export interface CustodianGroup {
   ID: number;
   Name: string;
   TaprootAddress: string;
   Quorum: number;
-  Custodials: Custodial[];
+  Custodians: Custodian[];
 }
 
-export interface ShortenCustodialGroup {
+export interface ShortenCustodianGroup {
   ID: number;
   Name: string;
   TaprootAddress: string;
 }
 
-export interface ShortenCustodialGroupsAPIResponse {
-  data: ShortenCustodialGroup[];
+export interface ShortenCustodianGroupsAPIResponse {
+  data: ShortenCustodianGroup[];
 }
 
-export interface CustodialGroupsAPIResponse {
-  data: CustodialGroup[];
+export interface CustodianGroupsAPIResponse {
+  data: CustodianGroup[];
 }

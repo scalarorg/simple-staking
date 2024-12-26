@@ -1,34 +1,42 @@
 import { create } from "zustand";
 
-import { DApp as DAppInterface } from "@/app/types/dApps";
+import { Bond } from "@/app/types/bonds";
+import { CustodianGroup } from "@/app/types/custodians";
+import { DeleteProtocolRequest, Protocol } from "@/app/types/protocol";
 
-import { Bond } from "../types/bonds";
-
-interface IModalStore {
+interface IProtocolModalStore {
   isOpen: boolean;
-  dApp?: DAppInterface;
-  open: (dApp?: DAppInterface) => void;
+  protocol?: Protocol;
+  open: (protocol?: Protocol) => void;
   close: () => void;
 }
 
-export const useMintTxModal = create<IModalStore>((set) => ({
+interface IDeleteProtocolModalStore {
+  isOpen: boolean;
+  protocolData?: DeleteProtocolRequest;
+  open: (protocolData?: DeleteProtocolRequest) => void;
+  close: () => void;
+}
+
+interface ICustodianGroupModalStore {
+  isOpen: boolean;
+  custodianGroup?: CustodianGroup;
+  open: (custodianGroup?: CustodianGroup) => void;
+  close: () => void;
+}
+
+export const useMintTxModal = create<IProtocolModalStore>((set) => ({
   isOpen: false,
-  dApp: undefined,
-  open: (dApp?: DAppInterface) => set({ isOpen: true, dApp }),
-  close: () => set({ isOpen: false, dApp: undefined }),
+  protocol: undefined,
+  open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+  close: () => set({ isOpen: false, protocol: undefined }),
 }));
 
-export const useDAppModal = create<IModalStore>((set) => ({
+export const useProtocolModal = create<IProtocolModalStore>((set) => ({
   isOpen: false,
-  dApp: undefined,
-  open: (dApp?: DAppInterface) => set({ isOpen: true, dApp }),
-  close: () => set({ isOpen: false, dApp: undefined }),
-}));
-
-export const useAddDAppModal = create<IModalStore>((set) => ({
-  isOpen: false,
-  open: () => set({ isOpen: true }),
-  close: () => set({ isOpen: false }),
+  protocol: undefined,
+  open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+  close: () => set({ isOpen: false, protocol: undefined }),
 }));
 
 interface IUnbondModalStore {
@@ -45,16 +53,59 @@ export const useUnbondModal = create<IUnbondModalStore>((set) => ({
   close: () => set({ isOpen: false, bond: undefined }),
 }));
 
-export const useStakeCustodialModal = create<IModalStore>((set) => ({
+export const useStakeCustodianModal = create<IProtocolModalStore>((set) => ({
   isOpen: false,
-  dApp: undefined,
-  open: (dApp?: DAppInterface) => set({ isOpen: true, dApp }),
-  close: () => set({ isOpen: false, dApp: undefined }),
+  protocol: undefined,
+  open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+  close: () => set({ isOpen: false, protocol: undefined }),
 }));
 
-export const useUnstakeCustodialModal = create<IModalStore>((set) => ({
+export const useUnstakeCustodianModal = create<IProtocolModalStore>((set) => ({
   isOpen: false,
-  dApp: undefined,
-  open: (dApp?: DAppInterface) => set({ isOpen: true, dApp }),
-  close: () => set({ isOpen: false, dApp: undefined }),
+  protocol: undefined,
+  open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+  close: () => set({ isOpen: false, protocol: undefined }),
 }));
+
+export const useAddProtocolModal = create<IProtocolModalStore>((set) => ({
+  isOpen: false,
+  open: () => set({ isOpen: true }),
+  close: () => set({ isOpen: false }),
+}));
+
+export const useDeleteProtocolModal = create<IDeleteProtocolModalStore>(
+  (set) => ({
+    isOpen: false,
+    protocolData: undefined,
+    open: (protocolData?: DeleteProtocolRequest) =>
+      set({ isOpen: true, protocolData }),
+    close: () => set({ isOpen: false, protocolData: undefined }),
+  }),
+);
+
+export const useAddDestinationChainModal = create<IProtocolModalStore>(
+  (set) => ({
+    isOpen: false,
+    protocol: undefined,
+    open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+    close: () => set({ isOpen: false, protocol: undefined }),
+  }),
+);
+
+export const useAddCustodianGroupModal = create<ICustodianGroupModalStore>(
+  (set) => ({
+    isOpen: false,
+    open: () => set({ isOpen: true }),
+    close: () => set({ isOpen: false }),
+  }),
+);
+
+export const useCustodianGroupModal = create<ICustodianGroupModalStore>(
+  (set) => ({
+    isOpen: false,
+    custodianGroup: undefined,
+    open: (custodianGroup?: CustodianGroup) =>
+      set({ isOpen: true, custodianGroup }),
+    close: () => set({ isOpen: false, custodianGroup: undefined }),
+  }),
+);

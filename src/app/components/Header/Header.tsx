@@ -3,6 +3,7 @@ import { useWalletInfo } from "../../context/WalletProvider";
 import { ConnectButton } from "../Connect/ConnectButton";
 
 import { Logo } from "./Logo";
+import { PageSelect } from "./PageSelect";
 
 export const Header: React.FC = () => {
   const { network } = useNetwork();
@@ -11,9 +12,12 @@ export const Header: React.FC = () => {
     <nav>
       <div>
         <div className="container mx-auto flex w-full items-center justify-between gap-4 py-6">
-          <Logo />
+          <div className="flex items-center gap-4">
+            <Logo />
+            <PageSelect />
+          </div>
 
-          <div className="grow flex gap-4 items-center justify-end">
+          <div className="flex gap-4 items-center justify-end">
             {address && (
               <div className="flex gap-1 items-center text-sm font-semibold">
                 Network:
