@@ -28,7 +28,7 @@ import {
   UpdateProtocolStatusRequest,
 } from "@/app/types/protocol";
 import { ProjectENV } from "@/env";
-import { hexStringWith0x, hexStringWithout0x } from "@/utils/trim";
+import { hexStringWithout0x } from "@/utils/trim";
 
 // TODO: Handle this information in scalar-chains
 const custodianDAppMap: Record<string, boolean> = {
@@ -145,96 +145,96 @@ export class ScalarClient {
       },
     );
 
-    // --- Get from old api
-    const { dApps }: { dApps: DApp[] } = await getDApps();
-    const oldProtocols: Protocol[] = dApps.map((dapp) => {
-      const attribute = this.isCustodianDApp(hexStringWith0x(dapp.scAddress))
-        ? {
-            model: LiquidityModel.POOLING,
-          }
-        : {
-            model: LiquidityModel.TRANSACTIONAL,
-          };
+    // // --- Get from old api
+    // const { dApps }: { dApps: DApp[] } = await getDApps();
+    // const oldProtocols: Protocol[] = dApps.map((dapp) => {
+    //   const attribute = this.isCustodianDApp(hexStringWith0x(dapp.scAddress))
+    //     ? {
+    //         model: LiquidityModel.POOLING,
+    //       }
+    //     : {
+    //         model: LiquidityModel.TRANSACTIONAL,
+    //       };
 
-      const custodianGroup: CustodianGroup = {
-        UID: dapp.custodianGroup.ID.toString(),
-        Name: dapp.custodianGroup.Name,
-        BtcPublicKey: dapp.custodianGroup.TaprootAddress,
-        Quorum: dapp.custodianGroup.Quorum,
-        Status: CustodianStatus.ACTIVATED,
-        Description: "",
-        Custodians: dapp.custodianGroup.Custodians.map((custodian) => {
-          return {
-            Name: custodian.Name,
-            Status: CustodianStatus.ACTIVATED,
-            BtcPublicKey: new Uint8Array(
-              Buffer.from(hexStringWithout0x(custodian.BtcPublicKeyHex), "hex"),
-            ),
-            Description: "",
-          };
-        }),
-      };
+    //   const custodianGroup: CustodianGroup = {
+    //     UID: dapp.custodianGroup.ID.toString(),
+    //     Name: dapp.custodianGroup.Name,
+    //     BtcPublicKey: dapp.custodianGroup.TaprootAddress,
+    //     Quorum: dapp.custodianGroup.Quorum,
+    //     Status: CustodianStatus.ACTIVATED,
+    //     Description: "",
+    //     Custodians: dapp.custodianGroup.Custodians.map((custodian) => {
+    //       return {
+    //         Name: custodian.Name,
+    //         Status: CustodianStatus.ACTIVATED,
+    //         BtcPublicKey: new Uint8Array(
+    //           Buffer.from(hexStringWithout0x(custodian.BtcPublicKeyHex), "hex"),
+    //         ),
+    //         Description: "",
+    //       };
+    //     }),
+    //   };
 
-      const chains: ProtocolChain[] = [
-        {
-          chain_name: dapp.chainName,
-          chain_id: 0,
-          chain_type: "EVM",
-          chain_smart_contract_address: new Uint8Array(
-            Buffer.from(hexStringWithout0x(dapp.tokenContractAddress), "hex"),
-          ),
-          supported_chain: {
-            address: dapp.scAddress,
-            token: {
-              oneofKind: "erc20",
-              erc20: {
-                asset: dapp.chainName,
-                chainId: new Uint8Array(),
-                details: {
-                  tokenName: dapp.chainName,
-                  symbol: dapp.chainName,
-                  decimals: 18,
-                  capacity: new Uint8Array(),
-                },
-                tokenAddress: dapp.tokenContractAddress,
-                txHash: "",
-                status: 4,
-                isExternal: false,
-                burnerCode: new Uint8Array(),
-              },
-            },
-          },
-        },
-      ];
+    //   const chains: ProtocolChain[] = [
+    //     {
+    //       chain_name: dapp.chainName,
+    //       chain_id: 0,
+    //       chain_type: "EVM",
+    //       chain_smart_contract_address: new Uint8Array(
+    //         Buffer.from(hexStringWithout0x(dapp.tokenContractAddress), "hex"),
+    //       ),
+    //       supported_chain: {
+    //         address: dapp.scAddress,
+    //         token: {
+    //           oneofKind: "erc20",
+    //           erc20: {
+    //             asset: dapp.chainName,
+    //             chainId: new Uint8Array(),
+    //             details: {
+    //               tokenName: dapp.chainName,
+    //               symbol: dapp.chainName,
+    //               decimals: 18,
+    //               capacity: new Uint8Array(),
+    //             },
+    //             tokenAddress: dapp.tokenContractAddress,
+    //             txHash: "",
+    //             status: 4,
+    //             isExternal: false,
+    //             burnerCode: new Uint8Array(),
+    //           },
+    //         },
+    //       },
+    //     },
+    //   ];
 
-      chains.push({
-        chain_name: "BTC",
-        chain_id: 0,
-        chain_type: "BTC",
-        chain_smart_contract_address: new Uint8Array(),
-        supported_chain: {
-          address: "",
-          token: {
-            oneofKind: "btc",
-            btc: {},
-          },
-        },
-      });
+    //   chains.push({
+    //     chain_name: "BTC",
+    //     chain_id: 0,
+    //     chain_type: "BTC",
+    //     chain_smart_contract_address: new Uint8Array(),
+    //     supported_chain: {
+    //       address: "",
+    //       token: {
+    //         oneofKind: "btc",
+    //         btc: {},
+    //       },
+    //     },
+    //   });
 
-      return {
-        pubkey: new Uint8Array(), // Scalar pubkey
-        address: new Uint8Array(), // Scalar address
-        name: dapp.chainName,
-        service_tag: ProjectENV.NEXT_PUBLIC_SERVICE_TAG,
-        attribute: attribute,
-        status: ProtocolStatus.ACTIVATED,
-        custodian_group: custodianGroup,
-        chains: chains,
-      };
-    });
+    //   return {
+    //     pubkey: new Uint8Array(), // Scalar pubkey
+    //     address: new Uint8Array(), // Scalar address
+    //     name: dapp.chainName,
+    //     service_tag: ProjectENV.NEXT_PUBLIC_SERVICE_TAG,
+    //     attribute: attribute,
+    //     status: ProtocolStatus.ACTIVATED,
+    //     custodian_group: custodianGroup,
+    //     chains: chains,
+    //   };
+    // });
 
-    // Merge protocols
-    protocols.push(...oldProtocols);
+    // // Merge protocols
+    // protocols.push(...oldProtocols);
     return { protocols };
   }
 

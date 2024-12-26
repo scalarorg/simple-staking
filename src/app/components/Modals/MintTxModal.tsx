@@ -15,7 +15,6 @@ import { useScalarVaultModule, useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useMintTxModal } from "@/app/stores/modal";
 import { ProtocolChain } from "@/app/types/protocol";
-import { ExtendedProjectENV } from "@/env";
 import { hexStringWith0x } from "@/utils/trim";
 
 import { Button } from "../ui/button";
@@ -138,10 +137,6 @@ export const MintTxModal: React.FC<{}> = () => {
 
       if (!walletProvider) {
         throw new Error("Wallet provider not found");
-      }
-
-      if (!ExtendedProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS) {
-        throw new Error("Covenant pubkeys not found");
       }
 
       if (!selectedDestChain) {

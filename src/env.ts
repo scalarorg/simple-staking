@@ -4,17 +4,19 @@ import { z } from "zod";
 
 const ProjectENVSchema = z.object({
   NEXT_PUBLIC_MEMPOOL_API: z.string().min(10),
-  NEXT_PUBLIC_MEMPOOL_WEB: z.string().min(10),
   NEXT_PUBLIC_API_URL: z.string().min(10),
   NEXT_PUBLIC_DEFAULT_DAPP_CHAINS: z.string().min(10),
   NEXT_PUBLIC_SCALAR_SCANNER: z.string().min(10),
 
   NEXT_PUBLIC_VERSION: z.number().default(0),
   NEXT_PUBLIC_TAG: z.string(),
-  NEXT_PUBLIC_COVENANT_QUORUM: z.number().min(1),
-  NEXT_PUBLIC_COVENANT_PUBKEYS: z.array(z.string().min(5)).optional(),
+  NEXT_PUBLIC_COVENANT_QUORUM: z.number().min(1).default(1),
+  NEXT_PUBLIC_COVENANT_PUBKEYS: z
+    .array(z.string().min(1))
+    .default([
+      "0248e69acb0b837fd7b94b0d6f07b9ff00e83439564ee0bdf940da12010c937501",
+    ]),
   NEXT_PUBLIC_SERVICE_TAG: z.string().default("pools"),
-  NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS: z.string().default(""),
   NEXT_PUBLIC_APP_URL: z
     .string()
     .default("https://btc-staking.testnet.scalar.org"),
@@ -26,7 +28,6 @@ const ProjectENVSchema = z.object({
  */
 export const ProjectENV = ProjectENVSchema.parse({
   NEXT_PUBLIC_MEMPOOL_API: process.env.NEXT_PUBLIC_MEMPOOL_API,
-  NEXT_PUBLIC_MEMPOOL_WEB: process.env.NEXT_PUBLIC_MEMPOOL_WEB,
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   NEXT_PUBLIC_DEFAULT_DAPP_CHAINS: process.env.NEXT_PUBLIC_DEFAULT_DAPP_CHAINS,
   NEXT_PUBLIC_SCALAR_SCANNER: process.env.NEXT_PUBLIC_SCALAR_SCANNER,
@@ -36,19 +37,6 @@ export const ProjectENV = ProjectENVSchema.parse({
     ? 0
     : Number(process.env.NEXT_PUBLIC_VERSION),
 
-  NEXT_PUBLIC_COVENANT_QUORUM: isNaN(
-    Number(process.env.NEXT_PUBLIC_COVENANT_QUORUM),
-  )
-    ? 1
-    : Number(process.env.NEXT_PUBLIC_COVENANT_QUORUM),
-  NEXT_PUBLIC_COVENANT_PUBKEYS:
-    process.env.NEXT_PUBLIC_COVENANT_PUBKEYS &&
-    process.env.NEXT_PUBLIC_COVENANT_PUBKEYS.split(",").length > 0
-      ? process.env.NEXT_PUBLIC_COVENANT_PUBKEYS.split(",")
-      : undefined,
-  NEXT_PUBLIC_SERVICE_TAG: process.env.NEXT_PUBLIC_SERVICE_TAG,
-  NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS:
-    process.env.NEXT_PUBLIC_GROUP_ALL_BTC_ADDRESS,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_SCALAR_GRPC_URL: process.env.NEXT_PUBLIC_SCALAR_GRPC_URL,
 });

@@ -52,7 +52,7 @@ function txInfoUrl(txId: string): URL {
 }
 
 export function mempoolWebTxUrl(txId: string, network = Network.TESTNET): URL {
-  const mempool_web_url = ProjectENV.NEXT_PUBLIC_MEMPOOL_WEB;
+  const mempool_web_url = ProjectENV.NEXT_PUBLIC_MEMPOOL_API;
   const tx_preview_prefix =
     network === Network.MAINNET || network === Network.REGTEST
       ? ""
