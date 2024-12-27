@@ -30,6 +30,7 @@ import { Input } from "../ui/input";
 import { Select } from "../ui/select";
 import { toast } from "../ui/use-toast";
 
+import { getBitcoinVaultChainType } from "@/utils/tool";
 import { GeneralModal } from "./GeneralModal";
 
 const FormSchema = z.object({
@@ -173,9 +174,50 @@ export const MintTxModal: React.FC<{}> = () => {
       })();
 
       const btcUserPk = scalarVaultModule.hexToBytes(pubkey.replace("0x", ""));
+
       // TODO: add btc_signer_pk to btc support chain in Scalar-core, then replace the new Uint8Array() with btc_signer_pk
       // const btcServicePk = btc_chain?.btc_signer_pk || new Uint8Array();
       const btcServicePk = new Uint8Array();
+
+      if (!protocol.custodian_group) {
+        throw new Error("Custodian group not found");
+      }
+
+      const numberOfCustodianPubkeys =
+        protocol.custodian_group.Custodians.length;
+      const custodian_pubkeys_uint8array = new Uint8Array(
+        33 * numberOfCustodianPubkeys,
+      );
+
+      for (let i = 0; i < numberOfCustodianPubkeys; i++) {
+        const custodianPubKey =
+          protocol.custodian_group.Custodians[i].BtcPublicKey;
+        const custodianPubKeyConv01 =
+          scalarVaultModule.bytesToHex(custodianPubKey);
+        const custodianPubKeyConv02 = scalarVaultModule.hexToBytes(
+          custodianPubKeyConv01,
+        );
+
+        if (!custodianPubKey) {
+          throw new Error(`Missing BTC public key for custodian ${i}`);
+        }
+        if (custodianPubKeyConv02.length !== 33) {
+          throw new Error(
+            `Invalid public key length for custodian ${i}: expected 33 bytes, got ${custodianPubKeyConv02.length}`,
+          );
+        }
+
+        custodian_pubkeys_uint8array.set(custodianPubKeyConv02, i * 33);
+      }
+
+      if (
+        custodian_pubkeys_uint8array.length !==
+        33 * numberOfCustodianPubkeys
+      ) {
+        throw new Error(
+          `Invalid final array length: expected ${33 * numberOfCustodianPubkeys} bytes, got ${custodian_pubkeys_uint8array.length}`,
+        );
+      }
 
       const destAddress = scalarVaultModule.hexToBytes(
         destRecipientAddress.replace("0x", ""),
@@ -183,29 +225,16 @@ export const MintTxModal: React.FC<{}> = () => {
       const smartContractAddress =
         selectedDestChain.chain_smart_contract_address;
 
-      const numberOfCustodianPubkeys =
-        protocol?.custodian_group?.Custodians.length || 0;
-      const custodian_pubkeys_uint8array = new Uint8Array(
-        33 * numberOfCustodianPubkeys,
+      const chainTypeKeys = Object.keys(scalarVaultModule.ChainType).filter(
+        (key) => isNaN(Number(key)),
       );
-
-      for (let i = 0; i < numberOfCustodianPubkeys; i++) {
-        custodian_pubkeys_uint8array.set(
-          protocol?.custodian_group?.Custodians[i]?.BtcPublicKey ||
-            new Uint8Array(),
-          i * 33,
-        );
-      }
-
       const chainType =
         scalarVaultModule.ChainType[
-          selectedDestChain.chain_type as keyof typeof scalarVaultModule.ChainType
+          getBitcoinVaultChainType(
+            selectedDestChain.chain_type,
+            chainTypeKeys,
+          ) as keyof typeof scalarVaultModule.ChainType
         ];
-      console.log(
-        "--- selectedDestChain.chain_type",
-        selectedDestChain.chain_type,
-      );
-      console.log("--- chainType", chainType);
       const destinationChain = new scalarVaultModule.DestinationChain(
         chainType,
         BigInt(selectedDestChain.chain_id),
@@ -218,7 +247,7 @@ export const MintTxModal: React.FC<{}> = () => {
           stakerAddress: address,
           protocolPubkey: btcServicePk,
           custodialPubkeys: custodian_pubkeys_uint8array,
-          covenantQuorum: protocol?.custodian_group?.Quorum || 0,
+          covenantQuorum: protocol.custodian_group.Quorum,
           haveOnlyCovenants: false,
           destinationChain,
           destinationContractAddress: smartContractAddress,

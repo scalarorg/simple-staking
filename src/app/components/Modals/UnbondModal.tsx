@@ -274,17 +274,43 @@ export const UnbondModal: React.FC = () => {
       // const btcProtocolPk = btc_chain?.btc_signer_pk || new Uint8Array();
       const btcProtocolPk = new Uint8Array();
 
+      if (!protocol.custodian_group) {
+        throw new Error("Custodian group not found");
+      }
+
       const numberOfCustodianPubkeys =
-        protocol?.custodian_group?.Custodians.length || 0;
+        protocol.custodian_group.Custodians.length;
       const custodian_pubkeys_uint8array = new Uint8Array(
         33 * numberOfCustodianPubkeys,
       );
 
       for (let i = 0; i < numberOfCustodianPubkeys; i++) {
-        custodian_pubkeys_uint8array.set(
-          protocol?.custodian_group?.Custodians[i]?.BtcPublicKey ||
-            new Uint8Array(),
-          i * 33,
+        const custodianPubKey =
+          protocol.custodian_group.Custodians[i].BtcPublicKey;
+        const custodianPubKeyConv01 =
+          scalarVaultModule.bytesToHex(custodianPubKey);
+        const custodianPubKeyConv02 = scalarVaultModule.hexToBytes(
+          custodianPubKeyConv01,
+        );
+
+        if (!custodianPubKey) {
+          throw new Error(`Missing BTC public key for custodian ${i}`);
+        }
+        if (custodianPubKeyConv02.length !== 33) {
+          throw new Error(
+            `Invalid public key length for custodian ${i}: expected 33 bytes, got ${custodianPubKeyConv02.length}`,
+          );
+        }
+
+        custodian_pubkeys_uint8array.set(custodianPubKeyConv02, i * 33);
+      }
+
+      if (
+        custodian_pubkeys_uint8array.length !==
+        33 * numberOfCustodianPubkeys
+      ) {
+        throw new Error(
+          `Invalid final array length: expected ${33 * numberOfCustodianPubkeys} bytes, got ${custodian_pubkeys_uint8array.length}`,
         );
       }
 
@@ -294,7 +320,7 @@ export const UnbondModal: React.FC = () => {
         stakerPubkey: btcUserPk,
         protocolPubkey: btcProtocolPk,
         covenantPubkeys: custodian_pubkeys_uint8array,
-        covenantQuorum: protocol?.custodian_group?.Quorum || 0,
+        covenantQuorum: protocol.custodian_group.Quorum,
         haveOnlyCovenants: false,
         feeRate: txFee,
         rbf: false,
