@@ -94,7 +94,7 @@ export const MintTxModal: React.FC<{}> = () => {
   const publicTag = data?.tag;
 
   const scalarVaultModule = useScalarVaultModule();
-  const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
+  const vault = useVault(protocol?.tag, publicTag, publicVersion);
 
   const btc_chain = protocol?.chains.find(
     (chain) => chain.chain_type === "BTC",
@@ -230,10 +230,10 @@ export const MintTxModal: React.FC<{}> = () => {
       );
       const chainType =
         scalarVaultModule.ChainType[
-          getBitcoinVaultChainType(
-            selectedDestChain.chain_type,
-            chainTypeKeys,
-          ) as keyof typeof scalarVaultModule.ChainType
+        getBitcoinVaultChainType(
+          selectedDestChain.chain_type,
+          chainTypeKeys,
+        ) as keyof typeof scalarVaultModule.ChainType
         ];
       const destinationChain = new scalarVaultModule.DestinationChain(
         chainType,
@@ -511,8 +511,8 @@ export const MintTxModal: React.FC<{}> = () => {
                         type="button"
                         variant={
                           field.value !== "fastestFee" &&
-                          field.value !== "hourFee" &&
-                          field.value !== "minimumFee"
+                            field.value !== "hourFee" &&
+                            field.value !== "minimumFee"
                             ? "default"
                             : "outline"
                         }
@@ -574,10 +574,10 @@ export const MintTxModal: React.FC<{}> = () => {
                     value={
                       selectedDestChain?.chain_smart_contract_address
                         ? hexStringWith0x(
-                            scalarVaultModule.bytesToHex(
-                              selectedDestChain?.chain_smart_contract_address,
-                            ),
-                          )
+                          scalarVaultModule.bytesToHex(
+                            selectedDestChain?.chain_smart_contract_address,
+                          ),
+                        )
                         : ""
                     }
                   />

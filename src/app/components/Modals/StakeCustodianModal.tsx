@@ -113,7 +113,7 @@ export const StakeCustodianModal = () => {
   const publicTag = data?.tag;
 
   const scalarVaultModule = useScalarVaultModule();
-  const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
+  const vault = useVault(protocol?.tag, publicTag, publicVersion);
 
   const [selectedDestChain, setSelectedDestChain] =
     useState<ProtocolChain | null>(null);
@@ -284,10 +284,10 @@ export const StakeCustodianModal = () => {
       );
       const chainType =
         scalarVaultModule.ChainType[
-          getBitcoinVaultChainType(
-            selectedDestChain.chain_type,
-            chainTypeKeys,
-          ) as keyof typeof scalarVaultModule.ChainType
+        getBitcoinVaultChainType(
+          selectedDestChain.chain_type,
+          chainTypeKeys,
+        ) as keyof typeof scalarVaultModule.ChainType
         ];
       const destinationChain = new scalarVaultModule.DestinationChain(
         chainType,
@@ -626,10 +626,10 @@ export const StakeCustodianModal = () => {
                     readOnly
                     value={
                       selectedSourceChain?.supported_chain.token.oneofKind ===
-                      "erc20"
+                        "erc20"
                         ? account.address
                         : selectedSourceChain?.supported_chain.token
-                              .oneofKind === "btc"
+                          .oneofKind === "btc"
                           ? address
                           : ""
                     }
@@ -665,22 +665,22 @@ export const StakeCustodianModal = () => {
 
               {selectedSourceChain?.supported_chain.token.oneofKind ===
                 "erc20" && (
-                <div className="space-y-2">
-                  <FormLabel>Smart contract address</FormLabel>
-                  <Input
-                    readOnly
-                    value={
-                      selectedSourceChain
-                        ? hexStringWith0x(
+                  <div className="space-y-2">
+                    <FormLabel>Smart contract address</FormLabel>
+                    <Input
+                      readOnly
+                      value={
+                        selectedSourceChain
+                          ? hexStringWith0x(
                             scalarVaultModule.bytesToHex(
                               selectedSourceChain.chain_smart_contract_address,
                             ),
                           )
-                        : ""
-                    }
-                  />
-                </div>
-              )}
+                          : ""
+                      }
+                    />
+                  </div>
+                )}
             </div>
 
             <div className="space-y-4 w-full">
@@ -777,22 +777,22 @@ export const StakeCustodianModal = () => {
 
               {selectedDestChain?.supported_chain.token.oneofKind ===
                 "erc20" && (
-                <div className="space-y-2">
-                  <FormLabel>Smart contract address</FormLabel>
-                  <Input
-                    readOnly
-                    value={
-                      selectedDestChain
-                        ? hexStringWith0x(
+                  <div className="space-y-2">
+                    <FormLabel>Smart contract address</FormLabel>
+                    <Input
+                      readOnly
+                      value={
+                        selectedDestChain
+                          ? hexStringWith0x(
                             scalarVaultModule.bytesToHex(
                               selectedDestChain.chain_smart_contract_address,
                             ),
                           )
-                        : ""
-                    }
-                  />
-                </div>
-              )}
+                          : ""
+                      }
+                    />
+                  </div>
+                )}
             </div>
           </div>
 

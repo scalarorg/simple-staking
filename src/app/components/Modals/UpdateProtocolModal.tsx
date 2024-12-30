@@ -67,7 +67,7 @@
 //   useEffect(() => {
 //     if (protocol) {
 //       setProtocolName(protocol.name || "");
-//       setServiceTag(protocol.service_tag || "");
+//       setServiceTag(protocol.tag || "");
 //     }
 //   }, [protocol]);
 

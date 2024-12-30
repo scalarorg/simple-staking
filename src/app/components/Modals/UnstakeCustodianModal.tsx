@@ -93,7 +93,7 @@
 //   const publicTag = data?.tag;
 
 //   const scalarVaultModule = useScalarVaultModule();
-//   const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
+//   const vault = useVault(protocol?.tag, publicTag, publicVersion);
 
 //   const btc_chain = protocol?.chains.find(
 //     (chain) => chain.chain_type === "BTC",

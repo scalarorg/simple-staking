@@ -14,7 +14,7 @@ import { Label } from "../ui/label";
 
 import { GeneralModal } from "./GeneralModal";
 
-export const PreviewProtocolModal: React.FC<{}> = ({}) => {
+export const PreviewProtocolModal: React.FC<{}> = ({ }) => {
   const { protocol, isOpen, close } = useProtocolModal();
   const scalarClient = useScalarClient();
 
@@ -30,7 +30,7 @@ export const PreviewProtocolModal: React.FC<{}> = ({}) => {
 
   const publicVersion = String(data?.version);
   const publicTag = data?.tag;
-  const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
+  const vault = useVault(protocol?.tag, publicTag, publicVersion);
   const { btcNetwork } = useWalletProvider();
   const isCustodianOnly = protocol?.attribute?.model === LiquidityModel.POOLING;
 
@@ -66,7 +66,7 @@ export const PreviewProtocolModal: React.FC<{}> = ({}) => {
 
         <div className="space-y-2">
           <Label className="text-gray-500">Service Tag</Label>
-          <Input readOnly value={protocol?.service_tag || ""} />
+          <Input readOnly value={protocol?.tag || ""} />
         </div>
 
         <div className="space-y-2">
@@ -190,8 +190,8 @@ export const PreviewProtocolModal: React.FC<{}> = ({}) => {
                         Smart Contract Address:{" "}
                         {chain.chain_smart_contract_address
                           ? Buffer.from(
-                              chain.chain_smart_contract_address,
-                            ).toString("hex")
+                            chain.chain_smart_contract_address,
+                          ).toString("hex")
                           : ""}
                       </div>
                       <div>

@@ -11,7 +11,7 @@ export interface Protocol {
   pubkey: Uint8Array;
   address: Uint8Array;
   name: string;
-  service_tag: string;
+  tag: string;
   attribute?: ProtocolAttribute;
   status: ProtocolStatus;
   custodian_group?: CustodianGroup;

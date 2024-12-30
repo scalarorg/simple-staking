@@ -41,7 +41,7 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
     >
       <td className="p-4">{index + 1}</td>
       <td className="p-4">{protocol.name}</td>
-      <td className="p-4">{protocol.service_tag}</td>
+      <td className="p-4">{protocol.tag}</td>
       <td className="p-4">{isCustodian ? "Pooling" : "Transactional"}</td>
       <td className="p-4">{ProtocolStatus[protocol.status]}</td>
       <td className="p-4">
@@ -51,9 +51,8 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
               e.stopPropagation();
               open(protocol);
             }}
-            className={`px-2 hover:text-orange-600 flex items-center gap-2 justify-center ${
-              !address ? "opacity-50 pointer-events-none" : ""
-            }`}
+            className={`px-2 hover:text-orange-600 flex items-center gap-2 justify-center ${!address ? "opacity-50 pointer-events-none" : ""
+              }`}
             disabled={!address}
           >
             Preview
@@ -61,9 +60,8 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
           </button>
           {!isCustodian && (
             <button
-              className={`px-2 hover:text-red-600 flex items-center gap-2 justify-center text-red-700 ${
-                !address ? "opacity-50 pointer-events-none" : ""
-              }`}
+              className={`px-2 hover:text-red-600 flex items-center gap-2 justify-center text-red-700 ${!address ? "opacity-50 pointer-events-none" : ""
+                }`}
               onClick={() => openMintTxModal(protocol)}
               disabled={!address}
             >
@@ -74,9 +72,8 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
           {isCustodian && (
             <>
               <button
-                className={`px-2 hover:text-green-600 flex items-center gap-2 justify-center text-green-700 ${
-                  !address ? "opacity-50 pointer-events-none" : ""
-                }`}
+                className={`px-2 hover:text-green-600 flex items-center gap-2 justify-center text-green-700 ${!address ? "opacity-50 pointer-events-none" : ""
+                  }`}
                 onClick={() => openStakeCustodianModal(protocol)}
                 disabled={!address}
               >

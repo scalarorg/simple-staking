@@ -169,7 +169,7 @@ export const UnbondModal: React.FC = () => {
   const publicTag = data?.tag;
 
   const scalarVaultModule = useScalarVaultModule();
-  const vault = useVault(protocol?.service_tag, publicTag, publicVersion);
+  const vault = useVault(protocol?.tag, publicTag, publicVersion);
 
   const { balance, allowance, approve } = useERC20Contract(
     SBTC_ABI,
