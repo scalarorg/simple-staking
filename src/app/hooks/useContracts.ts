@@ -13,9 +13,11 @@ export const useContract = (abi: Abi, address?: string) => {
   const signer = useEthersSigner();
   return useMemo(() => {
     if (!address) return null;
+    if (!abi) return null;
     if (Contracts[address]) {
       return Contracts[address];
     }
+    console.log("abi, address: ", abi, address);
     const contract = new ethers.Contract(
       address as `0x${string}`,
       abi as any,
@@ -26,6 +28,7 @@ export const useContract = (abi: Abi, address?: string) => {
   }, [address, signer, abi]);
 };
 
+// deprecated, remove in the future
 export const useERC20Contract = (
   abi: any,
   contractAddress?: string,

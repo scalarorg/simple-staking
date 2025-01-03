@@ -109,3 +109,17 @@ export const useCustodianGroupModal = create<ICustodianGroupModalStore>(
     close: () => set({ isOpen: false, custodianGroup: undefined }),
   }),
 );
+
+interface ITransferModalStore {
+  isOpen: boolean;
+  protocol?: Protocol;
+  open: (protocol?: Protocol) => void;
+  close: () => void;
+}
+
+export const useTransferModal = create<ITransferModalStore>((set) => ({
+  isOpen: false,
+  protocol: undefined,
+  open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+  close: () => set({ isOpen: false, protocol: undefined }),
+}));
