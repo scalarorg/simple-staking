@@ -1,4 +1,4 @@
-import { CustodianStatus } from "scalarjs-sdk/dist/types";
+import { CustodianStatus } from "@scalar-lab/scalarjs-sdk/dist/types";
 
 export interface Custodian {
   Name: string;

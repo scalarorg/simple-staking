@@ -2,7 +2,7 @@
 
 import { XIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { LiquidityModel, ProtocolStatus } from "scalarjs-sdk/dist/types";
+import { LiquidityModel, ProtocolStatus } from "@scalar-lab/scalarjs-sdk/dist/types";
 
 import { useProtocolModal } from "@/app/stores/modal";
 import { useScalarClient } from "@/app/context/ScalarProvider";
@@ -36,14 +36,14 @@ export const PreviewProtocolModal: React.FC<{}> = ({ }) => {
 
   // Chains
   const btcChain = protocol?.chains.find(
-    (chain) => chain.supported_chain.token.oneofKind === "btc",
+    (chain) => chain.supported_chain.chain.startsWith("bitcoin"),
   );
   const btcNetworkType = btcChain
     ? scalarClient.client.getBtcChainName(btcChain)
     : "";
   const destinationChains =
     protocol?.chains?.filter(
-      (chain) => chain.supported_chain.token.oneofKind !== "btc",
+      (chain) => !chain.supported_chain.chain.startsWith("bitcoin"),
     ) || [];
 
   // Modal content
@@ -182,9 +182,6 @@ export const PreviewProtocolModal: React.FC<{}> = ({ }) => {
                       <div>Type: {chain.chain_type}</div>
                       <div>
                         Token Name:{" "}
-                        {chain.supported_chain.token.oneofKind === "erc20"
-                          ? chain.supported_chain.token.erc20.asset
-                          : ""}
                       </div>
                       <div>
                         Smart Contract Address:{" "}
@@ -196,9 +193,7 @@ export const PreviewProtocolModal: React.FC<{}> = ({ }) => {
                       </div>
                       <div>
                         Token Contract Address:{" "}
-                        {chain.supported_chain.token.oneofKind === "erc20"
-                          ? chain.supported_chain.token.erc20.tokenAddress
-                          : ""}
+                        {chain.supported_chain.address}
                       </div>
                     </div>
                   </div>

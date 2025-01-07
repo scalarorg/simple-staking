@@ -2,8 +2,8 @@ import {
   ProtocolAttribute,
   ProtocolStatus,
   SupportedChain,
-} from "scalarjs-sdk/dist/types";
-import { ERC20TokenMetadata } from "scalarjs-sdk/dist/types";
+} from "@scalar-lab/scalarjs-sdk/dist/types";
+import { ERC20TokenMetadata } from "@scalar-lab/scalarjs-sdk/dist/types";
 
 import { CustodianGroup } from "@/app/types/custodians";
 

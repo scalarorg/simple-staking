@@ -1,5 +1,5 @@
 import { BookOpen } from "lucide-react";
-import { LiquidityModel, ProtocolStatus } from "scalarjs-sdk/dist/types";
+import { LiquidityModel, ProtocolStatus } from "@scalar-lab/scalarjs-sdk/dist/types";
 
 import { useWalletInfo } from "@/app/context/WalletProvider";
 import { fpStyles } from "@/app/scalar/theme";

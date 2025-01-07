@@ -1,15 +1,14 @@
 import { describe, expect, it } from "bun:test";
-import { getProtocols, Protocol } from "scalarjs-sdk";
+import { getProtocols, Protocol } from "@scalar-lab/scalarjs-sdk";
 
 describe("getProtocols", () => {
   it("should be able to get the protocols", async () => {
     // variable
-    // const grpcUrl = "localhost:9090";
     const grpcUrl = "18.141.172.185:9090";
 
     try {
       const protocols: Protocol[] = await getProtocols({
-        grpcUrl,
+        grpcUrl: process.env.SCALAR_GRPC_URL || "localhost:9090",
       });
 
       console.log("--- protocols", protocols);

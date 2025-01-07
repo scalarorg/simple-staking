@@ -1,7 +1,7 @@
 import { ArrowLeftRight, BookOpen, CircleArrowDown } from "lucide-react";
 // import { Tooltip } from "react-tooltip";
 import { useEffect } from "react";
-import { LiquidityModel, ProtocolStatus } from "scalarjs-sdk/dist/types";
+import { LiquidityModel, ProtocolStatus } from "@scalar-lab/scalarjs-sdk/dist/types";
 import { useAccount, useConnect } from "wagmi";
 
 import { useWalletInfo } from "@/app/context/WalletProvider";
@@ -61,9 +61,8 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
               e.stopPropagation();
               open(protocol);
             }}
-            className={`px-2 hover:text-orange-600 flex items-center gap-2 justify-center ${
-              !address ? "opacity-50 pointer-events-none" : ""
-            }`}
+            className={`px-2 hover:text-orange-600 flex items-center gap-2 justify-center ${!address ? "opacity-50 pointer-events-none" : ""
+              }`}
             disabled={!address}
           >
             Preview
@@ -71,9 +70,8 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
           </button>
           {!isCustodian && (
             <button
-              className={`px-2 hover:text-red-600 flex items-center gap-2 justify-center text-red-700 ${
-                !address ? "opacity-50 pointer-events-none" : ""
-              }`}
+              className={`px-2 hover:text-red-600 flex items-center gap-2 justify-center text-red-700 ${!address ? "opacity-50 pointer-events-none" : ""
+                }`}
               onClick={() => openMintTxModal(protocol)}
               disabled={!address}
             >
@@ -84,9 +82,8 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
           {isCustodian && (
             <>
               <button
-                className={`px-2 hover:text-yellow-300 flex items-center gap-2 justify-center text-[#f8c200] ${
-                  !address ? "opacity-50 pointer-events-none" : ""
-                }`}
+                className={`px-2 hover:text-yellow-300 flex items-center gap-2 justify-center text-[#f8c200] ${!address ? "opacity-50 pointer-events-none" : ""
+                  }`}
                 onClick={() => openTransferModal(protocol)}
                 disabled={!address}
               >

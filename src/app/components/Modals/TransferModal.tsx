@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Wallet, XIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { ERC20TokenMetadata } from "scalarjs-sdk/dist/types";
+import { ERC20TokenMetadata, SupportedChain } from "@scalar-lab/scalarjs-sdk/dist/types";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 
@@ -55,15 +55,15 @@ const FormSchema = z.object({
     .optional(),
 });
 
-const isEvmChain = (chain: ProtocolChain | null) => {
-  if (!chain) return false;
-  return chain.supported_chain.token.oneofKind === "erc20";
-};
+// const isEvmChain = (chain: ProtocolChain | null) => {
+//   if (!chain) return false;
+//   return chain.supported_chain.token.oneofKind === "erc20";
+// };
 
-const isBtcChain = (chain: ProtocolChain | null) => {
-  if (!chain) return false;
-  return chain.supported_chain.token.oneofKind === "btc";
-};
+// const isBtcChain = (chain: ProtocolChain | null) => {
+//   if (!chain) return false;
+//   return chain.supported_chain.token.oneofKind === "btc";
+// };
 
 export const TransferModal = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -104,35 +104,35 @@ export const TransferModal = () => {
   });
 
   const sourceTokenAddress = useMemo(() => {
-    return isEvmChain(selectedSourceChain) &&
-      selectedSourceChain!.supported_chain.token.oneofKind === "erc20"
-      ? Buffer.from(
-          (
-            selectedSourceChain!.supported_chain.token
-              .erc20 as ERC20TokenMetadata
-          ).tokenAddress,
-          "utf-8",
-        ).toString("hex")
-      : MOCK_TOKEN_ADDRESS;
+    // return isEvmChain(selectedSourceChain) &&
+    //   selectedSourceChain!.supported_chain.token.oneofKind === "erc20"
+    //   ? Buffer.from(
+    //     (
+    //       selectedSourceChain!.supported_chain.token
+    //         .erc20 as ERC20TokenMetadata
+    //     ).tokenAddress,
+    //     "utf-8",
+    //   ).toString("hex")
+    //   : MOCK_TOKEN_ADDRESS;
+    return selectedSourceChain?.supported_chain.address || MOCK_TOKEN_ADDRESS
   }, [selectedSourceChain]);
 
-  const destTokenAddress = useMemo(() => {
-    const address =
-      isEvmChain(selectedDestChain) &&
-      selectedDestChain!.supported_chain.token.oneofKind === "erc20"
-        ? Buffer.from(
-            (
-              selectedDestChain!.supported_chain.token
-                .erc20 as ERC20TokenMetadata
-            ).tokenAddress,
-            "utf-8",
-          ).toString("hex")
-        : MOCK_TOKEN_ADDRESS;
-
-    return address;
+  const destToken = useMemo(() => {
+    // const address =
+    //   isEvmChain(selectedDestChain) &&
+    //     selectedDestChain!.supported_chain.token.oneofKind === "erc20"
+    //     ? Buffer.from(
+    //       (
+    //         selectedDestChain!.supported_chain.token
+    //           .erc20 as ERC20TokenMetadata
+    //       ).tokenAddress,
+    //       "utf-8",
+    //     ).toString("hex")
+    //     : MOCK_TOKEN_ADDRESS;
+    return selectedDestChain?.supported_chain;
   }, [selectedDestChain]);
 
-  console.log({ selectedDestChain, destTokenAddress });
+  console.log({ selectedDestChain, destToken });
 
   const { sendToken, isConfirming, isConfirmed, isPending, error } = useGateway(
     {
@@ -142,9 +142,10 @@ export const TransferModal = () => {
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!protocol) return;
-
+    console.log(data)
     // TODO: use sendToken here....
-
+    // const params := 
+    // sendToken({ data.destinationChain, data.destRecipientAddress, "", data.transferAmount })
     try {
       // Add your transfer logic here
       toast({
@@ -246,13 +247,7 @@ export const TransferModal = () => {
                   <Input
                     readOnly
                     value={
-                      selectedSourceChain?.supported_chain.token.oneofKind ===
-                      "erc20"
-                        ? evmAddress
-                        : selectedSourceChain?.supported_chain.token
-                              .oneofKind === "btc"
-                          ? address
-                          : ""
+                      selectedSourceChain?.supported_chain.address
                     }
                   />
                 </FormControl>
@@ -333,23 +328,23 @@ export const TransferModal = () => {
                         type="button"
                         variant="outline"
                         onClick={() => {
-                          if (
-                            selectedDestChain?.supported_chain.token
-                              .oneofKind === "erc20"
-                          ) {
-                            form.setValue(
-                              "destRecipientAddress",
-                              evmAddress || "",
-                            );
-                          } else if (
-                            selectedDestChain?.supported_chain.token
-                              .oneofKind === "btc"
-                          ) {
-                            form.setValue(
-                              "destRecipientAddress",
-                              address || "",
-                            );
-                          }
+                          // if (
+                          //   selectedDestChain?.supported_chain.token
+                          //     .oneofKind === "erc20"
+                          // ) {
+                          //   form.setValue(
+                          //     "destRecipientAddress",
+                          //     evmAddress || "",
+                          //   );
+                          // } else if (
+                          //   selectedDestChain?.supported_chain.token
+                          //     .oneofKind === "btc"
+                          // ) {
+                          //   form.setValue(
+                          //     "destRecipientAddress",
+                          //     address || "",
+                          //   );
+                          // }
                         }}
                       >
                         <Wallet className="w-4 h-4 text-orange-400" />
@@ -371,10 +366,10 @@ export const TransferModal = () => {
                 />
               </div>
 
-              {destTokenAddress && (
+              {destToken && (
                 <div className="space-y-2">
                   <FormLabel>Token address</FormLabel>
-                  <Input readOnly value={destTokenAddress} />
+                  <Input readOnly value={destToken.address} />
                 </div>
               )}
             </div>

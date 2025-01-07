@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { printMsg } from "scalarjs-sdk";
+import { printMsg } from "@scalar-lab/scalarjs-sdk";
 
 describe("test", () => {
   it("should work", () => {

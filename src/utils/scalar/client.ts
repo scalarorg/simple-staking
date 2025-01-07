@@ -5,7 +5,7 @@ import {
   NetworkKind,
   ProtocolStatus,
   Protocol as ScalarProtocol,
-} from "scalarjs-sdk/dist/types";
+} from "@scalar-lab/scalarjs-sdk/dist/types";
 
 import { getShortenCustodianGroups } from "@/app/api/custodian";
 import { getDApps } from "@/app/api/dApp";
@@ -42,7 +42,7 @@ const destinationChainTokenNameMap: Record<string, string> = {
 };
 
 export class ScalarClient {
-  constructor(private readonly grpcUrl: string) {}
+  constructor(private readonly grpcUrl: string) { }
 
   async getDAppsFromScalar(): Promise<{ dApps: DApp[] }> {
     return getDApps();
@@ -53,21 +53,14 @@ export class ScalarClient {
   }
 
   getBtcChainName(chain: ProtocolChain): string {
-    if (chain.supported_chain.token.oneofKind !== "btc") {
+    if (chain.supported_chain.chain.startsWith("bitcoin")) {
       return "";
     }
     const [btcNetworkName, networkId] =
-      chain.supported_chain.params?.chain.split("|") ?? ["", ""];
-    let btcNetworkType = "";
-    switch (chain.supported_chain.params?.networkKind) {
-      case NetworkKind.MAINNET:
-        btcNetworkType = "mainnet";
-        break;
-      case NetworkKind.TESTNET:
-        btcNetworkType = "testnet";
-        break;
-      default:
-        btcNetworkType = "";
+      chain.supported_chain.chain.split("|") ?? ["", ""];
+    let btcNetworkType = "testnet";
+    if (networkId == "0") {
+      btcNetworkType = "mainnet";
     }
     return `${btcNetworkName}-${btcNetworkType}${networkId ? `${networkId}` : ""}`;
   }
@@ -90,21 +83,21 @@ export class ScalarClient {
         const custodianGroup: CustodianGroup | undefined =
           scalarProtocol.custodianGroup
             ? {
-                UID: scalarProtocol.custodianGroup.uid,
-                Name: scalarProtocol.custodianGroup.name,
-                BtcPublicKey: scalarProtocol.custodianGroup.btcPubkey,
-                Quorum: scalarProtocol.custodianGroup.quorum,
-                Status: scalarProtocol.custodianGroup.status,
-                Description: scalarProtocol.custodianGroup.description,
-                Custodians: scalarProtocol.custodianGroup.custodians.map(
-                  (custodian) => ({
-                    Name: custodian.name,
-                    Status: custodian.status,
-                    BtcPublicKey: custodian.btcPubkey,
-                    Description: custodian.description,
-                  }),
-                ),
-              }
+              UID: scalarProtocol.custodianGroup.uid,
+              Name: scalarProtocol.custodianGroup.name,
+              BtcPublicKey: scalarProtocol.custodianGroup.btcPubkey,
+              Quorum: scalarProtocol.custodianGroup.quorum,
+              Status: scalarProtocol.custodianGroup.status,
+              Description: scalarProtocol.custodianGroup.description,
+              Custodians: scalarProtocol.custodianGroup.custodians.map(
+                (custodian) => ({
+                  Name: custodian.name,
+                  Status: custodian.status,
+                  BtcPublicKey: custodian.btcPubkey,
+                  Description: custodian.description,
+                }),
+              ),
+            }
             : undefined;
         return {
           pubkey: scalarProtocol.pubkey,
@@ -114,24 +107,26 @@ export class ScalarClient {
           attribute: scalarProtocol.attribute
             ? scalarProtocol.attribute
             : {
-                model: LiquidityModel.POOLING,
-              },
+              model: LiquidityModel.POOLING,
+            },
           status: scalarProtocol.status,
           custodian_group: custodianGroup,
           chains: scalarProtocol.chains.map((chain) => {
-            const chain_name =
-              chain.token.oneofKind === "erc20"
-                ? chain.token.erc20.asset +
-                  "-" +
-                  chain.params?.chain.split("|")[1]
-                : "BTC"; // TODO: Handle for BTC
-            const chain_id = Number(chain.params?.chain.split("|")[1]) || 0;
-            const chain_type = chain.params?.chain.split("|")[0] || "evm";
+            // const chain_name =
+            //   chain.token.oneofKind === "erc20"
+            //     ? chain.token.erc20.asset +
+            //     "-" +
+            //     chain.params?.chain.split("|")[1]
+            //     : "BTC"; // TODO: Handle for BTC
+            const chain_name = chain.chain;
+            const parts = chain.chain.split("|")
+            const chain_id = Number(parts[1]) || 0;
+            const chain_type = parts[0] || "evm";
             const chain_smart_contract_address =
-              chain.token.oneofKind === "erc20"
+              chain.address
                 ? new Uint8Array(
-                    Buffer.from(hexStringWithout0x(chain.address), "hex"),
-                  )
+                  Buffer.from(hexStringWithout0x(chain.address), "hex"),
+                )
                 : new Uint8Array();
             return {
               chain_name: chain_name,

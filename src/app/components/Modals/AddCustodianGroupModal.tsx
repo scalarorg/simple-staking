@@ -2,7 +2,7 @@ import { Label } from "@radix-ui/react-label";
 import { useQuery } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
-import { CustodianStatus } from "scalarjs-sdk/dist/types";
+import { CustodianStatus } from "@scalar-lab/scalarjs-sdk/dist/types";
 
 import { GeneralModal } from "@/app/components/Modals/GeneralModal";
 import { InputField } from "@/app/components/Staking/Form/InputField";

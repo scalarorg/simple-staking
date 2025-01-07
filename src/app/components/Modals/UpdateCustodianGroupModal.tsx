@@ -1,6 +1,6 @@
 import { Trash2Icon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { CustodianStatus } from "scalarjs-sdk/dist/types";
+import { CustodianStatus } from "@scalar-lab/scalarjs-sdk/dist/types";
 
 import { GeneralModal } from "@/app/components/Modals/GeneralModal";
 import { InputField } from "@/app/components/Staking/Form/InputField";
@@ -11,7 +11,7 @@ import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useCustodianGroupModal } from "@/app/stores/modal";
 import { Custodian } from "@/app/types/custodians";
 
-export const UpdateCustodianGroupModal: React.FC<{}> = ({}) => {
+export const UpdateCustodianGroupModal: React.FC<{}> = ({ }) => {
   const { custodianGroup, isOpen, close } = useCustodianGroupModal();
   const scalarClient = useScalarClient();
   const [name, setName] = useState("");

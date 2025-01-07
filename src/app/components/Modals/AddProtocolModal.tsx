@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ProtocolStatus } from "scalarjs-sdk/dist/types";
+import { ProtocolStatus } from "@scalar-lab/scalarjs-sdk/dist/types";
 
 import { GeneralModal } from "@/app/components/Modals/GeneralModal";
 import { BtcAddress } from "@/app/components/Staking/Form/BtcAddress";
@@ -76,11 +76,11 @@ export const AddProtocolModal: React.FC<{}> = () => {
 
     const signerRequiredFields = !isCustodianOnly
       ? [
-          { value: signerApiEndpoint, name: "Signer API Endpoint" },
-          { value: accessToken, name: "Access Token" },
-          { value: btcAddress, name: "Bitcoin Address" },
-          { value: btcPubKey, name: "Bitcoin Public Key" },
-        ]
+        { value: signerApiEndpoint, name: "Signer API Endpoint" },
+        { value: accessToken, name: "Access Token" },
+        { value: btcAddress, name: "Bitcoin Address" },
+        { value: btcPubKey, name: "Bitcoin Public Key" },
+      ]
       : [];
 
     const allRequiredFields = [...baseRequiredFields, ...signerRequiredFields];
