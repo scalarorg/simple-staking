@@ -1,11 +1,10 @@
-import axios from "axios";
 import {
   CustodianStatus,
   LiquidityModel,
-  NetworkKind,
   ProtocolStatus,
   Protocol as ScalarProtocol,
 } from "@scalar-lab/scalarjs-sdk/dist/types";
+import axios from "axios";
 
 import { getShortenCustodianGroups } from "@/app/api/custodian";
 import { getDApps } from "@/app/api/dApp";
@@ -42,7 +41,7 @@ const destinationChainTokenNameMap: Record<string, string> = {
 };
 
 export class ScalarClient {
-  constructor(private readonly grpcUrl: string) { }
+  constructor(private readonly grpcUrl: string) {}
 
   async getDAppsFromScalar(): Promise<{ dApps: DApp[] }> {
     return getDApps();
@@ -56,8 +55,9 @@ export class ScalarClient {
     if (chain.supported_chain.chain.startsWith("bitcoin")) {
       return "";
     }
-    const [btcNetworkName, networkId] =
-      chain.supported_chain.chain.split("|") ?? ["", ""];
+    const [btcNetworkName, networkId] = chain.supported_chain.chain.split(
+      "|",
+    ) ?? ["", ""];
     let btcNetworkType = "testnet";
     if (networkId == "0") {
       btcNetworkType = "mainnet";
@@ -76,28 +76,28 @@ export class ScalarClient {
       },
     );
     const { data } = scalarProtocolsResponse.data;
+    console.log("Protocols from core:", data.protocols);
     const scalarProtocols = data.protocols;
-    console.log("--- scalarProtocols ---", scalarProtocols);
     const protocols: Protocol[] = scalarProtocols.map(
       (scalarProtocol: ScalarProtocol) => {
         const custodianGroup: CustodianGroup | undefined =
           scalarProtocol.custodianGroup
             ? {
-              UID: scalarProtocol.custodianGroup.uid,
-              Name: scalarProtocol.custodianGroup.name,
-              BtcPublicKey: scalarProtocol.custodianGroup.btcPubkey,
-              Quorum: scalarProtocol.custodianGroup.quorum,
-              Status: scalarProtocol.custodianGroup.status,
-              Description: scalarProtocol.custodianGroup.description,
-              Custodians: scalarProtocol.custodianGroup.custodians.map(
-                (custodian) => ({
-                  Name: custodian.name,
-                  Status: custodian.status,
-                  BtcPublicKey: custodian.btcPubkey,
-                  Description: custodian.description,
-                }),
-              ),
-            }
+                UID: scalarProtocol.custodianGroup.uid,
+                Name: scalarProtocol.custodianGroup.name,
+                BtcPublicKey: scalarProtocol.custodianGroup.btcPubkey,
+                Quorum: scalarProtocol.custodianGroup.quorum,
+                Status: scalarProtocol.custodianGroup.status,
+                Description: scalarProtocol.custodianGroup.description,
+                Custodians: scalarProtocol.custodianGroup.custodians.map(
+                  (custodian) => ({
+                    Name: custodian.name,
+                    Status: custodian.status,
+                    BtcPublicKey: custodian.btcPubkey,
+                    Description: custodian.description,
+                  }),
+                ),
+              }
             : undefined;
         return {
           pubkey: scalarProtocol.pubkey,
@@ -107,8 +107,8 @@ export class ScalarClient {
           attribute: scalarProtocol.attribute
             ? scalarProtocol.attribute
             : {
-              model: LiquidityModel.POOLING,
-            },
+                model: LiquidityModel.POOLING,
+              },
           status: scalarProtocol.status,
           custodian_group: custodianGroup,
           chains: scalarProtocol.chains.map((chain) => {
@@ -119,15 +119,14 @@ export class ScalarClient {
             //     chain.params?.chain.split("|")[1]
             //     : "BTC"; // TODO: Handle for BTC
             const chain_name = chain.chain;
-            const parts = chain.chain.split("|")
+            const parts = chain.chain.split("|");
             const chain_id = Number(parts[1]) || 0;
             const chain_type = parts[0] || "evm";
-            const chain_smart_contract_address =
-              chain.address
-                ? new Uint8Array(
+            const chain_smart_contract_address = chain.address
+              ? new Uint8Array(
                   Buffer.from(hexStringWithout0x(chain.address), "hex"),
                 )
-                : new Uint8Array();
+              : new Uint8Array();
             return {
               chain_name: chain_name,
               chain_id: chain_id,

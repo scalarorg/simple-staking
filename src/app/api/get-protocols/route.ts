@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
 import { getProtocols, Protocol } from "@scalar-lab/scalarjs-sdk";
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
     const { grpcUrl, status } = await request.json();
     const protocols: Protocol[] = await getProtocols({
-      grpcUrl: "localhost:9090",
+      grpcUrl,
       // status,
     });
 
