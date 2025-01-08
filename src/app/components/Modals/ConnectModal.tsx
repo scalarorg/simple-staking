@@ -103,11 +103,10 @@ export const ConnectModal: React.FC<{}> = ({}) => {
     }
   }, [setWalletProvider, selectedWallet, isInjectable]);
 
-  useEffect(() => {
-    if (!walletProvider) return;
-    connectWallet();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectWallet, walletProvider]);
+  // useEffect(() => {
+  //   if (!walletProvider) return;
+  //   connectWallet();
+  // }, [connectWallet, walletProvider]);
 
   const checkWalletAvailable = (
     provider: string,

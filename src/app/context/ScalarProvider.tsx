@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { createContext, memo, useContext, useEffect, useState } from "react";
+import { createContext, memo, useContext, useEffect, useMemo } from "react";
 
 import { useError } from "@/app/context/Error/ErrorContext";
 import { ErrorState } from "@/app/types/errors";
@@ -37,9 +37,9 @@ export function useScalarClient() {
 
 export function ScalarProvider({ children }: { children: React.ReactNode }) {
   const { isErrorOpen, showError } = useError();
-  const [client, setClient] = useState<ScalarClient>(
-    () => new ScalarClient(ProjectENV.NEXT_PUBLIC_SCALAR_GRPC_URL),
-  );
+  const client = useMemo(() => {
+    return new ScalarClient(ProjectENV.NEXT_PUBLIC_SCALAR_GRPC_URL);
+  }, []);
 
   // const dAppsQuery = useQuery({
   //   queryKey: ["getListDApps"],

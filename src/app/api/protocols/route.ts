@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const { grpcUrl, status } = await request.json();
     const protocols: Protocol[] = await getProtocols({
       grpcUrl,
-      // status,
+      status,
     });
 
     const res = {

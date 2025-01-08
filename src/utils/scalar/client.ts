@@ -66,15 +66,10 @@ export class ScalarClient {
   }
 
   async getProtocols(): Promise<{ protocols: Protocol[] }> {
-    // Get from core
-    const url = window.location.origin;
-    const scalarProtocolsResponse = await axios.post(
-      `${url}/api/get-protocols`,
-      {
-        grpcUrl: this.grpcUrl,
-        status: ProtocolStatus.ACTIVATED,
-      },
-    );
+    const scalarProtocolsResponse = await axios.post(`/api/protocols`, {
+      grpcUrl: this.grpcUrl,
+      status: ProtocolStatus.ACTIVATED,
+    });
     const { data } = scalarProtocolsResponse.data;
     console.log("Protocols from core:", data.protocols);
     const scalarProtocols = data.protocols;
@@ -230,6 +225,14 @@ export class ScalarClient {
     // // Merge protocols
     // protocols.push(...oldProtocols);
     return { protocols };
+  }
+
+  async getGatewayAddressForChain(chainName: string): Promise<THexString | null> {
+    const response = await axios.post(`/api/gateway`, {
+      grpcUrl: this.grpcUrl,
+      chainName,
+    });
+    return response.data.gateway;
   }
 
   async getVersionAndTag(): Promise<{ version: number; tag: string } | null> {

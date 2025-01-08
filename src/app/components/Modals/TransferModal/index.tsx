@@ -1,27 +1,32 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useAccount, useConnect } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 import { Button } from "@/app/components/ui/button";
 import { Form } from "@/app/components/ui/form";
 import { toast } from "@/app/components/ui/use-toast";
+import { useWalletInfo } from "@/app/context/WalletProvider";
+import { useGateway } from "@/app/hooks/useGateway";
 import { useTransferModal } from "@/app/stores/modal";
 import { ProtocolChain } from "@/app/types/protocol";
 
 import { GeneralModal } from "../GeneralModal";
 
+import { useScalarClient } from "@/app/context/ScalarProvider";
+import { useQuery } from "@tanstack/react-query";
 import { DestinationChainSection } from "./DestinationChainSection";
 import { FormSchema, TransferFormData } from "./schema";
 import { SourceChainSection } from "./SourceChainSection";
-import { MOCK_TOKEN_ADDRESS } from "./utils";
+import { isBtcChain, isEvmChain } from "./utils";
 
 export const TransferModal = () => {
   const form = useForm<TransferFormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       sourceChain: "",
+      sourceChainAddress: "",
       destinationChain: "",
       destRecipientAddress: "",
       transferAmount: "100000",
@@ -29,49 +34,105 @@ export const TransferModal = () => {
       customFeeRate: undefined,
     },
   });
-
   const { isOpen, close, protocol } = useTransferModal();
-  const { address: evmAddress, connector } = useAccount();
-  const { connect, connectors } = useConnect();
+  const { address: evmAddress } = useAccount();
+  const { address: btcAddress } = useWalletInfo();
+  const { switchChain, error } = useSwitchChain();
 
-  const [selectedDestChain, setSelectedDestChain] =
-    useState<ProtocolChain | null>(null);
-  const [selectedSourceChain, setSelectedSourceChain] =
-    useState<ProtocolChain | null>(null);
+  const [destChain, setDestChain] = useState<ProtocolChain | null>(null);
+  const [sourceChain, setSourceChain] = useState<ProtocolChain | null>(null);
 
   const watchTransferAmount = form.watch("transferAmount");
   const watchSourceChain = form.watch("sourceChain");
   const watchDestinationChain = form.watch("destinationChain");
+  const watchSourceChainAddress = form.watch("sourceChainAddress");
 
-  const sourceTokenAddress =
-    selectedSourceChain?.supported_chain.address || MOCK_TOKEN_ADDRESS;
+  const sourceTokenAddress = sourceChain?.supported_chain.address;
+  const { client } = useScalarClient();
 
   // Update selected chains when form values change
   useEffect(() => {
     if (!protocol || !watchSourceChain) {
-      setSelectedSourceChain(null);
+      setSourceChain(null);
       return;
     }
     const chain = protocol.chains.find(
       (c: ProtocolChain) => c.chain_name === watchSourceChain,
     );
-    setSelectedSourceChain(chain || null);
+    setSourceChain(chain || null);
   }, [watchSourceChain, protocol]);
 
   useEffect(() => {
     if (!protocol || !watchDestinationChain) {
-      setSelectedDestChain(null);
+      setDestChain(null);
       return;
     }
     const chain = protocol.chains.find(
       (c: ProtocolChain) => c.chain_name === watchDestinationChain,
     );
-    setSelectedDestChain(chain || null);
+    setDestChain(chain || null);
   }, [watchDestinationChain, protocol]);
 
+  useEffect(() => {
+    if (!sourceChain) return;
+    if (isBtcChain(sourceChain)) {
+      form.setValue("sourceChainAddress", btcAddress || "");
+    } else if (isEvmChain(sourceChain)) {
+      form.setValue("sourceChainAddress", evmAddress || "");
+    }
+  }, [sourceChain, btcAddress, evmAddress, form]);
+
+  const onConnectWallet = useCallback(() => {
+    if (isEvmChain(destChain)) {
+      form.setValue("destRecipientAddress", evmAddress || "");
+    } else if (isBtcChain(destChain)) {
+      console.log({ btcAddress });
+      // not supported yet
+      //   form.setValue("destRecipientAddress", btcAddress || "");
+    }
+  }, [evmAddress, btcAddress, form, destChain]);
+
+  const { data: gatewayAddress } = useQuery({
+    queryKey: ["gatewayAddress", sourceChain?.chain_name],
+    queryFn: async () => {
+      if (!sourceChain) return;
+      if (!isEvmChain(sourceChain)) return;
+      const gatewayAddress = await client.getGatewayAddressForChain(
+        sourceChain.chain_name,
+      );
+      return gatewayAddress;
+    },
+    enabled: !!sourceChain && !!client && isEvmChain(sourceChain),
+  });
+
+  const { sendToken } = useGateway();
+
+  const sendEVMToEVM = useCallback(
+    async (data: TransferFormData) => {
+      if (!sourceTokenAddress) return;
+      if (!gatewayAddress) return;
+      sendToken({
+        destinationChain: data.destinationChain,
+        destinationAddress: data.destRecipientAddress,
+        symbol: sourceTokenAddress,
+        amount: BigInt(data.transferAmount),
+        gatewayAddress: gatewayAddress,
+      });
+    },
+    [sendToken, sourceTokenAddress, gatewayAddress],
+  );
+
   const handleSubmit = async (data: TransferFormData) => {
-    if (!protocol) return;
+    if (!protocol || !sourceChain || !destChain) return;
     try {
+      switch (true) {
+        case isEvmChain(sourceChain) && isEvmChain(destChain):
+          await sendEVMToEVM(data);
+          break;
+        default:
+          throw new Error("Unsupported chain");
+      }
+
       // Implement your transfer logic here
       //   await sendToken({
       //     destinationChain: data.destinationChain,
@@ -108,17 +169,15 @@ export const TransferModal = () => {
             <SourceChainSection
               form={form}
               protocol={protocol}
-              selectedSourceChain={selectedSourceChain}
+              selectedSourceChain={sourceChain}
               sourceTokenAddress={sourceTokenAddress}
+              sourceChainAddress={watchSourceChainAddress}
             />
             <DestinationChainSection
               form={form}
               protocol={protocol}
-              selectedDestChain={selectedDestChain}
-              evmAddress={evmAddress}
-              onConnectWallet={() =>
-                connect({ connector: connector || connectors[0] })
-              }
+              selectedDestChain={destChain}
+              onConnectWallet={onConnectWallet}
               watchTransferAmount={watchTransferAmount}
             />
           </div>

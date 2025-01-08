@@ -14,25 +14,25 @@ import { Select } from "@/app/components/ui/select";
 import { ProtocolChain } from "@/app/types/protocol";
 
 import { TransferFormData } from "./schema";
+import { isBtcChain } from "./utils";
 
 interface DestinationChainSectionProps {
   form: UseFormReturn<TransferFormData>;
   protocol: any;
   selectedDestChain: ProtocolChain | null;
-  evmAddress?: string;
-  onConnectWallet: () => void;
+  destRecipientAddress?: string;
   watchTransferAmount: string;
+  onConnectWallet: () => void;
 }
 
 export const DestinationChainSection = ({
   form,
   protocol,
   selectedDestChain,
-  evmAddress,
-  onConnectWallet,
+  destRecipientAddress,
   watchTransferAmount,
+  onConnectWallet,
 }: DestinationChainSectionProps) => {
-  console.log({ evmAddress });
   return (
     <div className="space-y-4 w-full">
       <div className="space-y-2 -mt-2">
@@ -42,14 +42,19 @@ export const DestinationChainSection = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Destination chain</FormLabel>
-              <Select value={field.value} onChange={field.onChange}>
+              <Select
+                value={field.value}
+                onChange={field.onChange}
+                disabled={isBtcChain(selectedDestChain)}
+              >
                 <option value="" disabled>
                   Select chain
                 </option>
                 {protocol?.chains
                   .filter(
                     (chain: ProtocolChain) =>
-                      chain.chain_name !== form.getValues("sourceChain"),
+                      chain.chain_name !== form.getValues("sourceChain") &&
+                      !isBtcChain(chain),
                   )
                   .map((chain: ProtocolChain) => (
                     <option key={chain.chain_name} value={chain.chain_name}>
@@ -67,7 +72,7 @@ export const DestinationChainSection = ({
         name="destRecipientAddress"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Recipient address</FormLabel>
+            <FormLabel>Destination address</FormLabel>
             <div className="flex gap-2 items-center">
               <FormControl>
                 <Input placeholder="" {...field} />
@@ -75,13 +80,8 @@ export const DestinationChainSection = ({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  if (evmAddress) {
-                    form.setValue("destRecipientAddress", evmAddress);
-                    return;
-                  }
-                  onConnectWallet();
-                }}
+                disabled={!selectedDestChain}
+                onClick={onConnectWallet}
               >
                 <Wallet className="w-4 h-4 text-orange-400" />
               </Button>

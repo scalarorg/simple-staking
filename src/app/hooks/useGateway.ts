@@ -2,19 +2,17 @@ import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 
 import { IGateway_ABI } from "@/abis/IGateway";
 
-interface UseGatewayProps {
-  contractAddress: `0x${string}`;
-}
-
 interface SendTokenParams {
   destinationChain: string;
   destinationAddress: string;
   symbol: string;
   amount: bigint;
+  gatewayAddress: `0x${string}`;
 }
 
-export const useGateway = ({ contractAddress }: UseGatewayProps) => {
+export const useGateway = () => {
   const { data: hash, error, isPending, writeContract } = useWriteContract();
+  
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({
       hash,
@@ -25,9 +23,10 @@ export const useGateway = ({ contractAddress }: UseGatewayProps) => {
     destinationAddress,
     symbol,
     amount,
+    gatewayAddress,
   }: SendTokenParams) => {
     writeContract({
-      address: contractAddress,
+      address: gatewayAddress,
       abi: IGateway_ABI,
       functionName: "sendToken",
       args: [destinationChain, destinationAddress, symbol, amount],

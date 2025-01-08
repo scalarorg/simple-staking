@@ -1,7 +1,6 @@
 import { ChainFormatters, defineChain } from "viem";
 import { cookieStorage, createConfig, createStorage, http } from "wagmi";
 import * as supportedChains from "wagmi/chains";
-import { injected } from "wagmi/connectors";
 
 import { ProjectENV } from "@/env";
 
@@ -75,7 +74,6 @@ const defaultChainTransports = defaultChains.reduce(
 export function getConfig() {
   return createConfig({
     chains: [localEthereumSepoliaChain, localChain, ...defaultChains],
-    connectors: [injected()],
     storage: createStorage({
       storage: cookieStorage,
     }),

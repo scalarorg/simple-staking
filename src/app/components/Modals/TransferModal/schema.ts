@@ -4,6 +4,9 @@ export const FormSchema = z.object({
   sourceChain: z.string({
     required_error: "Please select a source chain.",
   }),
+  sourceChainAddress: z.string({
+    required_error: "Please enter your source chain address.",
+  }),
   destinationChain: z.string({
     required_error: "Please select a destination chain.",
   }),

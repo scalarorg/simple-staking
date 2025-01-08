@@ -1,0 +1,66 @@
+{
+  "protocols": [
+    {
+      "chains": [
+        {
+          "chain": "bitcoin|4",
+          "address": "tb1p07q440mdl4uyywns325dk8pvjphwety3psp4zvkngtjf3z3hhr2sfar3hv"
+        },
+        {
+          "chain": "evm|11155111",
+          "address": "0xaBbeEcbBfE4732b9DA50CE6b298EDf47E351Fc05"
+        },
+        {
+          "chain": "evm|97",
+          "address": "0xaa36A8a917D1804376A7b6Cd54AE1C74Cf83654d"
+        }
+      ],
+      "pubkey": "Aw/18SVK0K+b6fWX23voEYcKj06KrbM3XFFU42At5stz",
+      "address": "92lo8NtWJHXk7yE6SyNgYlvr3OM=",
+      "name": "scalar",
+      "tag": "pools",
+      "attribute": {
+        "model": "LIQUIDITY_MODEL_POOLING"
+      },
+      "status": "STATUS_ACTIVATED",
+      "custodian_group": {
+        "custodians": [
+          {
+            "name": "scalarnode1",
+            "btc_pubkey": "AhXakTs+h7STKx4bh9lmfCjnJQqg7WCzoxCV9UHhZBSI",
+            "status": "STATUS_ACTIVATED",
+            "description": ""
+          },
+          {
+            "name": "scalarnode2",
+            "btc_pubkey": "AvDz2b6vejlFvKoUfgQa4dXKApvefkDYJR8Hg9bsvo+1",
+            "status": "STATUS_ACTIVATED",
+            "description": ""
+          },
+          {
+            "name": "scalarnode3",
+            "btc_pubkey": "A1lOeMCiloIQ2cFVDUrTGwPV5LllnPL2eEJIO7PCu3gR",
+            "status": "STATUS_ACTIVATED",
+            "description": ""
+          },
+          {
+            "name": "scalarnode4",
+            "btc_pubkey": "A7WeV1zvhz6pUnOv1VlWyEWQUHIA1BDmk+SweaQmzGEC",
+            "status": "STATUS_ACTIVATED",
+            "description": ""
+          }
+        ],
+        "uid": "mock|123456789",
+        "name": "scalar",
+        "btc_pubkey": "",
+        "quorum": 3,
+        "status": "STATUS_ACTIVATED",
+        "description": "Default custodial group, which contains all custodians"
+      },
+      "asset": {
+        "chain": "bitcoin|4",
+        "name": "sBtc"
+      }
+    }
+  ]
+}
