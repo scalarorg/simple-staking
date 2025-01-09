@@ -21,7 +21,7 @@ import { isEvmChain } from "./utils";
 interface SourceChainSectionProps {
   form: UseFormReturn<TransferFormData>;
   protocol: TProtocol;
-  selectedSourceChain: TProtocolChain | null;
+  selectedSourceChain?: TProtocolChain;
   sourceTokenAddress: string | undefined;
   sourceChainAddress: string;
   gateway: string;

@@ -5,12 +5,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 
-import ScalarAPI from "@/apis/scalar";
 import { Button } from "@/app/components/ui/button";
 import { Form } from "@/app/components/ui/form";
 import { toast } from "@/app/components/ui/use-toast";
 import { useWalletInfo } from "@/app/context/WalletProvider";
-import { useGateway } from "@/app/hooks/useGateway";
 import { useTransferModal } from "@/app/stores/modal";
 import { isSupportedChain } from "@/app/wagmi";
 import { getChainID } from "@/utils/scalar/chains";
@@ -20,6 +18,8 @@ import { GeneralModal } from "../GeneralModal";
 import { DestinationChainSection } from "./DestinationChainSection";
 import { FormSchema, TransferFormData } from "./schema";
 import { SourceChainSection } from "./SourceChainSection";
+import { useGateway } from "./useGateway";
+import { useSendToken } from "./useSendToken";
 import { isBtcChain, isEvmChain } from "./utils";
 
 export const TransferModal = () => {
@@ -41,8 +41,8 @@ export const TransferModal = () => {
   const { switchChain, error } = useSwitchChain();
   const chainId = useChainId();
 
-  const [destChain, setDestChain] = useState<TProtocolChain | null>(null);
-  const [sourceChain, setSourceChain] = useState<TProtocolChain | null>(null);
+  const [destChain, setDestChain] = useState<TProtocolChain>();
+  const [sourceChain, setSourceChain] = useState<TProtocolChain>();
 
   const watchTransferAmount = form.watch("transferAmount");
   const watchSourceChain = form.watch("sourceChain");
@@ -50,27 +50,32 @@ export const TransferModal = () => {
   const watchSourceChainAddress = form.watch("sourceChainAddress");
 
   const sourceTokenAddress = sourceChain?.address;
-  // const { client } = useScalarClient();
+  const evmChains = protocol?.chains?.filter((c) => isEvmChain(c));
 
-  // Update selected chains when form values change
   useEffect(() => {
     if (!protocol || !watchSourceChain) {
-      setSourceChain(null);
       return;
     }
     const chain = protocol.chains?.find((c) => c.chain === watchSourceChain);
-    setSourceChain(chain || null);
-  }, [watchSourceChain, protocol]);
+    if (!chain) return;
+    setSourceChain(chain);
+    if (isEvmChain(chain)) {
+      const otherEvmChain = evmChains?.find(
+        (c: TProtocolChain) => c.chain !== chain.chain,
+      );
+      setDestChain(otherEvmChain);
+    }
+  }, [watchSourceChain, protocol, evmChains]);
 
   useEffect(() => {
     if (!protocol || !watchDestinationChain) {
-      setDestChain(null);
       return;
     }
     const chain = protocol.chains?.find(
       (c) => c.chain === watchDestinationChain,
     );
-    setDestChain(chain || null);
+    if (!chain) return;
+    setDestChain(chain);
   }, [watchDestinationChain, protocol]);
 
   useEffect(() => {
@@ -102,18 +107,7 @@ export const TransferModal = () => {
     }
   }, [evmAddress, btcAddress, form, destChain]);
 
-  const { data: gateway } = ScalarAPI.useQuery(
-    "get",
-    `/scalar/chains/v1beta1/gateway_address/{chain}`,
-    {
-      params: {
-        path: { chain: sourceChain?.chain ?? "" },
-      },
-    },
-    {
-      enabled: Boolean(sourceChain?.chain) && isEvmChain(sourceChain),
-    },
-  );
+  const { data: gateway } = useGateway(sourceChain?.chain);
 
   const {
     sendToken,
@@ -122,7 +116,7 @@ export const TransferModal = () => {
     hash,
     error: sendError,
     receiptError,
-  } = useGateway();
+  } = useSendToken();
 
   const sendEVMToEVM = useCallback(
     async (data: TransferFormData) => {
@@ -139,18 +133,130 @@ export const TransferModal = () => {
         amount: BigInt(data.transferAmount),
         gatewayAddress: gateway.address as THexString,
       });
+
+      while (!isPending) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
+      toast({
+        title: "Transfer transaction successful",
+        description: `Transaction hash: ${hash}`,
+      });
     },
-    [sendToken, sourceTokenAddress, gateway, protocol],
+    [sendToken, sourceTokenAddress, gateway, protocol, isPending, hash],
   );
 
-  // const sendBtcToEvm = useCallback(
+  // const handleBtcToEvm = useCallback(
   //   async (data: TransferFormData) => {
-  //     if (!gateway || !gateway.address) return;
-  //     if (!isHexString(gateway.address)) return;
-  //     if (!isBtcChain(data.sourceChain)) return;
-  //     if (!isEvmChain(data.destinationChain)) return;
+  //     if (!isBtcChain(data.sourceChain))
+  //       throw new Error("Invalid source chain");
+  //     if (!isEvmChain(data.destinationChain))
+  //       throw new Error("Invalid destination chain");
+  //     if (!btcNetwork) throw new Error("Invalid BTC network");
+  //     if (!protocol) throw new Error("Invalid protocol");
+  //     if (!walletProvider) throw new Error("Invalid wallet provider");
+  //     if (!destChain) throw new Error("Invalid destination chain");
+  //     if (!destChain?.address)
+  //       throw new Error("Invalid destination chain address");
+  //     if (!protocol?.custodian_group?.custodians)
+  //       throw new Error("Invalid custodian pubkeys");
+  //     if (!protocol?.custodian_group?.quorum)
+  //       throw new Error("Invalid custodian quorum");
+  //     if (!btcPubkey) throw new Error("Invalid BTC pubkey");
+  //     if (!btcAddress) throw new Error("Invalid BTC address");
+
+  //     const requiredFields = {
+  //       btcNetwork,
+  //       protocol,
+  //       walletProvider,
+  //       destChain: destChain?.address,
+  //       custodians: protocol?.custodian_group?.custodians,
+  //       quorum: protocol?.custodian_group?.quorum,
+  //       destinationChain: data.destinationChain,
+  //     };
+
+  //     // Validate all required fields exist
+  //     for (const [key, value] of Object.entries(requiredFields)) {
+  //       if (!value) throw new Error(`Missing required field: ${key}`);
+  //     }
+
+  //     // Get and validate UTXOs
+  //     const addressUtxos = await walletProvider.getUtxos(
+  //       btcAddress,
+  //       Number(data.transferAmount),
+  //     );
+  //     if (!addressUtxos) throw new Error("Not enough UTXOs");
+
+  //     // Prepare transaction data
+  //     const txData = {
+  //       utxos: addressUtxos.map((utxo) => ({ ...utxo, status: {} as any })),
+  //       feeRate:
+  //         data.btcFeeRate === "custom"
+  //           ? (data.customFeeRate ?? feeRates.fastestFee)
+  //           : feeRates.minimumFee,
+  //       addresses: {
+  //         btcUserPk: scalarVaultModule.hexToBytes(btcPubkey.replace("0x", "")),
+  //         destinationRecipient: scalarVaultModule.hexToBytes(
+  //           data.destRecipientAddress.replace("0x", ""),
+  //         ),
+  //         destinationToken: scalarVaultModule.hexToBytes(
+  //           destChain.address.replace("0x", ""),
+  //         ),
+  //       },
+  //     };
+
+  //     // Prepare custodian pubkeys
+  //     const custodianPubkeysBuffer = await prepareCustodianPubkeys(
+  //       protocol.custodian_group.custodians,
+  //     );
+
+  //     // Build and sign transaction
+  //     const chainId = getChainID(data.destinationChain);
+  //     if (!chainId) throw new Error("Invalid chain ID");
+
+  //     const destinationChain = new scalarVaultModule.DestinationChain(
+  //       ChainType.EVM,
+  //       BigInt(chainId),
+  //     );
+
+  //     const { psbt: unsignedVaultPsbt } =
+  //       vault.buildStakingOutputWithOnlyCovenants({
+  //         stakingAmount: BigInt(data.transferAmount),
+  //         stakerPubkey: txData.addresses.btcUserPk,
+  //         stakerAddress: btcAddress,
+  //         custodialPubkeys: custodianPubkeysBuffer,
+  //         covenantQuorum: protocol.custodian_group.quorum,
+  //         destinationChain,
+  //         destinationContractAddress: txData.addresses.destinationToken,
+  //         destinationRecipientAddress: txData.addresses.destinationRecipient,
+  //         availableUTXOs: txData.utxos,
+  //         feeRate: txData.feeRate,
+  //         rbf: true,
+  //       });
+
+  //     // Sign and broadcast transaction
+  //     const signedPsbt = await walletProvider.signPsbt(
+  //       unsignedVaultPsbt.toHex(),
+  //       {
+  //         autoFinalized: true,
+  //       },
+  //     );
+  //     if (!signedPsbt) throw new Error("Failed to sign the PSBT");
+
+  //     const txHex = Psbt.fromHex(signedPsbt).extractTransaction().toHex();
+  //     const txId = await walletProvider.pushTx(txHex);
+  //     setTxId(txId);
   //   },
-  //   [sourceTokenAddress, gateway],
+  //   [
+  //     vault,
+  //     walletProvider,
+  //     btcNetwork,
+  //     protocol,
+  //     destChain,
+  //     btcAddress,
+  //     btcPubkey,
+  //     feeRates,
+  //   ],
   // );
 
   const handleSubmit = async (data: TransferFormData) => {
@@ -161,7 +267,7 @@ export const TransferModal = () => {
           await sendEVMToEVM(data);
           break;
         case isBtcChain(sourceChain) && isEvmChain(destChain):
-          await sendBtcToEvm(data);
+          // await sendBtcToEvm(data);
           break;
         // case isEvmChain(sourceChain) && isBtcChain(destChain):
         //   await sendEvmToBtc(data);
@@ -170,21 +276,6 @@ export const TransferModal = () => {
           throw new Error("Unsupported chain");
       }
 
-      // Implement your transfer logic here
-      //   await sendToken({
-      //     destinationChain: data.destinationChain,
-      //     destRecipientAddress: data.destRecipientAddress,
-      //     transferAmount: data.transferAmount,
-      //   });
-
-      while (!isPending) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-
-      toast({
-        title: "Transfer transaction successful",
-        description: `Transaction hash: ${hash}`,
-      });
       close();
     } catch (error) {
       console.error({ error });
@@ -213,13 +304,6 @@ export const TransferModal = () => {
   }, [receiptError, sendError]);
 
   useEffect(() => {
-    if (isPending) {
-      toast({
-        title: "Transaction pending",
-        description: "Waiting for sending transaction",
-      });
-    }
-
     if (isConfirmed) {
       toast({
         title: "Transaction confirmed",
@@ -259,6 +343,7 @@ export const TransferModal = () => {
                 selectedDestChain={destChain}
                 onConnectWallet={onConnectWallet}
                 watchTransferAmount={watchTransferAmount}
+                sourceChain={sourceChain}
               />
             </div>
             <div className="flex justify-end">

@@ -18,8 +18,9 @@ import { isBtcChain } from "./utils";
 interface DestinationChainSectionProps {
   form: UseFormReturn<TransferFormData>;
   protocol: TProtocol;
-  selectedDestChain: TProtocolChain | null;
+  selectedDestChain?: TProtocolChain;
   destRecipientAddress?: string;
+  sourceChain?: TProtocolChain;
   watchTransferAmount: string;
   onConnectWallet: () => void;
 }
@@ -28,10 +29,11 @@ export const DestinationChainSection = ({
   form,
   protocol,
   selectedDestChain,
-  destRecipientAddress,
   watchTransferAmount,
+  sourceChain,
   onConnectWallet,
 }: DestinationChainSectionProps) => {
+  console.log("sourceChain", sourceChain);
   return (
     <div className="space-y-4 w-full">
       <div className="space-y-2 -mt-2">
@@ -52,8 +54,7 @@ export const DestinationChainSection = ({
                 {protocol?.chains
                   ?.filter(
                     (chain: TProtocolChain) =>
-                      chain.chain !== form.getValues("sourceChain") &&
-                      !isBtcChain(chain),
+                      chain.chain !== sourceChain?.chain && !isBtcChain(chain),
                   )
                   .map((chain: TProtocolChain) => (
                     <option key={chain.chain} value={chain.chain}>
