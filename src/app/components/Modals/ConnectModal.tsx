@@ -9,7 +9,6 @@ import { PiWalletBold } from "react-icons/pi";
 import { Tooltip } from "react-tooltip";
 
 import { useTerms } from "@/app/context/Terms/TermsContext";
-import { useGeneralModal } from "@/app/stores/modal";
 import { getNetworkConfig } from "@/config/network.config";
 import { BROWSER_INJECTED_WALLET_NAME, walletList } from "@/utils/wallet/list";
 import { WalletProvider } from "@/utils/wallet/wallet_provider";
@@ -25,6 +24,7 @@ const BROWSER = "btcwallet";
 export const ConnectModal: React.FC<{}> = ({}) => {
   const [accepted, setAccepted] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<string>("Unisat");
+  const [open, setOpen] = useState(false);
 
   const [injectedWalletProviderName, setInjectedWalletProviderName] =
     useState("Browser");
@@ -153,15 +153,13 @@ export const ConnectModal: React.FC<{}> = ({}) => {
     [selectedWallet, injectedWalletProviderName, injectedWalletProviderIcon],
   );
 
-  const { open, close } = useGeneralModal();
-
   return (
-    <GeneralModal open={true} onClose={() => close("connect")}>
+    <GeneralModal open={open} onClose={() => setOpen(false)}>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-bold">Connect wallet</h3>
         <button
           className="btn btn-circle btn-ghost btn-sm"
-          onClick={() => close("connect")}
+          onClick={() => setOpen(false)}
         >
           <IoMdClose size={24} />
         </button>

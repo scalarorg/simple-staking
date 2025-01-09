@@ -1,13 +1,17 @@
-import { ProtocolChain } from "@/app/types/protocol";
-
 export const MOCK_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000123";
 
-export const isEvmChain: (chain: ProtocolChain | null) => boolean = (chain) => {
+export const isEvmChain: (chain: TProtocolChain | string | null) => boolean = (
+  chain,
+) => {
   if (!chain) return false;
-  return chain.chain_type.startsWith("evm");
+  if (typeof chain === "string") return !!chain.startsWith("evm");
+  return !!chain.chain?.startsWith("evm");
 };
 
-export const isBtcChain: (chain: ProtocolChain | null) => boolean = (chain) => {
+export const isBtcChain: (chain: TProtocolChain | string | null) => boolean = (
+  chain,
+) => {
   if (!chain) return false;
-  return chain.chain_type.startsWith("bitcoin");
+  if (typeof chain === "string") return !!chain.startsWith("bitcoin");
+  return !!chain.chain?.startsWith("bitcoin");
 };

@@ -1,9 +1,5 @@
 import { ArrowLeftRight, BookOpen, CircleArrowDown } from "lucide-react";
 // import { Tooltip } from "react-tooltip";
-import {
-  LiquidityModel,
-  ProtocolStatus,
-} from "@scalar-lab/scalarjs-sdk/dist/types";
 import { useEffect } from "react";
 import { useAccount, useConnect } from "wagmi";
 
@@ -14,15 +10,14 @@ import {
   useProtocolModal,
   useTransferModal,
 } from "@/app/stores/modal";
-import { Protocol } from "@/app/types/protocol";
 
 interface ProtocolProps {
   index: number;
-  protocol: Protocol;
+  protocol: TProtocol;
 }
 
 export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
-  const isCustodian = protocol.attribute?.model === LiquidityModel.POOLING;
+  const isCustodian = protocol.attribute?.model === "LIQUIDITY_MODEL_POOLING";
 
   const generalStyles = "cursor-pointer transition-shadow hover:shadow-md";
 
@@ -50,9 +45,11 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
     >
       <td className="p-4">{index + 1}</td>
       <td className="p-4">{protocol.name}</td>
-      <td className="p-4">{protocol.tag}</td>
+      <td className="p-4">
+        {protocol.tag ? Buffer.from(protocol.tag, "base64").toString() : ""}
+      </td>
       <td className="p-4">{isCustodian ? "Pooling" : "Transactional"}</td>
-      <td className="p-4">{ProtocolStatus[protocol.status]}</td>
+      <td className="p-4">{protocol.status?.replace(/^STATUS_/, "")}</td>
       <td className="p-4">
         <div className="flex gap-2 items-center">
           <button

@@ -12,11 +12,14 @@ interface SendTokenParams {
 
 export const useGateway = () => {
   const { data: hash, error, isPending, writeContract } = useWriteContract();
-  
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
+
+  const {
+    isLoading: isConfirming,
+    isSuccess: isConfirmed,
+    error: receiptError,
+  } = useWaitForTransactionReceipt({
+    hash,
+  });
 
   const sendToken = ({
     destinationChain,
@@ -33,5 +36,13 @@ export const useGateway = () => {
     });
   };
 
-  return { hash, error, isPending, sendToken, isConfirming, isConfirmed };
+  return {
+    hash,
+    error,
+    receiptError,
+    isPending,
+    sendToken,
+    isConfirming,
+    isConfirmed,
+  };
 };

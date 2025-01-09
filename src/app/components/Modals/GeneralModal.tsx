@@ -34,9 +34,9 @@ export const GeneralModal: React.FC<GeneralModalProps> = ({
     if (small) {
       return "md:max-w-[25rem]";
     } else if (big) {
-      return "md:w-full md:max-w-[45rem] lg:max-w-[60rem]";
+      return "md:w-full md:max-w-[45rem] lg:max-w-[64rem]";
     } else {
-      return "md:max-w-[45rem] lg:max-w-[60rem]";
+      return "md:max-w-[45rem] lg:max-w-[64rem]";
     }
   };
 

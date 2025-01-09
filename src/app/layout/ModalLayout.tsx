@@ -26,7 +26,7 @@ export const ModalLayout: React.FC<{}> = ({}) => {
           onRetry={retryErrorAction}
         />
       )}
-      {isOpen("connect") && <ConnectModal />}
+      <ConnectModal />
       {/* <PreviewProtocolModal /> */}
       {/* <UnbondModal />
       <StakeCustodianModal />

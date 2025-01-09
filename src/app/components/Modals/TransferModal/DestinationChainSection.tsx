@@ -11,15 +11,14 @@ import {
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
 import { Select } from "@/app/components/ui/select";
-import { ProtocolChain } from "@/app/types/protocol";
 
 import { TransferFormData } from "./schema";
 import { isBtcChain } from "./utils";
 
 interface DestinationChainSectionProps {
   form: UseFormReturn<TransferFormData>;
-  protocol: any;
-  selectedDestChain: ProtocolChain | null;
+  protocol: TProtocol;
+  selectedDestChain: TProtocolChain | null;
   destRecipientAddress?: string;
   watchTransferAmount: string;
   onConnectWallet: () => void;
@@ -51,14 +50,14 @@ export const DestinationChainSection = ({
                   Select chain
                 </option>
                 {protocol?.chains
-                  .filter(
-                    (chain: ProtocolChain) =>
-                      chain.chain_name !== form.getValues("sourceChain") &&
+                  ?.filter(
+                    (chain: TProtocolChain) =>
+                      chain.chain !== form.getValues("sourceChain") &&
                       !isBtcChain(chain),
                   )
-                  .map((chain: ProtocolChain) => (
-                    <option key={chain.chain_name} value={chain.chain_name}>
-                      {chain.chain_name}
+                  .map((chain: TProtocolChain) => (
+                    <option key={chain.chain} value={chain.chain}>
+                      {chain.chain}
                     </option>
                   ))}
               </Select>
@@ -103,10 +102,10 @@ export const DestinationChainSection = ({
         />
       </div>
 
-      {selectedDestChain?.supported_chain && (
+      {selectedDestChain?.address && (
         <div className="space-y-2">
           <FormLabel>Token address</FormLabel>
-          <Input readOnly value={selectedDestChain.supported_chain.address} />
+          <Input readOnly value={selectedDestChain.address} />
         </div>
       )}
     </div>

@@ -7,7 +7,8 @@
     "noEmit": true,
     "esModuleInterop": true,
     "target": "ESNext",
-    "module": "CommonJS",
+    "noUncheckedIndexedAccess": true,
+    "module": "ESNext",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -23,7 +24,7 @@
       "vault/*": ["./remotebtclib/vault/src/*"],
       "bitcoin-flow/*": ["./remotebtclib/bitcoin-flow/src/*"]
     },
-    "moduleResolution": "node"
+    "moduleResolution": "Bundler"
   },
   "include": [
     "next-env.d.ts",

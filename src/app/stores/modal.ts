@@ -2,7 +2,6 @@ import { create } from "zustand";
 
 import { Bond } from "@/app/types/bonds";
 import { CustodianGroup } from "@/app/types/custodians";
-import { DeleteProtocolRequest, Protocol } from "@/app/types/protocol";
 
 type ModalType = "connect" | "transfer" | "general";
 
@@ -32,15 +31,8 @@ export const useGeneralModal = create<IGeneralModalStore>((set, get) => ({
 
 interface IProtocolModalStore {
   isOpen: boolean;
-  protocol?: Protocol;
-  open: (protocol?: Protocol) => void;
-  close: () => void;
-}
-
-interface IDeleteProtocolModalStore {
-  isOpen: boolean;
-  protocolData?: DeleteProtocolRequest;
-  open: (protocolData?: DeleteProtocolRequest) => void;
+  protocol?: TProtocol;
+  open: (protocol?: TProtocol) => void;
   close: () => void;
 }
 
@@ -54,14 +46,14 @@ interface ICustodianGroupModalStore {
 export const useMintTxModal = create<IProtocolModalStore>((set) => ({
   isOpen: false,
   protocol: undefined,
-  open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+  open: (protocol?: TProtocol) => set({ isOpen: true, protocol }),
   close: () => set({ isOpen: false, protocol: undefined }),
 }));
 
 export const useProtocolModal = create<IProtocolModalStore>((set) => ({
   isOpen: false,
   protocol: undefined,
-  open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+  open: (protocol?: TProtocol) => set({ isOpen: true, protocol }),
   close: () => set({ isOpen: false, protocol: undefined }),
 }));
 
@@ -82,14 +74,14 @@ export const useUnbondModal = create<IUnbondModalStore>((set) => ({
 export const useStakeCustodianModal = create<IProtocolModalStore>((set) => ({
   isOpen: false,
   protocol: undefined,
-  open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+  open: (protocol?: TProtocol) => set({ isOpen: true, protocol }),
   close: () => set({ isOpen: false, protocol: undefined }),
 }));
 
 export const useUnstakeCustodianModal = create<IProtocolModalStore>((set) => ({
   isOpen: false,
   protocol: undefined,
-  open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+  open: (protocol?: TProtocol) => set({ isOpen: true, protocol }),
   close: () => set({ isOpen: false, protocol: undefined }),
 }));
 
@@ -99,21 +91,11 @@ export const useAddProtocolModal = create<IProtocolModalStore>((set) => ({
   close: () => set({ isOpen: false }),
 }));
 
-export const useDeleteProtocolModal = create<IDeleteProtocolModalStore>(
-  (set) => ({
-    isOpen: false,
-    protocolData: undefined,
-    open: (protocolData?: DeleteProtocolRequest) =>
-      set({ isOpen: true, protocolData }),
-    close: () => set({ isOpen: false, protocolData: undefined }),
-  }),
-);
-
 export const useAddDestinationChainModal = create<IProtocolModalStore>(
   (set) => ({
     isOpen: false,
     protocol: undefined,
-    open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+    open: (protocol?: TProtocol) => set({ isOpen: true, protocol }),
     close: () => set({ isOpen: false, protocol: undefined }),
   }),
 );
@@ -138,14 +120,14 @@ export const useCustodianGroupModal = create<ICustodianGroupModalStore>(
 
 interface ITransferModalStore {
   isOpen: boolean;
-  protocol?: Protocol;
-  open: (protocol?: Protocol) => void;
+  protocol?: TProtocol;
+  open: (protocol?: TProtocol) => void;
   close: () => void;
 }
 
 export const useTransferModal = create<ITransferModalStore>((set) => ({
   isOpen: false,
   protocol: undefined,
-  open: (protocol?: Protocol) => set({ isOpen: true, protocol }),
+  open: (protocol?: TProtocol) => set({ isOpen: true, protocol }),
   close: () => set({ isOpen: false, protocol: undefined }),
 }));

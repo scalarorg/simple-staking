@@ -12,7 +12,6 @@ import {
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
 import { Select } from "@/app/components/ui/select";
-import { ProtocolChain } from "@/app/types/protocol";
 
 import { Button } from "../../ui/button";
 
@@ -21,10 +20,11 @@ import { isEvmChain } from "./utils";
 
 interface SourceChainSectionProps {
   form: UseFormReturn<TransferFormData>;
-  protocol: any;
-  selectedSourceChain: ProtocolChain | null;
+  protocol: TProtocol;
+  selectedSourceChain: TProtocolChain | null;
   sourceTokenAddress: string | undefined;
   sourceChainAddress: string;
+  gateway: string;
 }
 
 export const SourceChainSection = ({
@@ -33,6 +33,7 @@ export const SourceChainSection = ({
   selectedSourceChain,
   sourceTokenAddress,
   sourceChainAddress,
+  gateway,
 }: SourceChainSectionProps) => {
   const { connect, connectors } = useConnect();
 
@@ -49,9 +50,9 @@ export const SourceChainSection = ({
                 <option value="" disabled>
                   Select chain
                 </option>
-                {protocol?.chains.map((chain: ProtocolChain) => (
-                  <option key={chain.chain_name} value={chain.chain_name}>
-                    {chain.chain_name}
+                {protocol?.chains?.map((chain: TProtocolChain) => (
+                  <option key={chain.chain} value={chain.chain}>
+                    {chain.chain}
                   </option>
                 ))}
               </Select>
@@ -124,10 +125,17 @@ export const SourceChainSection = ({
       />
 
       {isEvmChain(selectedSourceChain) && (
-        <div className="space-y-2">
-          <FormLabel>Token address</FormLabel>
-          <Input readOnly value={sourceTokenAddress || ""} />
-        </div>
+        <>
+          <div className="space-y-2">
+            <FormLabel>Token address</FormLabel>
+            <Input readOnly value={sourceTokenAddress || ""} />
+          </div>
+
+          <div className="space-y-2">
+            <FormLabel>Gateway</FormLabel>
+            <Input readOnly value={gateway || ""} />
+          </div>
+        </>
       )}
     </div>
   );

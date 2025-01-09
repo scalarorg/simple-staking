@@ -9,6 +9,7 @@ import { getNetworkConfig } from "@/config/network.config";
 import { satoshiToBtc } from "@/utils/btcConversions";
 import { maxDecimals } from "@/utils/maxDecimals";
 import { trim } from "@/utils/trim";
+import { useGeneralModal } from "@/app/stores/modal";
 
 import { useWalletInfo, useWalletProvider } from "../../context/WalletProvider";
 import { Hash } from "../Hash/Hash";
@@ -27,6 +28,7 @@ export const ConnectButton: React.FC = () => {
   const { address, balance } = useWalletInfo();
 
   const { disconnectWallet, connectWallet } = useWalletProvider();
+  const { open } = useGeneralModal();
 
   return address ? (
     <div className="relative mr-[-10px] flex text-sm" ref={ref}>
@@ -96,7 +98,10 @@ export const ConnectButton: React.FC = () => {
         btn-primary btn h-[2.5rem] min-h-[2.5rem] rounded-full px-2 text-white md:rounded-lg 
         ${buttonStyles}
         `}
-      onClick={connectWallet}
+      onClick={() => {
+        open("connect");
+        connectWallet();
+      }}
       disabled={!!address}
     >
       <PiWalletBold size={20} className="flex md:hidden" />
