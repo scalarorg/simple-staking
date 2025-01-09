@@ -1,39 +1,28 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { createContext, memo, useContext, useEffect, useMemo } from "react";
+import { createContext, memo, useMemo } from "react";
 
 import { useError } from "@/app/context/Error/ErrorContext";
-import { ErrorState } from "@/app/types/errors";
-import { Protocol } from "@/app/types/protocol";
 import { ProjectENV } from "@/env";
 import { ScalarClient } from "@/utils/scalar/client";
 
 interface ScalarContextType {
   client: ScalarClient;
-  // dApps: {
-  //   data: any;
+  // // dApps: {
+  // //   data: any;
+  // //   isLoading: boolean;
+  // //   error: Error | null;
+  // //   refetch: () => void;
+  // // };
+  // protocols: {
+  //   data: { protocols: Protocol[] } | undefined;
   //   isLoading: boolean;
   //   error: Error | null;
   //   refetch: () => void;
   // };
-  protocols: {
-    data: { protocols: Protocol[] } | undefined;
-    isLoading: boolean;
-    error: Error | null;
-    refetch: () => void;
-  };
 }
 
 const ScalarContext = createContext<ScalarContextType | undefined>(undefined);
-
-export function useScalarClient() {
-  const context = useContext(ScalarContext);
-  if (context === undefined) {
-    throw new Error("useScalarClient must be used within a ScalarProvider");
-  }
-  return context;
-}
 
 export function ScalarProvider({ children }: { children: React.ReactNode }) {
   const { isErrorOpen, showError } = useError();
@@ -50,14 +39,14 @@ export function ScalarProvider({ children }: { children: React.ReactNode }) {
   //   },
   // });
 
-  const protocolsQuery = useQuery({
-    queryKey: ["getListProtocols"],
-    queryFn: () => client.getProtocols(),
-    refetchInterval: 60000, // 1 minute
-    retry: (failureCount, error) => {
-      return !isErrorOpen && failureCount <= 3;
-    },
-  });
+  // const protocolsQuery = useQuery({
+  //   queryKey: ["getListProtocols"],
+  //   queryFn: () => client.getProtocols(),
+  //   refetchInterval: 60000, // 1 minute
+  //   retry: (failureCount, error) => {
+  //     return !isErrorOpen && failureCount <= 3;
+  //   },
+  // });
 
   // useEffect(() => {
   //   if (dAppsQuery.isError && dAppsQuery.error) {
@@ -72,17 +61,17 @@ export function ScalarProvider({ children }: { children: React.ReactNode }) {
   //   }
   // }, [dAppsQuery.isError, dAppsQuery.error, showError]);
 
-  useEffect(() => {
-    if (protocolsQuery.isError && protocolsQuery.error) {
-      showError({
-        error: {
-          message: protocolsQuery.error.message,
-          errorState: ErrorState.SERVER_ERROR,
-          errorTime: new Date(),
-        },
-      });
-    }
-  }, [protocolsQuery.isError, protocolsQuery.error, showError]);
+  // useEffect(() => {
+  //   if (protocolsQuery.isError && protocolsQuery.error) {
+  //     showError({
+  //       error: {
+  //         message: protocolsQuery.error.message,
+  //         errorState: ErrorState.SERVER_ERROR,
+  //         errorTime: new Date(),
+  //       },
+  //     });
+  //   }
+  // }, [protocolsQuery.isError, protocolsQuery.error, showError]);
 
   const value = {
     client,
@@ -92,12 +81,12 @@ export function ScalarProvider({ children }: { children: React.ReactNode }) {
     //   error: dAppsQuery.error,
     //   refetch: dAppsQuery.refetch,
     // },
-    protocols: {
-      data: protocolsQuery.data,
-      isLoading: protocolsQuery.isLoading,
-      error: protocolsQuery.error,
-      refetch: protocolsQuery.refetch,
-    },
+    // protocols: {
+    //   data: protocolsQuery.data,
+    //   isLoading: protocolsQuery.isLoading,
+    //   error: protocolsQuery.error,
+    //   refetch: protocolsQuery.refetch,
+    // },
   };
 
   return (

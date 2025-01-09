@@ -2,10 +2,9 @@
 
 import { Suspense } from "react";
 
-import { AddCustodianGroupModal } from "@/app/components/Modals/AddCustodianGroupModal";
+// import { AddCustodianGroupModal } from "@/app/components/Modals/AddCustodianGroupModal";
 import { ConnectModal } from "@/app/components/Modals/ConnectModal";
 import { ErrorModal } from "@/app/components/Modals/ErrorModal";
-import { UpdateCustodianGroupModal } from "@/app/components/Modals/UpdateCustodianGroupModal";
 import { useError } from "@/app/context/Error/ErrorContext";
 
 export const CustodianGroupsPageModalLayout: React.FC<{}> = ({}) => {
@@ -22,8 +21,8 @@ export const CustodianGroupsPageModalLayout: React.FC<{}> = ({}) => {
         onClose={hideError}
         onRetry={retryErrorAction}
       />
-      <AddCustodianGroupModal />
-      <UpdateCustodianGroupModal />
+      {/* <AddCustodianGroupModal /> */}
+      {/* <UpdateCustodianGroupModal /> */}
     </Suspense>
   );
 };

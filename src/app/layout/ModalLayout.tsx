@@ -4,33 +4,34 @@ import { Suspense } from "react";
 
 import { ConnectModal } from "../components/Modals/ConnectModal";
 import { ErrorModal } from "../components/Modals/ErrorModal";
-import { MintTxModal } from "../components/Modals/MintTxModal";
-import { PreviewProtocolModal } from "../components/Modals/PreviewProtocolModal";
-import { StakeCustodianModal } from "../components/Modals/StakeCustodianModal";
 import { TransferModal } from "../components/Modals/TransferModal";
-import { UnbondModal } from "../components/Modals/UnbondModal";
 import { useError } from "../context/Error/ErrorContext";
+import { useGeneralModal, useTransferModal } from "../stores/modal";
 
 export const ModalLayout: React.FC<{}> = ({}) => {
   const { isErrorOpen, error, hideError, retryErrorAction } = useError();
+  const { isOpen: isTransferModalOpen } = useTransferModal();
+  const { isOpen } = useGeneralModal();
 
   return (
     <Suspense>
-      <ConnectModal />
-      <MintTxModal />
-      <ErrorModal
-        open={isErrorOpen}
-        errorMessage={error.message}
-        errorState={error.errorState}
-        errorTime={error.errorTime}
-        onClose={hideError}
-        onRetry={retryErrorAction}
-      />
-      <PreviewProtocolModal />
-      <UnbondModal />
+      {/* <MintTxModal /> */}
+      {isErrorOpen && (
+        <ErrorModal
+          open={isErrorOpen}
+          errorMessage={error.message}
+          errorState={error.errorState}
+          errorTime={error.errorTime}
+          onClose={hideError}
+          onRetry={retryErrorAction}
+        />
+      )}
+      {isOpen("connect") && <ConnectModal />}
+      {/* <PreviewProtocolModal /> */}
+      {/* <UnbondModal />
       <StakeCustodianModal />
-      <TransferModal />
       {/* <UnstakeCustodianModal /> */}
+      {isTransferModalOpen && <TransferModal />}
     </Suspense>
   );
 };

@@ -4,6 +4,32 @@ import { Bond } from "@/app/types/bonds";
 import { CustodianGroup } from "@/app/types/custodians";
 import { DeleteProtocolRequest, Protocol } from "@/app/types/protocol";
 
+type ModalType = "connect" | "transfer" | "general";
+
+interface IGeneralModalStore {
+  modalState: Record<ModalType, boolean>;
+  open: (type: ModalType) => void;
+  close: (type: ModalType) => void;
+  isOpen: (type: ModalType) => boolean;
+}
+
+export const useGeneralModal = create<IGeneralModalStore>((set, get) => ({
+  modalState: {
+    connect: false,
+    transfer: false,
+    general: false,
+  },
+  open: (type: ModalType) =>
+    set((state) => ({
+      modalState: { ...state.modalState, [type]: true },
+    })),
+  close: (type: ModalType) =>
+    set((state) => ({
+      modalState: { ...state.modalState, [type]: false },
+    })),
+  isOpen: (type: ModalType) => get().modalState[type],
+}));
+
 interface IProtocolModalStore {
   isOpen: boolean;
   protocol?: Protocol;

@@ -10,7 +10,6 @@ import { WagmiProvider } from "wagmi";
 import { CosmosWalletProvider } from "@/app/context/CosmosWalletProvider";
 import { ErrorProvider } from "@/app/context/Error/ErrorContext";
 import NetworkProvicer from "@/app/context/NetworkProvicer";
-import ScalarProvider from "@/app/context/ScalarProvider";
 import { TermsProvider } from "@/app/context/Terms/TermsContext";
 import VaultProvider from "@/app/context/VaultContext";
 import WalletProvider from "@/app/context/WalletProvider";
@@ -26,19 +25,17 @@ function Providers({ children }: React.PropsWithChildren) {
         <QueryClientProvider client={client}>
           <ErrorProvider>
             <NetworkProvicer>
-              <ScalarProvider>
-                <TermsProvider>
-                  <WalletProvider>
-                    <CosmosWalletProvider>
-                      <VaultProvider>
-                        <ReactQueryStreamedHydration>
-                          {children}
-                        </ReactQueryStreamedHydration>
-                      </VaultProvider>
-                    </CosmosWalletProvider>
-                  </WalletProvider>
-                </TermsProvider>
-              </ScalarProvider>
+              <TermsProvider>
+                <WalletProvider>
+                  <CosmosWalletProvider>
+                    <VaultProvider>
+                      <ReactQueryStreamedHydration>
+                        {children}
+                      </ReactQueryStreamedHydration>
+                    </VaultProvider>
+                  </CosmosWalletProvider>
+                </WalletProvider>
+              </TermsProvider>
             </NetworkProvicer>
           </ErrorProvider>
           <ReactQueryDevtools

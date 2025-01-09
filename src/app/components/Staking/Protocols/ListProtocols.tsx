@@ -1,20 +1,15 @@
-import { LoadingView } from "@/app/components/Loading/Loading";
-import { useScalarClient } from "@/app/context/ScalarProvider";
 import { fpTableStyles } from "@/app/scalar/theme";
-import { Protocol } from "@/app/types/protocol";
-
-import { ProtocolItem } from "./ProtocolItem";
 
 export const ListProtocols: React.FC = () => {
-  const { protocols } = useScalarClient();
+  // const { protocols } = useScalarClient();
 
-  if (protocols.isLoading) {
-    return <LoadingView />;
-  }
+  // if (protocols.isLoading) {
+  //   return <LoadingView />;
+  // }
 
-  if (!protocols.data?.protocols) {
-    return <div>No protocols found</div>;
-  }
+  // if (!protocols.data?.protocols) {
+  //   return <div>No protocols found</div>;
+  // }
 
   return (
     <div className="flex flex-col gap-4 container mx-auto w-full">
@@ -36,11 +31,11 @@ export const ListProtocols: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {protocols.data.protocols.map(
+              {/* {protocols.data.protocols.map(
                 (protocol: Protocol, index: number) => (
                   <ProtocolItem key={index} index={index} protocol={protocol} />
                 ),
-              )}
+              )} */}
             </tbody>
           </table>
         </div>

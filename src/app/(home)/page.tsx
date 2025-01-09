@@ -3,7 +3,6 @@
 import Image from "next/image";
 
 import earth from "@/app/assets/earth.webp";
-import { ListBonds } from "@/app/components/Bonds/ListBonds";
 import { ListProtocols } from "@/app/components/Staking/Protocols/ListProtocols";
 import { Summary } from "@/app/components/Summary/Summary";
 import { ModalLayout } from "@/app/layout/ModalLayout";
@@ -37,7 +36,6 @@ const Home: React.FC<HomeProps> = () => {
         </div>
       </div>
       <ListProtocols />
-      <ListBonds />
       <ModalLayout />
     </main>
   );

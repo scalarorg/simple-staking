@@ -1,19 +1,17 @@
+import { CustodianStatus } from "@scalar-lab/scalarjs-sdk/dist/types";
 import { Trash2Icon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { CustodianStatus } from "@scalar-lab/scalarjs-sdk/dist/types";
 
 import { GeneralModal } from "@/app/components/Modals/GeneralModal";
 import { InputField } from "@/app/components/Staking/Form/InputField";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Switch } from "@/app/components/ui/switch";
-import { useScalarClient } from "@/app/context/ScalarProvider";
 import { useCustodianGroupModal } from "@/app/stores/modal";
 import { Custodian } from "@/app/types/custodians";
 
-export const UpdateCustodianGroupModal: React.FC<{}> = ({ }) => {
+export const UpdateCustodianGroupModal: React.FC<{}> = ({}) => {
   const { custodianGroup, isOpen, close } = useCustodianGroupModal();
-  const scalarClient = useScalarClient();
   const [name, setName] = useState("");
   const [btcNetwork, setBtcNetwork] = useState("");
   const [taprootAddress, setTaprootAddress] = useState("");

@@ -3,10 +3,10 @@
 import Image from "next/image";
 
 import earth from "@/app/assets/earth.webp";
-import { CustodianGroups } from "@/app/components/Staking/Protocols/CustodianGroups";
+// import { CustodianGroups } from "@/app/components/Staking/Protocols/CustodianGroups";
 import { CustodianGroupsPageModalLayout } from "@/app/protocols/CustodianGroupsPageModalLayout";
 
-import { Custodians } from "../components/Staking/Protocols/Custodians";
+// import { Custodians } from "../components/Staking/Protocols/Custodians";
 
 interface CustodianGroupsProps {}
 
@@ -20,8 +20,8 @@ const CustodianGroupsPage: React.FC<CustodianGroupsProps> = () => {
         alt={"earth"}
         src={earth}
       />
-      <CustodianGroups />
-      <Custodians />
+      {/* <CustodianGroups />
+      <Custodians /> */}
       <CustodianGroupsPageModalLayout />
     </main>
   );

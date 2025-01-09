@@ -3,8 +3,6 @@
 import Image from "next/image";
 
 import earth from "@/app/assets/earth.webp";
-import { ManageProtocols } from "@/app/components/Staking/Protocols/ManageProtocols";
-import { ProtocolsPageModalLayout } from "@/app/protocols/ProtocolsPageModalLayout";
 
 interface ProtocolsProps {}
 
@@ -18,8 +16,8 @@ const Protocols: React.FC<ProtocolsProps> = () => {
         alt={"earth"}
         src={earth}
       />
-      <ManageProtocols />
-      <ProtocolsPageModalLayout />
+      {/* <ManageProtocols /> */}
+      {/* <ProtocolsPageModalLayout /> */}
     </main>
   );
 };

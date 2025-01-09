@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -14,8 +15,6 @@ import { ProtocolChain } from "@/app/types/protocol";
 
 import { GeneralModal } from "../GeneralModal";
 
-import { useScalarClient } from "@/app/context/ScalarProvider";
-import { useQuery } from "@tanstack/react-query";
 import { DestinationChainSection } from "./DestinationChainSection";
 import { FormSchema, TransferFormData } from "./schema";
 import { SourceChainSection } from "./SourceChainSection";
@@ -34,7 +33,7 @@ export const TransferModal = () => {
       customFeeRate: undefined,
     },
   });
-  const { isOpen, close, protocol } = useTransferModal();
+  const { close, protocol } = useTransferModal();
   const { address: evmAddress } = useAccount();
   const { address: btcAddress } = useWalletInfo();
   const { switchChain, error } = useSwitchChain();
@@ -48,7 +47,7 @@ export const TransferModal = () => {
   const watchSourceChainAddress = form.watch("sourceChainAddress");
 
   const sourceTokenAddress = sourceChain?.supported_chain.address;
-  const { client } = useScalarClient();
+  // const { client } = useScalarClient();
 
   // Update selected chains when form values change
   useEffect(() => {
@@ -97,12 +96,12 @@ export const TransferModal = () => {
     queryFn: async () => {
       if (!sourceChain) return;
       if (!isEvmChain(sourceChain)) return;
-      const gatewayAddress = await client.getGatewayAddressForChain(
-        sourceChain.chain_name,
-      );
-      return gatewayAddress;
+      // const gatewayAddress = await client.getGatewayAddressForChain(
+      //   sourceChain.chain_name,
+      // );
+      // return gatewayAddress;
     },
-    enabled: !!sourceChain && !!client && isEvmChain(sourceChain),
+    enabled: !!sourceChain && isEvmChain(sourceChain),
   });
 
   const { sendToken } = useGateway();
@@ -129,6 +128,12 @@ export const TransferModal = () => {
         case isEvmChain(sourceChain) && isEvmChain(destChain):
           await sendEVMToEVM(data);
           break;
+        // case isBtcChain(sourceChain) && isEvmChain(destChain):
+        //   await sendBtcToEvm(data);
+        //   break;
+        // case isEvmChain(sourceChain) && isBtcChain(destChain):
+        //   await sendEvmToBtc(data);
+        //   break;
         default:
           throw new Error("Unsupported chain");
       }
@@ -152,7 +157,7 @@ export const TransferModal = () => {
   };
 
   return (
-    <GeneralModal open={isOpen} big onClose={close}>
+    <GeneralModal open={true} big onClose={close}>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-bold">Transfer token</h3>
         <button className="btn btn-circle btn-ghost btn-sm" onClick={close}>
