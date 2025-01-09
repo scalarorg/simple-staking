@@ -21,3 +21,23 @@ export const getChainID = (chain: TProtocolChain | string | null) => {
   if (typeof chain === "string") return chain.split("|")[1];
   return chain.chain?.split("|")[1] || "";
 };
+
+export const prepareCustodianPubkeys = (
+  custodians: {
+    name?: string;
+    btc_pubkey?: string;
+    status: "STATUS_UNSPECIFIED" | "STATUS_ACTIVATED" | "STATUS_DEACTIVATED";
+    description?: string;
+  }[],
+) => {
+  if (!custodians) return "";
+  const custodian = custodians.filter(
+    (custodian) => custodian.status === "STATUS_ACTIVATED",
+  );
+  if (!custodian) return "";
+  return custodian
+    .filter((custodian) => !!custodian.btc_pubkey)
+    .map((custodian) =>
+      Uint8Array.from(Buffer.from(custodian.btc_pubkey!, "base64")),
+    );
+};

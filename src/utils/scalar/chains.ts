@@ -6,6 +6,8 @@ export const getChainType = (chain: TProtocolChain) => {
   return chain.chain?.split("|")[0];
 };
 
-export const getChainID = (chain: TProtocolChain) => {
-  return chain.chain?.split("|")[1];
+export const getChainID = (chain: TProtocolChain | string | null) => {
+  if (!chain) return "";
+  if (typeof chain === "string") return chain.split("|")[1];
+  return chain.chain?.split("|")[1] || "";
 };

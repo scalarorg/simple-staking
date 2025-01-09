@@ -4,11 +4,14 @@ import { XIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { Psbt } from "bitcoinjs-lib";
 
 import { Button } from "@/app/components/ui/button";
 import { Form } from "@/app/components/ui/form";
 import { toast } from "@/app/components/ui/use-toast";
-import { useWalletInfo } from "@/app/context/WalletProvider";
+import { useVault } from "@/app/context/VaultContext";
+import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
+import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useTransferModal } from "@/app/stores/modal";
 import { isSupportedChain } from "@/app/wagmi";
 import { getChainID } from "@/utils/scalar/chains";
@@ -20,7 +23,7 @@ import { FormSchema, TransferFormData } from "./schema";
 import { SourceChainSection } from "./SourceChainSection";
 import { useGateway } from "./useGateway";
 import { useSendToken } from "./useSendToken";
-import { isBtcChain, isEvmChain } from "./utils";
+import { isBtcChain, isEvmChain, prepareCustodianPubkeys } from "./utils";
 
 export const TransferModal = () => {
   const form = useForm<TransferFormData>({
@@ -36,8 +39,13 @@ export const TransferModal = () => {
     },
   });
   const { close, protocol } = useTransferModal();
+  const { address: btcAddress, pubkey: btcPubkey } = useWalletInfo();
+  const { networkConfig, btcNetwork, walletProvider, mempoolClient } =
+    useWalletProvider();
+  const vault = useVault();
+  const feeRates = useFeeRates(btcAddress, mempoolClient);
+
   const { address: evmAddress } = useAccount();
-  const { address: btcAddress } = useWalletInfo();
   const { switchChain, error } = useSwitchChain();
   const chainId = useChainId();
 
@@ -146,118 +154,138 @@ export const TransferModal = () => {
     [sendToken, sourceTokenAddress, gateway, protocol, isPending, hash],
   );
 
-  // const handleBtcToEvm = useCallback(
-  //   async (data: TransferFormData) => {
-  //     if (!isBtcChain(data.sourceChain))
-  //       throw new Error("Invalid source chain");
-  //     if (!isEvmChain(data.destinationChain))
-  //       throw new Error("Invalid destination chain");
-  //     if (!btcNetwork) throw new Error("Invalid BTC network");
-  //     if (!protocol) throw new Error("Invalid protocol");
-  //     if (!walletProvider) throw new Error("Invalid wallet provider");
-  //     if (!destChain) throw new Error("Invalid destination chain");
-  //     if (!destChain?.address)
-  //       throw new Error("Invalid destination chain address");
-  //     if (!protocol?.custodian_group?.custodians)
-  //       throw new Error("Invalid custodian pubkeys");
-  //     if (!protocol?.custodian_group?.quorum)
-  //       throw new Error("Invalid custodian quorum");
-  //     if (!btcPubkey) throw new Error("Invalid BTC pubkey");
-  //     if (!btcAddress) throw new Error("Invalid BTC address");
+  const sendBtcToEvm = useCallback(
+    async (data: TransferFormData) => {
+      if (!isBtcChain(data.sourceChain))
+        throw new Error("Invalid source chain");
+      if (!isEvmChain(data.destinationChain))
+        throw new Error("Invalid destination chain");
+      if (!btcNetwork) throw new Error("Invalid BTC network");
+      if (!protocol) throw new Error("Invalid protocol");
+      if (!walletProvider) throw new Error("Invalid wallet provider");
+      if (!destChain) throw new Error("Invalid destination chain");
+      if (!destChain?.address)
+        throw new Error("Invalid destination chain address");
+      if (!protocol?.custodian_group?.custodians)
+        throw new Error("Invalid custodian pubkeys");
+      if (!protocol?.custodian_group?.quorum)
+        throw new Error("Invalid custodian quorum");
+      if (!btcPubkey) throw new Error("Invalid BTC pubkey");
+      if (!btcAddress) throw new Error("Invalid BTC address");
 
-  //     const requiredFields = {
-  //       btcNetwork,
-  //       protocol,
-  //       walletProvider,
-  //       destChain: destChain?.address,
-  //       custodians: protocol?.custodian_group?.custodians,
-  //       quorum: protocol?.custodian_group?.quorum,
-  //       destinationChain: data.destinationChain,
-  //     };
+      const requiredFields = {
+        btcNetwork,
+        protocol,
+        walletProvider,
+        destChain: destChain?.address,
+        custodians: protocol?.custodian_group?.custodians,
+        quorum: protocol?.custodian_group?.quorum,
+        destinationChain: data.destinationChain,
+      };
 
-  //     // Validate all required fields exist
-  //     for (const [key, value] of Object.entries(requiredFields)) {
-  //       if (!value) throw new Error(`Missing required field: ${key}`);
-  //     }
+      // Validate all required fields exist
+      for (const [key, value] of Object.entries(requiredFields)) {
+        if (!value) throw new Error(`Missing required field: ${key}`);
+      }
 
-  //     // Get and validate UTXOs
-  //     const addressUtxos = await walletProvider.getUtxos(
-  //       btcAddress,
-  //       Number(data.transferAmount),
-  //     );
-  //     if (!addressUtxos) throw new Error("Not enough UTXOs");
+      // // Get and validate UTXOs
+      const addressUtxos = await walletProvider.getUtxos(
+        btcAddress,
+        Number(data.transferAmount),
+      );
+      if (!addressUtxos) throw new Error("Not enough UTXOs");
 
-  //     // Prepare transaction data
-  //     const txData = {
-  //       utxos: addressUtxos.map((utxo) => ({ ...utxo, status: {} as any })),
-  //       feeRate:
-  //         data.btcFeeRate === "custom"
-  //           ? (data.customFeeRate ?? feeRates.fastestFee)
-  //           : feeRates.minimumFee,
-  //       addresses: {
-  //         btcUserPk: scalarVaultModule.hexToBytes(btcPubkey.replace("0x", "")),
-  //         destinationRecipient: scalarVaultModule.hexToBytes(
-  //           data.destRecipientAddress.replace("0x", ""),
-  //         ),
-  //         destinationToken: scalarVaultModule.hexToBytes(
-  //           destChain.address.replace("0x", ""),
-  //         ),
-  //       },
-  //     };
+      // // Prepare transaction data
+      const txData = {
+        utxos: addressUtxos.map((utxo) => ({ ...utxo, status: {} as any })),
+        feeRate:
+          data.btcFeeRate === "custom"
+            ? (data.customFeeRate ?? feeRates.fastestFee)
+            : feeRates.minimumFee,
+        addresses: {
+          btcUserPk: scalarVaultModule.hexToBytes(btcPubkey.replace("0x", "")),
+          destinationRecipient: scalarVaultModule.hexToBytes(
+            data.destRecipientAddress.replace("0x", ""),
+          ),
+          destinationToken: scalarVaultModule.hexToBytes(
+            destChain.address.replace("0x", ""),
+          ),
+        },
+      };
 
-  //     // Prepare custodian pubkeys
-  //     const custodianPubkeysBuffer = await prepareCustodianPubkeys(
-  //       protocol.custodian_group.custodians,
-  //     );
+      console.log({ txData });
 
-  //     // Build and sign transaction
-  //     const chainId = getChainID(data.destinationChain);
-  //     if (!chainId) throw new Error("Invalid chain ID");
+      // // Prepare custodian pubkeys
+      const custodianPubkeysBuffer = prepareCustodianPubkeys(
+        protocol.custodian_group.custodians,
+      );
 
-  //     const destinationChain = new scalarVaultModule.DestinationChain(
-  //       ChainType.EVM,
-  //       BigInt(chainId),
-  //     );
+      if (!custodianPubkeysBuffer) throw new Error("Invalid custodian pubkeys");
 
-  //     const { psbt: unsignedVaultPsbt } =
-  //       vault.buildStakingOutputWithOnlyCovenants({
-  //         stakingAmount: BigInt(data.transferAmount),
-  //         stakerPubkey: txData.addresses.btcUserPk,
-  //         stakerAddress: btcAddress,
-  //         custodialPubkeys: custodianPubkeysBuffer,
-  //         covenantQuorum: protocol.custodian_group.quorum,
-  //         destinationChain,
-  //         destinationContractAddress: txData.addresses.destinationToken,
-  //         destinationRecipientAddress: txData.addresses.destinationRecipient,
-  //         availableUTXOs: txData.utxos,
-  //         feeRate: txData.feeRate,
-  //         rbf: true,
-  //       });
+      const custodianPubkeysBufferArray = new Uint8Array(
+        custodianPubkeysBuffer.reduce(
+          (acc: number[], curr) => [...acc, ...Array.from(curr)],
+          [],
+        ),
+      );
 
-  //     // Sign and broadcast transaction
-  //     const signedPsbt = await walletProvider.signPsbt(
-  //       unsignedVaultPsbt.toHex(),
-  //       {
-  //         autoFinalized: true,
-  //       },
-  //     );
-  //     if (!signedPsbt) throw new Error("Failed to sign the PSBT");
+      console.log({ custodianPubkeysBuffer });
 
-  //     const txHex = Psbt.fromHex(signedPsbt).extractTransaction().toHex();
-  //     const txId = await walletProvider.pushTx(txHex);
-  //     setTxId(txId);
-  //   },
-  //   [
-  //     vault,
-  //     walletProvider,
-  //     btcNetwork,
-  //     protocol,
-  //     destChain,
-  //     btcAddress,
-  //     btcPubkey,
-  //     feeRates,
-  //   ],
-  // );
+      const destinationChain = new scalarVaultModule.DestinationChain(
+        scalarVaultModule.ChainType.EVM,
+        BigInt(chainId),
+      );
+
+      console.log({ destinationChain: destinationChain.toBytes() });
+
+      const { psbt: unsignedVaultPsbt } =
+        vault.buildStakingOutputWithOnlyCovenants({
+          stakingAmount: BigInt(data.transferAmount),
+          stakerPubkey: txData.addresses.btcUserPk,
+          stakerAddress: btcAddress,
+          custodialPubkeys: custodianPubkeysBufferArray,
+          covenantQuorum: protocol.custodian_group.quorum,
+          destinationChain,
+          destinationContractAddress: txData.addresses.destinationToken,
+          destinationRecipientAddress: txData.addresses.destinationRecipient,
+          availableUTXOs: txData.utxos,
+          feeRate: txData.feeRate,
+          rbf: true,
+        });
+
+      console.log({ unsignedVaultPsbt });
+
+      // // Sign and broadcast transaction
+      const signedPsbt = await walletProvider.signPsbt(
+        unsignedVaultPsbt.toHex(),
+        {
+          autoFinalized: true,
+        },
+      );
+      if (!signedPsbt) throw new Error("Failed to sign the PSBT");
+
+      const txHex = Psbt.fromHex(signedPsbt).extractTransaction().toHex();
+      console.log({ txHex });
+      const txId = await walletProvider.pushTx(txHex);
+      console.log({ txId });
+
+      toast({
+        title: "Transfer transaction successful",
+        description: `Transaction hash: ${txId}`,
+      });
+    },
+    [
+      chainId,
+      vault,
+      walletProvider,
+      btcNetwork,
+      protocol,
+      destChain,
+      btcAddress,
+      btcPubkey,
+      feeRates,
+    ],
+  );
 
   const handleSubmit = async (data: TransferFormData) => {
     if (!protocol || !sourceChain || !destChain) return;
@@ -267,7 +295,7 @@ export const TransferModal = () => {
           await sendEVMToEVM(data);
           break;
         case isBtcChain(sourceChain) && isEvmChain(destChain):
-          // await sendBtcToEvm(data);
+          await sendBtcToEvm(data);
           break;
         // case isEvmChain(sourceChain) && isBtcChain(destChain):
         //   await sendEvmToBtc(data);
@@ -316,7 +344,12 @@ export const TransferModal = () => {
   return (
     <GeneralModal open={true} big onClose={close}>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-bold">Transfer token</h3>
+        <h3 className="font-bold">
+          Transfer token{""}
+          <span className="ml-2 text-orange-500 font-bold text-xl">
+            ${protocol?.asset?.name}
+          </span>
+        </h3>
         <button className="btn btn-circle btn-ghost btn-sm" onClick={close}>
           <XIcon size={24} />
         </button>

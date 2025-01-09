@@ -8,7 +8,6 @@ interface FeeRates {
 }
 
 export const useFeeRates = (
-  isOpen: boolean,
   address: string | undefined,
   mempoolClient: BtcMempool | undefined,
 ) => {
@@ -21,7 +20,7 @@ export const useFeeRates = (
   useEffect(() => {
     const fetchFeeRates = async () => {
       if (!mempoolClient) return;
-      if (!isOpen || !address) return;
+      if (!address) return;
       try {
         const { fees } = mempoolClient;
         const { fastestFee, hourFee, minimumFee } =
@@ -43,7 +42,7 @@ export const useFeeRates = (
     };
 
     fetchFeeRates();
-  }, [isOpen, address, mempoolClient]);
+  }, [address, mempoolClient]);
 
   return feeRates;
 };

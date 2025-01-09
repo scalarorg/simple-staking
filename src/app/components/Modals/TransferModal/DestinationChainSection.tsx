@@ -33,7 +33,6 @@ export const DestinationChainSection = ({
   sourceChain,
   onConnectWallet,
 }: DestinationChainSectionProps) => {
-  console.log("sourceChain", sourceChain);
   return (
     <div className="space-y-4 w-full">
       <div className="space-y-2 -mt-2">
