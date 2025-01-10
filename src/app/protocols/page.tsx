@@ -15,6 +15,7 @@ const Protocols: React.FC<ProtocolsProps> = () => {
         }
         alt={"earth"}
         src={earth}
+        priority
       />
       {/* <ManageProtocols /> */}
       {/* <ProtocolsPageModalLayout /> */}

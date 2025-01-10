@@ -18,6 +18,7 @@ const Home: React.FC<HomeProps> = () => {
         }
         alt={"earth"}
         src={earth}
+        priority
       />
       <div className="container mx-auto flex justify-center py-6">
         <div className="container flex flex-col gap-6">

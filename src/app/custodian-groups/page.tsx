@@ -19,6 +19,7 @@ const CustodianGroupsPage: React.FC<CustodianGroupsProps> = () => {
         }
         alt={"earth"}
         src={earth}
+        priority
       />
       {/* <CustodianGroups />
       <Custodians /> */}

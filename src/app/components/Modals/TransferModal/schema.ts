@@ -10,11 +10,9 @@ export const FormSchema = z.object({
   destinationChain: z.string({
     required_error: "Please select a destination chain.",
   }),
-  destRecipientAddress: z
-    .string({
-      required_error: "Please enter your token receiver address.",
-    })
-    .regex(/^0x[a-fA-F0-9]{40}$/, "Please enter a valid Ethereum address."),
+  destRecipientAddress: z.string({
+    required_error: "Please enter your token receiver address.",
+  }),
   transferAmount: z.coerce
     .string({
       required_error: "Please enter the amount.",

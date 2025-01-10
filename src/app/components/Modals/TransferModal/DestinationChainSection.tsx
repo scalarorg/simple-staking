@@ -13,7 +13,6 @@ import { Input } from "@/app/components/ui/input";
 import { Select } from "@/app/components/ui/select";
 
 import { TransferFormData } from "./schema";
-import { isBtcChain } from "./utils";
 
 interface DestinationChainSectionProps {
   form: UseFormReturn<TransferFormData>;
@@ -33,6 +32,7 @@ export const DestinationChainSection = ({
   sourceChain,
   onConnectWallet,
 }: DestinationChainSectionProps) => {
+  console.log({ selectedDestChain });
   return (
     <div className="space-y-4 w-full">
       <div className="space-y-2 -mt-2">
@@ -42,18 +42,14 @@ export const DestinationChainSection = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Destination chain</FormLabel>
-              <Select
-                value={field.value}
-                onChange={field.onChange}
-                disabled={isBtcChain(selectedDestChain)}
-              >
+              <Select value={field.value} onChange={field.onChange}>
                 <option value="" disabled>
                   Select chain
                 </option>
                 {protocol?.chains
                   ?.filter(
                     (chain: TProtocolChain) =>
-                      chain.chain !== sourceChain?.chain && !isBtcChain(chain),
+                      chain.chain !== sourceChain?.chain,
                   )
                   .map((chain: TProtocolChain) => (
                     <option key={chain.chain} value={chain.chain}>

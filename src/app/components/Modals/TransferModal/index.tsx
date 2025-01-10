@@ -1,10 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Psbt } from "bitcoinjs-lib";
+import { toOutputScript } from "bitcoinjs-lib/src/address";
 import { isHexString } from "ethers";
 import { XIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
-import { Psbt } from "bitcoinjs-lib";
 
 import { Button } from "@/app/components/ui/button";
 import { Form } from "@/app/components/ui/form";
@@ -21,9 +22,12 @@ import { GeneralModal } from "../GeneralModal";
 import { DestinationChainSection } from "./DestinationChainSection";
 import { FormSchema, TransferFormData } from "./schema";
 import { SourceChainSection } from "./SourceChainSection";
+import { useCallContractWithToken } from "./useContractCallWithToken";
 import { useGateway } from "./useGateway";
 import { useSendToken } from "./useSendToken";
 import { isBtcChain, isEvmChain, prepareCustodianPubkeys } from "./utils";
+
+const EMPTY_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export const TransferModal = () => {
   const form = useForm<TransferFormData>({
@@ -58,7 +62,6 @@ export const TransferModal = () => {
   const watchSourceChainAddress = form.watch("sourceChainAddress");
 
   const sourceTokenAddress = sourceChain?.address;
-  const evmChains = protocol?.chains?.filter((c) => isEvmChain(c));
 
   useEffect(() => {
     if (!protocol || !watchSourceChain) {
@@ -67,13 +70,16 @@ export const TransferModal = () => {
     const chain = protocol.chains?.find((c) => c.chain === watchSourceChain);
     if (!chain) return;
     setSourceChain(chain);
-    if (isEvmChain(chain)) {
-      const otherEvmChain = evmChains?.find(
-        (c: TProtocolChain) => c.chain !== chain.chain,
+    if (form.getValues("destinationChain") === chain.chain) {
+      const otherChains = protocol.chains?.filter(
+        (c) => c.chain !== chain.chain,
       );
-      setDestChain(otherEvmChain);
+      if (otherChains && otherChains?.length > 0) {
+        setDestChain(otherChains[0]);
+        form.setValue("destinationChain", otherChains[0]?.chain || "");
+      }
     }
-  }, [watchSourceChain, protocol, evmChains]);
+  }, [watchSourceChain, protocol, form, setDestChain]);
 
   useEffect(() => {
     if (!protocol || !watchDestinationChain) {
@@ -84,7 +90,12 @@ export const TransferModal = () => {
     );
     if (!chain) return;
     setDestChain(chain);
-  }, [watchDestinationChain, protocol]);
+    if (isBtcChain(chain)) {
+      form.setValue("destRecipientAddress", btcAddress || "");
+    } else if (isEvmChain(chain)) {
+      form.setValue("destRecipientAddress", evmAddress || "");
+    }
+  }, [watchDestinationChain, protocol, form, btcAddress, evmAddress]);
 
   useEffect(() => {
     if (!sourceChain) return;
@@ -109,9 +120,7 @@ export const TransferModal = () => {
     if (isEvmChain(destChain)) {
       form.setValue("destRecipientAddress", evmAddress || "");
     } else if (isBtcChain(destChain)) {
-      console.log({ btcAddress });
-      // not supported yet
-      //   form.setValue("destRecipientAddress", btcAddress || "");
+      form.setValue("destRecipientAddress", btcAddress || "");
     }
   }, [evmAddress, btcAddress, form, destChain]);
 
@@ -119,11 +128,11 @@ export const TransferModal = () => {
 
   const {
     sendToken,
-    isConfirmed,
-    isPending,
-    hash,
+    isConfirmed: isConfirmedSendToken,
+    isPending: isPendingSendToken,
+    hash: hashSendToken,
     error: sendError,
-    receiptError,
+    receiptError: sendTokenReceiptError,
   } = useSendToken();
 
   const sendEVMToEVM = useCallback(
@@ -142,19 +151,89 @@ export const TransferModal = () => {
         gatewayAddress: gateway.address as THexString,
       });
 
-      while (!isPending) {
+      while (!isPendingSendToken) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       toast({
         title: "Transfer transaction successful",
-        description: `Transaction hash: ${hash}`,
+        description: `Transaction hash: ${hashSendToken}`,
       });
     },
-    [sendToken, sourceTokenAddress, gateway, protocol, isPending, hash],
+    [
+      sendToken,
+      sourceTokenAddress,
+      gateway,
+      protocol,
+      isPendingSendToken,
+      hashSendToken,
+    ],
   );
 
-  const sendBtcToEvm = useCallback(
+  const {
+    callContractWithToken,
+    isConfirmed: isConfirmedCallContractWithToken,
+    isPending: isPendingCallContractWithToken,
+    hash: hashCallContractWithToken,
+    error: callContractWithTokenError,
+    receiptError: callContractWithTokenReceiptError,
+  } = useCallContractWithToken();
+
+  const sendEVMToBTC = useCallback(
+    async (data: TransferFormData) => {
+      if (!sourceTokenAddress) return;
+      if (!gateway || !gateway.address) return;
+      if (!isHexString(gateway.address)) return;
+      if (!isEvmChain(data.sourceChain)) return;
+      if (!isBtcChain(data.destinationChain)) return;
+
+      console.log({ recipient: data.destRecipientAddress });
+
+      const lockingScript = toOutputScript(
+        data.destRecipientAddress,
+        btcNetwork,
+      );
+
+      console.log({ lockingScript: lockingScript.toString("hex") });
+
+      const payload = scalarVaultModule.calculateContractCallWithTokenPayload(
+        scalarVaultModule.BTCFeeOpts.MinimumFee,
+        true,
+        `0x${lockingScript.toString("hex")}`,
+      );
+
+      console.log({ payload });
+
+      callContractWithToken({
+        destinationChain: data.destinationChain,
+        destinationContractAddress: EMPTY_ADDRESS,
+        payload: payload,
+        symbol: protocol?.asset?.name || "",
+        amount: BigInt(data.transferAmount),
+        gatewayAddress: gateway.address as THexString,
+      });
+
+      while (!isPendingCallContractWithToken) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
+      toast({
+        title: "Transfer transaction successful",
+        description: `Transaction hash: ${hashCallContractWithToken}`,
+      });
+    },
+    [
+      btcNetwork,
+      callContractWithToken,
+      sourceTokenAddress,
+      gateway,
+      protocol,
+      isPendingCallContractWithToken,
+      hashCallContractWithToken,
+    ],
+  );
+
+  const sendBTCToEvm = useCallback(
     async (data: TransferFormData) => {
       if (!isBtcChain(data.sourceChain))
         throw new Error("Invalid source chain");
@@ -295,11 +374,11 @@ export const TransferModal = () => {
           await sendEVMToEVM(data);
           break;
         case isBtcChain(sourceChain) && isEvmChain(destChain):
-          await sendBtcToEvm(data);
+          await sendBTCToEvm(data);
           break;
-        // case isEvmChain(sourceChain) && isBtcChain(destChain):
-        //   await sendEvmToBtc(data);
-        //   break;
+        case isEvmChain(sourceChain) && isBtcChain(destChain):
+          await sendEVMToBTC(data);
+          break;
         default:
           throw new Error("Unsupported chain");
       }
@@ -316,30 +395,43 @@ export const TransferModal = () => {
   };
 
   useEffect(() => {
-    if (receiptError) {
+    if (sendTokenReceiptError || callContractWithTokenReceiptError) {
       toast({
         title: "Error",
-        description: receiptError.message,
+        description:
+          sendTokenReceiptError?.message ||
+          callContractWithTokenReceiptError?.message,
       });
     }
-    if (sendError) {
+    if (sendError || callContractWithTokenError) {
       toast({
         title: "Error",
-        description: sendError.message,
+        description: sendError?.message || callContractWithTokenError?.message,
       });
       return;
     }
-  }, [receiptError, sendError]);
+  }, [
+    sendTokenReceiptError,
+    sendError,
+    callContractWithTokenReceiptError,
+    callContractWithTokenError,
+  ]);
 
   useEffect(() => {
-    if (isConfirmed) {
+    if (isConfirmedSendToken || isConfirmedCallContractWithToken) {
       toast({
         title: "Transaction confirmed",
         description: "Transaction has been confirmed",
       });
       close();
     }
-  }, [isPending, isConfirmed, close]);
+  }, [
+    isPendingSendToken,
+    isPendingCallContractWithToken,
+    isConfirmedSendToken,
+    isConfirmedCallContractWithToken,
+    close,
+  ]);
 
   return (
     <GeneralModal open={true} big onClose={close}>
@@ -380,8 +472,14 @@ export const TransferModal = () => {
               />
             </div>
             <div className="flex justify-end">
-              <Button variant="outline" type="submit" disabled={isPending}>
-                {isPending ? "Sending..." : "Transfer"}
+              <Button
+                variant="outline"
+                type="submit"
+                disabled={isPendingSendToken || isPendingCallContractWithToken}
+              >
+                {isPendingSendToken || isPendingCallContractWithToken
+                  ? "Sending..."
+                  : "Transfer"}
               </Button>
             </div>
           </form>

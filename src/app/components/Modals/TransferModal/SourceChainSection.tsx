@@ -89,6 +89,7 @@ export const SourceChainSection = ({
                       className="rounded"
                       width={18}
                       height={18}
+                      priority
                     />
                   )}
                   {!connector.icon && (
