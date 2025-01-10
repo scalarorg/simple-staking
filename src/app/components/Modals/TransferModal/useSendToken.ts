@@ -10,6 +10,12 @@ interface SendTokenParams {
   gatewayAddress: `0x${string}`;
 }
 
+interface ApproveERC20Params {
+  tokenAddress: `0x${string}`;
+  spenderAddress: `0x${string}`;
+  amount: bigint;
+}
+
 export const useSendToken = () => {
   const { data: hash, error, isPending, writeContract } = useWriteContract();
 

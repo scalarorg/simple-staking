@@ -13,6 +13,7 @@ import { Form } from "@/app/components/ui/form";
 import { toast } from "@/app/components/ui/use-toast";
 import { useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
+import { useERC20 } from "@/app/hooks/useERC20";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useTransferModal } from "@/app/stores/modal";
 import { getWagmiChain, isSupportedChain } from "@/app/wagmi";
@@ -167,12 +168,19 @@ export const TransferModal = () => {
 
   const {
     sendToken,
-    isConfirmed: isConfirmedSendToken,
-    isPending: isPendingSendToken,
-    hash: hashSendToken,
+    isConfirmed: isConfirmedToken,
+    isConfirming: isConfirmingToken,
+    isPending: isPendingToken,
+    hash: hashToken,
     error: sendError,
     receiptError: sendTokenReceiptError,
   } = useSendToken();
+
+  const {
+    approve: approveERC20,
+    isLoadingApprove,
+    approveError,
+  } = useERC20(sourceTokenAddress as `0x${string}`);
 
   const sendEVMToEVM = useCallback(
     async (data: TransferFormData) => {
@@ -182,6 +190,18 @@ export const TransferModal = () => {
       if (!isEvmChain(data.destinationChain)) return;
       if (!isEvmChain(data.sourceChain)) return;
 
+      await approveERC20(
+        gateway.address as `0x${string}`,
+        BigInt(data.transferAmount),
+      );
+
+      while (isLoadingApprove) {
+        if (approveError) {
+          throw new Error("Failed to approve ERC20");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
       sendToken({
         destinationChain: data.destinationChain,
         destinationAddress: data.destRecipientAddress,
@@ -190,19 +210,22 @@ export const TransferModal = () => {
         gatewayAddress: gateway.address as THexString,
       });
 
-      while (!isPendingSendToken) {
+      while (!isPendingToken) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
-      showSuccessTx((hashSendToken || "") as string, data.sourceChain);
+      showSuccessTx((hashToken || "") as string, data.sourceChain);
     },
     [
+      approveERC20,
+      approveError,
+      isLoadingApprove,
+      isPendingToken,
       sendToken,
       sourceTokenAddress,
       gateway,
       protocol,
-      isPendingSendToken,
-      hashSendToken,
+      hashToken,
       showSuccessTx,
     ],
   );
@@ -224,14 +247,10 @@ export const TransferModal = () => {
       if (!isEvmChain(data.sourceChain)) return;
       if (!isBtcChain(data.destinationChain)) return;
 
-      console.log({ recipient: data.destRecipientAddress });
-
       const lockingScript = toOutputScript(
         data.destRecipientAddress,
         btcNetwork,
       );
-
-      console.log({ lockingScript: lockingScript.toString("hex") });
 
       const payload = scalarVaultModule.calculateContractCallWithTokenPayload(
         scalarVaultModule.BTCFeeOpts.MinimumFee,
@@ -239,7 +258,17 @@ export const TransferModal = () => {
         `0x${lockingScript.toString("hex")}`,
       );
 
-      console.log({ payload });
+      await approveERC20(
+        gateway.address as `0x${string}`,
+        BigInt(data.transferAmount),
+      );
+
+      while (isLoadingApprove) {
+        if (approveError) {
+          throw new Error("Failed to approve ERC20");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
 
       callContractWithToken({
         destinationChain: data.destinationChain,
@@ -261,6 +290,9 @@ export const TransferModal = () => {
     },
     [
       btcNetwork,
+      approveERC20,
+      isConfirmedToken,
+      isConfirmingToken,
       sourceTokenAddress,
       gateway,
       protocol,
@@ -437,15 +469,23 @@ export const TransferModal = () => {
       });
       return;
     }
+    if (approveError) {
+      toast({
+        title: "Error",
+        description: approveError,
+      });
+      return;
+    }
   }, [
     sendTokenReceiptError,
     sendError,
     callContractWithTokenReceiptError,
     callContractWithTokenError,
+    approveError,
   ]);
 
   useEffect(() => {
-    if (isConfirmedSendToken || isConfirmedCallContractWithToken) {
+    if (isConfirmedToken || isConfirmedCallContractWithToken) {
       toast({
         title: "Transaction confirmed",
         description: "Transaction has been confirmed",
@@ -453,9 +493,9 @@ export const TransferModal = () => {
       close();
     }
   }, [
-    isPendingSendToken,
+    isPendingToken,
     isPendingCallContractWithToken,
-    isConfirmedSendToken,
+    isConfirmedToken,
     isConfirmedCallContractWithToken,
     close,
   ]);
@@ -503,9 +543,9 @@ export const TransferModal = () => {
               <Button
                 variant="outline"
                 type="submit"
-                disabled={isPendingSendToken || isPendingCallContractWithToken}
+                disabled={isPendingToken || isPendingCallContractWithToken}
               >
-                {isPendingSendToken || isPendingCallContractWithToken
+                {isPendingToken || isPendingCallContractWithToken
                   ? "Sending..."
                   : "Transfer"}
               </Button>
