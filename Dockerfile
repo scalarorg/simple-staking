@@ -6,8 +6,7 @@ RUN apt-get update && apt-get install -y python3 make gcc g++ python3-pip && rm 
 WORKDIR /app
 COPY package.json bun.lockb ./
 # Install dependencies with bun
-RUN bun install --no-optional ||
-    (bun add -d node-gyp && bun install --no-optional)
+RUN bun install --no-optional || bun add -d node-gyp && bun install --no-optional
 
 COPY src ./src
 COPY public ./public
@@ -21,9 +20,6 @@ ENV NEXT_PUBLIC_MEMPOOL_API=APP_NEXT_PUBLIC_MEMPOOL_API
 ENV NEXT_PUBLIC_MEMPOOL_WEB=APP_NEXT_PUBLIC_MEMPOOL_WEB
 ENV NEXT_PUBLIC_API_URL=APP_NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_SCALAR_SCANNER=APP_NEXT_PUBLIC_SCALAR_SCANNER
-
-ENV NEXT_PUBLIC_VERSION=APP_NEXT_PUBLIC_VERSION
-ENV NEXT_PUBLIC_TAG=APP_NEXT_PUBLIC_TAG
 
 ENV NEXT_PUBLIC_APP_URL=http://APP_NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_SCALAR_API_URL=APP_NEXT_PUBLIC_SCALAR_API_URL
