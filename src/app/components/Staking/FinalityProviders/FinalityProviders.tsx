@@ -1,9 +1,6 @@
 import InfiniteScroll from "react-infinite-scroll-component";
 
-import {
-  LoadingTableList,
-  LoadingView,
-} from "@/app/components/Loading/Loading";
+import { LoadingTableList, LoadingView } from "@/app/components/Loading";
 import { QueryMeta } from "@/app/types/api";
 import { FinalityProvider as FinalityProviderInterface } from "@/app/types/finalityProviders";
 

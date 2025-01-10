@@ -74,7 +74,7 @@ export async function pushTx(txHex: string): Promise<string> {
     try {
       const mempoolError = await response.text();
       // Extract the error message from the response
-      const message = mempoolError.split('"message":"')[1].split('"}')[0];
+      const message = mempoolError?.split('"message":"')[1]?.split('"}')[0];
       if (mempoolError.includes("error") || mempoolError.includes("message")) {
         throw new Error(message);
       } else {
@@ -177,7 +177,13 @@ export async function getFundingUTXOs(
   if (amount) {
     var sum = 0;
     for (var i = 0; i < confirmedUTXOs.length; ++i) {
-      sum += confirmedUTXOs[i].value;
+      const utxo = confirmedUTXOs[i];
+      if (!utxo?.value) {
+        continue;
+      }
+
+      sum += utxo.value;
+
       if (sum > amount) {
         break;
       }

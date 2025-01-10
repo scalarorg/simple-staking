@@ -1,4 +1,4 @@
-// import { LoadingView } from "@/app/components/Loading/Loading";
+// import { LoadingView } from "@/app/components/Loading";
 // import { ManageProtocolsItem } from "@/app/components/Staking/Protocols/ManageProtocolsItem";
 // import { useScalarClient } from "@/app/context/ScalarProvider";
 // import { fpTableStyles } from "@/app/scalar/theme";

@@ -49,7 +49,7 @@ const regtestConfig: NetworkConfig = {
   network: Network.REGTEST,
 };
 
-const config: Record<string, NetworkConfig> = {
+const config: Record<Network, NetworkConfig> = {
   mainnet: mainnetConfig,
   // signet: signetConfig,
   testnet: testnetConfig,
@@ -61,8 +61,6 @@ export function getNetworkConfig(network = Network.TESTNET4): NetworkConfig {
   switch (network) {
     case Network.MAINNET:
       return config.mainnet;
-    // case Network.SIGNET:
-    //   return config.signet;
     case Network.TESTNET:
       return config.testnet;
     case Network.TESTNET4:
@@ -70,7 +68,7 @@ export function getNetworkConfig(network = Network.TESTNET4): NetworkConfig {
     case Network.REGTEST:
       return config.regtest;
     default:
-      return config.signet;
+      throw new Error(`Unsupported network: ${network}`);
   }
 }
 

@@ -1,7 +1,6 @@
 import ScalarAPI from "@/apis/scalar";
+import { LoadingView } from "@/app/components/Loading";
 import { fpTableStyles } from "@/app/scalar/theme";
-
-import { LoadingView } from "../../Loading/Loading";
 
 import { ProtocolItem } from "./ProtocolItem";
 

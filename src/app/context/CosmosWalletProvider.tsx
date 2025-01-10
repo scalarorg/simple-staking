@@ -3,8 +3,10 @@
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -60,9 +62,9 @@ export function CosmosWalletProvider({ children }: { children: ReactNode }) {
 
   // Initialize wallet implementation
   // TODO: Replace with Keplr implementation when ready
-  const wallet = new DummyWallet();
+  const wallet = useMemo(() => new DummyWallet(), []);
 
-  const connectWallet = async () => {
+  const connectWallet = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -82,7 +84,7 @@ export function CosmosWalletProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [wallet]);
 
   const disconnectWallet = () => {
     wallet.disconnect();
@@ -120,7 +122,7 @@ export function CosmosWalletProvider({ children }: { children: ReactNode }) {
     if (wasConnected) {
       connectWallet().catch(console.error);
     }
-  }, []);
+  }, [connectWallet]);
 
   const value = {
     address,

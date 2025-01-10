@@ -1,7 +1,6 @@
 import { create } from "zustand";
 
 import { Bond } from "@/app/types/bonds";
-import { CustodianGroup } from "@/app/types/custodians";
 
 type ModalType = "connect" | "transfer" | "general";
 
@@ -33,13 +32,6 @@ interface IProtocolModalStore {
   isOpen: boolean;
   protocol?: TProtocol;
   open: (protocol?: TProtocol) => void;
-  close: () => void;
-}
-
-interface ICustodianGroupModalStore {
-  isOpen: boolean;
-  custodianGroup?: CustodianGroup;
-  open: (custodianGroup?: CustodianGroup) => void;
   close: () => void;
 }
 
@@ -97,24 +89,6 @@ export const useAddDestinationChainModal = create<IProtocolModalStore>(
     protocol: undefined,
     open: (protocol?: TProtocol) => set({ isOpen: true, protocol }),
     close: () => set({ isOpen: false, protocol: undefined }),
-  }),
-);
-
-export const useAddCustodianGroupModal = create<ICustodianGroupModalStore>(
-  (set) => ({
-    isOpen: false,
-    open: () => set({ isOpen: true }),
-    close: () => set({ isOpen: false }),
-  }),
-);
-
-export const useCustodianGroupModal = create<ICustodianGroupModalStore>(
-  (set) => ({
-    isOpen: false,
-    custodianGroup: undefined,
-    open: (custodianGroup?: CustodianGroup) =>
-      set({ isOpen: true, custodianGroup }),
-    close: () => set({ isOpen: false, custodianGroup: undefined }),
   }),
 );
 

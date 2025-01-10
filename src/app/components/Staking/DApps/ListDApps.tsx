@@ -1,6 +1,6 @@
 // import { useState } from "react";
 
-// import { LoadingView } from "@/app/components/Loading/Loading";
+// import { LoadingView } from "@/app/components/Loading";
 // import { useWalletInfo } from "@/app/context/WalletProvider";
 // import { fpTableStyles } from "@/app/scalar/theme";
 // import { useAddDAppModal } from "@/app/stores/modal";

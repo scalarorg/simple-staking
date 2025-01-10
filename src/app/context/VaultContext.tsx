@@ -5,7 +5,7 @@ import { memo, useCallback, useEffect, useState } from "react";
 
 import { ProjectENV } from "@/env";
 
-import { LoadingView } from "../components/Loading/Loading";
+import { LoadingView } from "../components/Loading";
 
 import { useNetwork } from "./NetworkProvicer";
 

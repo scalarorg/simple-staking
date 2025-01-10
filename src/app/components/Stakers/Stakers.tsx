@@ -4,7 +4,7 @@
 // import { Tooltip } from "react-tooltip";
 
 // import { getStakers } from "@/app/api/getStakers";
-// import { LoadingView } from "@/app/components/Loading/Loading";
+// import { LoadingView } from "@/app/components/Loading";
 // import { useError } from "@/app/context/Error/ErrorContext";
 // import { ErrorState } from "@/app/types/errors";
 
