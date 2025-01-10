@@ -1,3 +1,5 @@
+import { decodeScalarBytesToUint8Array } from "@/utils/scalar/decode";
+
 export const MOCK_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000123";
 
 export const isEvmChain: (chain?: TProtocolChain | string) => boolean = (
@@ -30,14 +32,11 @@ export const prepareCustodianPubkeys = (
     description?: string;
   }[],
 ) => {
-  if (!custodians) return "";
+  if (!custodians) return null;
   const custodian = custodians.filter(
     (custodian) => custodian.status === "STATUS_ACTIVATED",
   );
-  if (!custodian) return "";
   return custodian
     .filter((custodian) => !!custodian.btc_pubkey)
-    .map((custodian) =>
-      Uint8Array.from(Buffer.from(custodian.btc_pubkey!, "base64")),
-    );
+    .map((custodian) => decodeScalarBytesToUint8Array(custodian.btc_pubkey!));
 };

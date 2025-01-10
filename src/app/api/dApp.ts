@@ -1,5 +1,3 @@
-import { ProjectENV } from "@/env";
-
 import {
   CreatePayload,
   DApp,
@@ -38,14 +36,8 @@ export const getDApps = async (): Promise<{ dApps: DApp[] }> => {
           ID: 0,
           Name: "All",
           TaprootAddress: "",
-          Quorum: ProjectENV.NEXT_PUBLIC_COVENANT_QUORUM,
-          Custodians: ProjectENV.NEXT_PUBLIC_COVENANT_PUBKEYS!.map(
-            (pubkey: string, index: number) => ({
-              ID: index,
-              Name: "Custodian" + (index + 1),
-              BtcPublicKeyHex: pubkey,
-            }),
-          ),
+          Quorum: 0, // TODO: get this from scalar-node
+          Custodians: [], // TODO: get this from scalar-node
         };
     return {
       id: da.ID,

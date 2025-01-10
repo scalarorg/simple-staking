@@ -13,6 +13,7 @@ import { Input } from "@/app/components/ui/input";
 import { Select } from "@/app/components/ui/select";
 
 import { TransferFormData } from "./schema";
+import { isEvmChain } from "./utils";
 
 interface DestinationChainSectionProps {
   form: UseFormReturn<TransferFormData>;
@@ -22,6 +23,7 @@ interface DestinationChainSectionProps {
   sourceChain?: TProtocolChain;
   watchTransferAmount: string;
   onConnectWallet: () => void;
+  evmAddress?: string;
 }
 
 export const DestinationChainSection = ({
@@ -30,6 +32,7 @@ export const DestinationChainSection = ({
   selectedDestChain,
   watchTransferAmount,
   sourceChain,
+  evmAddress,
   onConnectWallet,
 }: DestinationChainSectionProps) => {
   console.log({ selectedDestChain });
@@ -75,7 +78,10 @@ export const DestinationChainSection = ({
               <Button
                 type="button"
                 variant="outline"
-                disabled={!selectedDestChain}
+                disabled={
+                  !selectedDestChain ||
+                  (isEvmChain(selectedDestChain) && !evmAddress)
+                }
                 onClick={onConnectWallet}
               >
                 <Wallet className="w-4 h-4 text-orange-400" />

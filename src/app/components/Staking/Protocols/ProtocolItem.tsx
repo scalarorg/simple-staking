@@ -10,6 +10,7 @@ import {
   useProtocolModal,
   useTransferModal,
 } from "@/app/stores/modal";
+import { decodeScalarBytesToString } from "@/utils/scalar/decode";
 
 interface ProtocolProps {
   index: number;
@@ -46,7 +47,7 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
       <td className="p-4">{index + 1}</td>
       <td className="p-4">{protocol.name}</td>
       <td className="p-4">
-        {protocol.tag ? Buffer.from(protocol.tag, "base64").toString() : ""}
+        {protocol.tag ? decodeScalarBytesToString(protocol.tag) : ""}
       </td>
       <td className="p-4">{isCustodian ? "Pooling" : "Transactional"}</td>
       <td className="p-4">{protocol.status?.replace(/^STATUS_/, "")}</td>

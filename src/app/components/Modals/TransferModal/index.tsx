@@ -3,6 +3,7 @@ import { Psbt } from "bitcoinjs-lib";
 import { toOutputScript } from "bitcoinjs-lib/src/address";
 import { isHexString } from "ethers";
 import { XIcon } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
@@ -14,8 +15,9 @@ import { useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { useTransferModal } from "@/app/stores/modal";
-import { isSupportedChain } from "@/app/wagmi";
+import { getWagmiChain, isSupportedChain } from "@/app/wagmi";
 import { getChainID } from "@/utils/scalar/chains";
+import { decodeScalarBytesToString } from "@/utils/scalar/decode";
 
 import { GeneralModal } from "../GeneralModal";
 
@@ -43,10 +45,14 @@ export const TransferModal = () => {
     },
   });
   const { close, protocol } = useTransferModal();
+  const protocolTag = protocol?.tag;
   const { address: btcAddress, pubkey: btcPubkey } = useWalletInfo();
   const { networkConfig, btcNetwork, walletProvider, mempoolClient } =
     useWalletProvider();
-  const vault = useVault();
+
+  const vault = useVault(
+    protocolTag ? decodeScalarBytesToString(protocolTag) : undefined,
+  );
   const feeRates = useFeeRates(btcAddress, mempoolClient);
 
   const { address: evmAddress } = useAccount();
@@ -124,6 +130,39 @@ export const TransferModal = () => {
     }
   }, [evmAddress, btcAddress, form, destChain]);
 
+  const showSuccessTx = useCallback(
+    (txid: string, chain: string) => {
+      let link = "";
+      if (isBtcChain(chain)) {
+        link = `${networkConfig?.mempoolApiUrl}/tx/${txid}`;
+      } else if (isEvmChain(chain)) {
+        const chainId = getChainID(chain);
+        if (!isSupportedChain(Number(chainId))) return;
+        const wagmiChain = getWagmiChain(Number(chainId));
+        if (!wagmiChain) return;
+        link = `${wagmiChain.blockExplorers?.default.url}/tx/${txid}`;
+      }
+      toast({
+        title: "Transfer transaction successful",
+        description: (
+          <div className="mt-2 w-[640px] rounded-md bg-slate-950">
+            <p className="text-white">
+              Txid:{" "}
+              <Link
+                className="text-blue-500 underline"
+                href={link}
+                target="_blank"
+              >
+                {txid.slice(0, 8)}...{txid.slice(-8)} (click to view)
+              </Link>
+            </p>
+          </div>
+        ),
+      });
+    },
+    [networkConfig?.mempoolApiUrl],
+  );
+
   const { data: gateway } = useGateway(sourceChain?.chain);
 
   const {
@@ -155,10 +194,7 @@ export const TransferModal = () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
-      toast({
-        title: "Transfer transaction successful",
-        description: `Transaction hash: ${hashSendToken}`,
-      });
+      showSuccessTx((hashSendToken || "") as string, data.sourceChain);
     },
     [
       sendToken,
@@ -167,6 +203,7 @@ export const TransferModal = () => {
       protocol,
       isPendingSendToken,
       hashSendToken,
+      showSuccessTx,
     ],
   );
 
@@ -217,24 +254,26 @@ export const TransferModal = () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
-      toast({
-        title: "Transfer transaction successful",
-        description: `Transaction hash: ${hashCallContractWithToken}`,
-      });
+      showSuccessTx(
+        (hashCallContractWithToken || "") as string,
+        data.sourceChain,
+      );
     },
     [
       btcNetwork,
-      callContractWithToken,
       sourceTokenAddress,
       gateway,
       protocol,
       isPendingCallContractWithToken,
       hashCallContractWithToken,
+      showSuccessTx,
+      callContractWithToken,
     ],
   );
 
   const sendBTCToEvm = useCallback(
     async (data: TransferFormData) => {
+      if (!vault) throw new Error("Vault not found");
       if (!isBtcChain(data.sourceChain))
         throw new Error("Invalid source chain");
       if (!isEvmChain(data.destinationChain))
@@ -292,8 +331,6 @@ export const TransferModal = () => {
         },
       };
 
-      console.log({ txData });
-
       // // Prepare custodian pubkeys
       const custodianPubkeysBuffer = prepareCustodianPubkeys(
         protocol.custodian_group.custodians,
@@ -315,8 +352,6 @@ export const TransferModal = () => {
         BigInt(chainId),
       );
 
-      console.log({ destinationChain: destinationChain.toBytes() });
-
       const { psbt: unsignedVaultPsbt } =
         vault.buildStakingOutputWithOnlyCovenants({
           stakingAmount: BigInt(data.transferAmount),
@@ -332,8 +367,6 @@ export const TransferModal = () => {
           rbf: true,
         });
 
-      console.log({ unsignedVaultPsbt });
-
       // // Sign and broadcast transaction
       const signedPsbt = await walletProvider.signPsbt(
         unsignedVaultPsbt.toHex(),
@@ -344,14 +377,9 @@ export const TransferModal = () => {
       if (!signedPsbt) throw new Error("Failed to sign the PSBT");
 
       const txHex = Psbt.fromHex(signedPsbt).extractTransaction().toHex();
-      console.log({ txHex });
       const txId = await walletProvider.pushTx(txHex);
-      console.log({ txId });
 
-      toast({
-        title: "Transfer transaction successful",
-        description: `Transaction hash: ${txId}`,
-      });
+      showSuccessTx(txId, data.sourceChain);
     },
     [
       chainId,
@@ -363,6 +391,7 @@ export const TransferModal = () => {
       btcAddress,
       btcPubkey,
       feeRates,
+      showSuccessTx,
     ],
   );
 
