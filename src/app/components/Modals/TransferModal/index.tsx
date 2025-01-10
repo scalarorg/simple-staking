@@ -345,8 +345,6 @@ export const TransferModal = () => {
         ),
       );
 
-      console.log({ custodianPubkeysBuffer });
-
       const destinationChain = new scalarVaultModule.DestinationChain(
         scalarVaultModule.ChainType.EVM,
         BigInt(chainId),
@@ -498,6 +496,7 @@ export const TransferModal = () => {
                 onConnectWallet={onConnectWallet}
                 watchTransferAmount={watchTransferAmount}
                 sourceChain={sourceChain}
+                evmAddress={evmAddress}
               />
             </div>
             <div className="flex justify-end">
