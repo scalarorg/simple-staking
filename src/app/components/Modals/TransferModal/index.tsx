@@ -291,8 +291,8 @@ export const TransferModal = () => {
     [
       btcNetwork,
       approveERC20,
-      isConfirmedToken,
-      isConfirmingToken,
+      approveError,
+      isLoadingApprove,
       sourceTokenAddress,
       gateway,
       protocol,
@@ -377,9 +377,12 @@ export const TransferModal = () => {
         ),
       );
 
+      const chainID = getChainID(data.destinationChain);
+      if (!chainID) throw new Error("Invalid destination chain");
+
       const destinationChain = new scalarVaultModule.DestinationChain(
         scalarVaultModule.ChainType.EVM,
-        BigInt(chainId),
+        BigInt(chainID),
       );
 
       const { psbt: unsignedVaultPsbt } =
