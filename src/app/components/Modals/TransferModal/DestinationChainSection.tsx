@@ -11,6 +11,7 @@ import {
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
 import { Select } from "@/app/components/ui/select";
+import { getDisplayedChainName } from "@/utils/scalar/chains";
 
 import { TransferFormData } from "./schema";
 import { isEvmChain } from "./utils";
@@ -56,7 +57,7 @@ export const DestinationChainSection = ({
                   )
                   .map((chain: TProtocolChain) => (
                     <option key={chain.chain} value={chain.chain}>
-                      {chain.chain}
+                      {getDisplayedChainName(chain)}
                     </option>
                   ))}
               </Select>

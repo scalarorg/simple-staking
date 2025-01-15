@@ -12,6 +12,7 @@ import {
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
 import { Select } from "@/app/components/ui/select";
+import { getDisplayedChainName } from "@/utils/scalar/chains";
 
 import { Button } from "../../ui/button";
 
@@ -52,7 +53,7 @@ export const SourceChainSection = ({
                 </option>
                 {protocol?.chains?.map((chain: TProtocolChain) => (
                   <option key={chain.chain} value={chain.chain}>
-                    {chain.chain}
+                    {getDisplayedChainName(chain)}
                   </option>
                 ))}
               </Select>

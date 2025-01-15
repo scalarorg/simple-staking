@@ -6,8 +6,10 @@ import { XIcon } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { decodeErrorResult } from "viem";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 
+import { IGateway_ABI } from "@/abis/IGateway";
 import { Button } from "@/app/components/ui/button";
 import { Form } from "@/app/components/ui/form";
 import { toast } from "@/app/components/ui/use-toast";
@@ -25,12 +27,62 @@ import { GeneralModal } from "../GeneralModal";
 import { DestinationChainSection } from "./DestinationChainSection";
 import { FormSchema, TransferFormData } from "./schema";
 import { SourceChainSection } from "./SourceChainSection";
-import { useCallContractWithToken } from "./useContractCallWithToken";
 import { useGateway } from "./useGateway";
-import { useSendToken } from "./useSendToken";
+import { useGatewayContract } from "./useSendToken";
 import { isBtcChain, isEvmChain, prepareCustodianPubkeys } from "./utils";
 
 const EMPTY_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+// First, let's create some helper functions at the top level
+const validateTransferConfig = (
+  sourceTokenAddress?: string,
+  gateway?: { address?: string },
+) => {
+  if (
+    !sourceTokenAddress ||
+    !gateway?.address ||
+    !isHexString(gateway.address)
+  ) {
+    throw new Error("Invalid configuration");
+  }
+};
+
+const handleTokenApproval = async (
+  sourceChainAddress: string,
+  gatewayAddress: `0x${string}`,
+  transferAmount: bigint,
+  { checkAllowance, approveERC20 }: any,
+) => {
+  const currentAllowance = await checkAllowance(
+    sourceChainAddress,
+    gatewayAddress,
+  );
+
+  if (currentAllowance < transferAmount) {
+    try {
+      const approvalTx = await approveERC20(gatewayAddress, transferAmount);
+      if (!approvalTx) throw new Error("Failed to create approval transaction");
+
+      const approvalConfirmed = await Promise.race([
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Approval timeout")), 60000),
+        ),
+        approvalTx.wait(),
+      ]);
+
+      if (!approvalConfirmed) {
+        throw new Error("Approval failed");
+      }
+    } catch (error: any) {
+      if (error.message?.includes("contract runner")) {
+        throw new Error(
+          "Please ensure your wallet is connected and network is correct",
+        );
+      }
+      throw error;
+    }
+  }
+};
 
 export const TransferModal = () => {
   const form = useForm<TransferFormData>({
@@ -57,7 +109,7 @@ export const TransferModal = () => {
   const feeRates = useFeeRates(btcAddress, mempoolClient);
 
   const { address: evmAddress } = useAccount();
-  const { switchChain, error } = useSwitchChain();
+  const { switchChain } = useSwitchChain();
   const chainId = useChainId();
 
   const [destChain, setDestChain] = useState<TProtocolChain>();
@@ -168,138 +220,187 @@ export const TransferModal = () => {
 
   const {
     sendToken,
-    isConfirmed: isConfirmedToken,
-    isConfirming: isConfirmingToken,
-    isPending: isPendingToken,
-    hash: hashToken,
-    error: sendError,
-    receiptError: sendTokenReceiptError,
-  } = useSendToken();
+    callContractWithToken,
+    isPending,
+    error: gatewayError,
+  } = useGatewayContract(gateway?.address as `0x${string}`);
 
   const {
     approve: approveERC20,
-    isLoadingApprove,
+    checkAllowance,
     approveError,
+    balanceOf,
   } = useERC20(sourceTokenAddress as `0x${string}`);
 
   const sendEVMToEVM = useCallback(
     async (data: TransferFormData) => {
-      if (!sourceTokenAddress) return;
-      if (!gateway || !gateway.address) return;
-      if (!isHexString(gateway.address)) return;
-      if (!isEvmChain(data.destinationChain)) return;
-      if (!isEvmChain(data.sourceChain)) return;
+      try {
+        validateTransferConfig(sourceTokenAddress, gateway);
 
-      await approveERC20(
-        gateway.address as `0x${string}`,
-        BigInt(data.transferAmount),
-      );
-
-      while (isLoadingApprove) {
-        if (approveError) {
-          throw new Error("Failed to approve ERC20");
+        if (
+          !isEvmChain(data.destinationChain) ||
+          !isEvmChain(data.sourceChain)
+        ) {
+          throw new Error("Invalid chain types");
         }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        if (!evmAddress) {
+          throw new Error("Please connect your wallet first");
+        }
+
+        const balance = await balanceOf(data.sourceChainAddress);
+        if (balance < BigInt(data.transferAmount)) {
+          throw new Error(
+            `Insufficient balance, your balance is ${balance} ${protocol?.asset?.name}. Please try a smaller amount.`,
+          );
+        }
+
+        await handleTokenApproval(
+          data.sourceChainAddress,
+          gateway?.address as `0x${string}`,
+          BigInt(data.transferAmount),
+          { checkAllowance, approveERC20 },
+        );
+
+        try {
+          const transferTx = await sendToken({
+            destinationChain: data.destinationChain,
+            destinationAddress: data.destRecipientAddress,
+            symbol: protocol?.asset?.name || "",
+            amount: BigInt(data.transferAmount),
+          });
+
+          if (!transferTx)
+            throw new Error("Failed to create transfer transaction");
+
+          const transferConfirmed = await Promise.race([
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("Transfer timeout")), 60000),
+            ),
+            transferTx.wait(),
+          ]);
+
+          if (transferConfirmed) {
+            showSuccessTx(transferTx.hash, data.sourceChain);
+          } else {
+            throw new Error("Transfer failed");
+          }
+        } catch (error: any) {
+          if (error.message?.includes("contract runner")) {
+            throw new Error(
+              "Please ensure your wallet is connected and network is correct",
+            );
+          }
+          throw error;
+        }
+      } catch (error: any) {
+        let errorMessage = "";
+
+        if (error.data) {
+          try {
+            const decodedError = decodeErrorResult({
+              abi: IGateway_ABI,
+              data: error.data as `0x${string}`,
+            });
+
+            errorMessage = `Contract error: ${decodedError.errorName}`;
+            if (decodedError.args) {
+              errorMessage += ` (${decodedError.args.join(", ")})`;
+            }
+          } catch (decodeError) {
+            console.error("Failed to decode error:", decodeError);
+          }
+        }
+
+        if (!errorMessage) {
+          errorMessage = error.message;
+        }
+
+        throw new Error(errorMessage);
       }
-
-      sendToken({
-        destinationChain: data.destinationChain,
-        destinationAddress: data.destRecipientAddress,
-        symbol: protocol?.asset?.name || "",
-        amount: BigInt(data.transferAmount),
-        gatewayAddress: gateway.address as THexString,
-      });
-
-      while (!isPendingToken) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-
-      showSuccessTx((hashToken || "") as string, data.sourceChain);
     },
     [
+      balanceOf,
       approveERC20,
-      approveError,
-      isLoadingApprove,
-      isPendingToken,
       sendToken,
       sourceTokenAddress,
       gateway,
       protocol,
-      hashToken,
       showSuccessTx,
+      checkAllowance,
+      evmAddress,
     ],
   );
 
-  const {
-    callContractWithToken,
-    isConfirmed: isConfirmedCallContractWithToken,
-    isPending: isPendingCallContractWithToken,
-    hash: hashCallContractWithToken,
-    error: callContractWithTokenError,
-    receiptError: callContractWithTokenReceiptError,
-  } = useCallContractWithToken();
-
   const sendEVMToBTC = useCallback(
     async (data: TransferFormData) => {
-      if (!sourceTokenAddress) return;
-      if (!gateway || !gateway.address) return;
-      if (!isHexString(gateway.address)) return;
-      if (!isEvmChain(data.sourceChain)) return;
-      if (!isBtcChain(data.destinationChain)) return;
+      try {
+        validateTransferConfig(sourceTokenAddress, gateway);
 
-      const lockingScript = toOutputScript(
-        data.destRecipientAddress,
-        btcNetwork,
-      );
-
-      const payload = scalarVaultModule.calculateContractCallWithTokenPayload(
-        scalarVaultModule.BTCFeeOpts.MinimumFee,
-        true,
-        `0x${lockingScript.toString("hex")}`,
-      );
-
-      await approveERC20(
-        gateway.address as `0x${string}`,
-        BigInt(data.transferAmount),
-      );
-
-      while (isLoadingApprove) {
-        if (approveError) {
-          throw new Error("Failed to approve ERC20");
+        if (
+          !isEvmChain(data.sourceChain) ||
+          !isBtcChain(data.destinationChain)
+        ) {
+          throw new Error("Invalid chain types");
         }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        const balance = await balanceOf(data.sourceChainAddress);
+        if (balance < BigInt(data.transferAmount)) {
+          throw new Error("Insufficient balance");
+        }
+
+        await handleTokenApproval(
+          data.sourceChainAddress,
+          gateway?.address as `0x${string}`,
+          BigInt(data.transferAmount),
+          { checkAllowance, approveERC20 },
+        );
+
+        const lockingScript = toOutputScript(
+          data.destRecipientAddress,
+          btcNetwork,
+        );
+        const payload = scalarVaultModule.calculateContractCallWithTokenPayload(
+          scalarVaultModule.BTCFeeOpts.MinimumFee,
+          true,
+          `0x${lockingScript.toString("hex")}`,
+        );
+
+        const contractCallTx = await callContractWithToken({
+          destinationChain: data.destinationChain,
+          destinationContractAddress: EMPTY_ADDRESS,
+          payload,
+          symbol: protocol?.asset?.name || "",
+          amount: BigInt(data.transferAmount),
+        });
+
+        const contractCallConfirmed = await Promise.race([
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Transfer timeout")), 60000),
+          ),
+          contractCallTx.wait(),
+        ]);
+
+        if (contractCallConfirmed) {
+          showSuccessTx(contractCallTx.hash, data.sourceChain);
+        } else {
+          throw new Error("Transfer failed");
+        }
+      } catch (error) {
+        console.error({ error });
+        throw error; // Re-throw to handle in the parent
       }
-
-      callContractWithToken({
-        destinationChain: data.destinationChain,
-        destinationContractAddress: EMPTY_ADDRESS,
-        payload: payload,
-        symbol: protocol?.asset?.name || "",
-        amount: BigInt(data.transferAmount),
-        gatewayAddress: gateway.address as THexString,
-      });
-
-      while (!isPendingCallContractWithToken) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-
-      showSuccessTx(
-        (hashCallContractWithToken || "") as string,
-        data.sourceChain,
-      );
     },
     [
       btcNetwork,
       approveERC20,
-      approveError,
-      isLoadingApprove,
       sourceTokenAddress,
       gateway,
       protocol,
-      isPendingCallContractWithToken,
-      hashCallContractWithToken,
       showSuccessTx,
+      balanceOf,
       callContractWithToken,
+      checkAllowance,
     ],
   );
 
@@ -415,7 +516,6 @@ export const TransferModal = () => {
       showSuccessTx(txId, data.sourceChain);
     },
     [
-      chainId,
       vault,
       walletProvider,
       btcNetwork,
@@ -445,7 +545,9 @@ export const TransferModal = () => {
           throw new Error("Unsupported chain");
       }
 
-      close();
+      // wait for 10 seconds before closing
+      // await new Promise((resolve) => setTimeout(resolve, 10000));
+      // close();
     } catch (error) {
       console.error({ error });
       toast({
@@ -457,51 +559,31 @@ export const TransferModal = () => {
   };
 
   useEffect(() => {
-    if (sendTokenReceiptError || callContractWithTokenReceiptError) {
+    if (gatewayError) {
       toast({
         title: "Error",
         description:
-          sendTokenReceiptError?.message ||
-          callContractWithTokenReceiptError?.message,
+          (gatewayError as any)?.shortMessage || "Failed to send token",
       });
+      console.error({
+        sendError: gatewayError,
+      });
+      return;
     }
-    if (sendError || callContractWithTokenError) {
-      toast({
-        title: "Error",
-        description: sendError?.message || callContractWithTokenError?.message,
-      });
+    if (approveError) {
+      console.error({ approveError });
       return;
     }
     if (approveError) {
       toast({
         title: "Error",
-        description: approveError,
+        description:
+          (approveError as any)?.shortMessage || "Failed to approve ERC20",
       });
+      console.error({ approveError });
       return;
     }
-  }, [
-    sendTokenReceiptError,
-    sendError,
-    callContractWithTokenReceiptError,
-    callContractWithTokenError,
-    approveError,
-  ]);
-
-  useEffect(() => {
-    if (isConfirmedToken || isConfirmedCallContractWithToken) {
-      toast({
-        title: "Transaction confirmed",
-        description: "Transaction has been confirmed",
-      });
-      close();
-    }
-  }, [
-    isPendingToken,
-    isPendingCallContractWithToken,
-    isConfirmedToken,
-    isConfirmedCallContractWithToken,
-    close,
-  ]);
+  }, [gatewayError, approveError]);
 
   return (
     <GeneralModal open={true} big onClose={close}>
@@ -543,14 +625,8 @@ export const TransferModal = () => {
               />
             </div>
             <div className="flex justify-end">
-              <Button
-                variant="outline"
-                type="submit"
-                disabled={isPendingToken || isPendingCallContractWithToken}
-              >
-                {isPendingToken || isPendingCallContractWithToken
-                  ? "Sending..."
-                  : "Transfer"}
+              <Button variant="outline" type="submit" disabled={isPending}>
+                {isPending ? "Sending..." : "Transfer"}
               </Button>
             </div>
           </form>

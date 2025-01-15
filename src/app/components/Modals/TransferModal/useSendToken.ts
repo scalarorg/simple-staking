@@ -1,54 +1,73 @@
-import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { useCallback, useState } from "react";
 
 import { IGateway_ABI } from "@/abis/IGateway";
+import { useContract } from "@/app/hooks/useContracts";
 
 interface SendTokenParams {
   destinationChain: string;
   destinationAddress: string;
   symbol: string;
   amount: bigint;
-  gatewayAddress: `0x${string}`;
 }
 
-interface ApproveERC20Params {
-  tokenAddress: `0x${string}`;
-  spenderAddress: `0x${string}`;
+interface CallContractWithTokenParams {
+  destinationChain: string;
+  destinationContractAddress: string;
+  payload: string;
+  symbol: string;
   amount: bigint;
 }
 
-export const useSendToken = () => {
-  const { data: hash, error, isPending, writeContract } = useWriteContract();
+export const useGatewayContract = (gatewayAddress: `0x${string}`) => {
+  const contract = useContract(IGateway_ABI, gatewayAddress);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
 
-  const {
-    isLoading: isConfirming,
-    isSuccess: isConfirmed,
-    error: receiptError,
-  } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const sendToken = useCallback(
+    async (params: SendTokenParams) => {
+      if (!contract) return;
+      setIsPending(true);
+      try {
+        return contract.sendToken?.(
+          params.destinationChain,
+          params.destinationAddress,
+          params.symbol,
+          params.amount,
+        );
+      } catch (error) {
+        setError(error as string);
+      } finally {
+        setIsPending(false);
+      }
+    },
+    [contract],
+  );
 
-  const sendToken = ({
-    destinationChain,
-    destinationAddress,
-    symbol,
-    amount,
-    gatewayAddress,
-  }: SendTokenParams) => {
-    writeContract({
-      address: gatewayAddress,
-      abi: IGateway_ABI,
-      functionName: "sendToken",
-      args: [destinationChain, destinationAddress, symbol, amount],
-    });
-  };
+  const callContractWithToken = useCallback(
+    async (params: CallContractWithTokenParams) => {
+      if (!contract) return;
+      setIsPending(true);
+      try {
+        return contract.callContractWithToken?.(
+          params.destinationChain,
+          params.destinationContractAddress,
+          params.payload,
+          params.symbol,
+          params.amount,
+        );
+      } catch (error) {
+        setError(error as string);
+      } finally {
+        setIsPending(false);
+      }
+    },
+    [contract],
+  );
 
   return {
-    hash,
     error,
-    receiptError,
-    isPending,
     sendToken,
-    isConfirming,
-    isConfirmed,
+    callContractWithToken,
+    isPending,
   };
 };
