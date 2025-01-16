@@ -486,20 +486,19 @@ export const TransferModal = () => {
         BigInt(chainID),
       );
 
-      const { psbt: unsignedVaultPsbt } =
-        vault.buildStakingOutputWithOnlyCovenants({
-          stakingAmount: BigInt(data.transferAmount),
-          stakerPubkey: txData.addresses.btcUserPk,
-          stakerAddress: btcAddress,
-          custodialPubkeys: custodianPubkeysBufferArray,
-          covenantQuorum: protocol.custodian_group.quorum,
-          destinationChain,
-          destinationContractAddress: txData.addresses.destinationToken,
-          destinationRecipientAddress: txData.addresses.destinationRecipient,
-          availableUTXOs: txData.utxos,
-          feeRate: txData.feeRate,
-          rbf: true,
-        });
+      const { psbt: unsignedVaultPsbt } = vault.buildCustodianOnlyStakingPsbt({
+        stakingAmount: BigInt(data.transferAmount),
+        stakerPubkey: txData.addresses.btcUserPk,
+        stakerAddress: btcAddress,
+        custodianPubkeys: custodianPubkeysBufferArray,
+        custodianQuorum: protocol.custodian_group.quorum,
+        destinationChain,
+        destinationContractAddress: txData.addresses.destinationToken,
+        destinationRecipientAddress: txData.addresses.destinationRecipient,
+        availableUTXOs: txData.utxos,
+        feeRate: txData.feeRate,
+        rbf: true,
+      });
 
       // // Sign and broadcast transaction
       const signedPsbt = await walletProvider.signPsbt(
