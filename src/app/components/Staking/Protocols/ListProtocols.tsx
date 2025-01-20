@@ -19,8 +19,6 @@ export const ListProtocols: React.FC = () => {
     return <div>No protocols found</div>;
   }
 
-  console.log({ data });
-
   return (
     <div className="flex flex-col gap-4 container mx-auto w-full">
       <div className="flex justify-between items-center">
@@ -32,15 +30,15 @@ export const ListProtocols: React.FC = () => {
             <thead>
               <tr className="text-left">
                 <th className="p-4 w-12">No</th>
-                <th className="p-4 w-[200px]">Protocol Name</th>
+                <th className="p-4">Token</th>
+                <th className="p-4 w-[200px]">Protocol</th>
                 <th className="p-4 w-[150px]">Tag</th>
                 <th className="p-4">Type</th>
-                {/* <th className="p-4">Custodian Group BTC Address</th> */}
                 <th className="p-4">Status</th>
                 <th className="p-4 w-20">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200">
               {data?.protocols?.map((protocol, index: number) => (
                 <ProtocolItem key={index} index={index} protocol={protocol} />
               ))}

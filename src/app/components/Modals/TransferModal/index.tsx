@@ -1,10 +1,12 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Psbt } from "bitcoinjs-lib";
-import { toOutputScript } from "bitcoinjs-lib/src/address";
+import { useQuery } from "@tanstack/react-query";
+import * as bitcoin from "bitcoinjs-lib";
 import { isHexString } from "ethers";
-import { XIcon } from "lucide-react";
+import { WalletIcon, XIcon } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { decodeErrorResult } from "viem";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
@@ -99,7 +101,11 @@ export const TransferModal = () => {
   });
   const { close, protocol } = useTransferModal();
   const protocolTag = protocol?.tag;
-  const { address: btcAddress, pubkey: btcPubkey } = useWalletInfo();
+  const {
+    address: btcAddress,
+    pubkey: btcPubkey,
+    balance: btcBalance,
+  } = useWalletInfo();
   const { networkConfig, btcNetwork, walletProvider, mempoolClient } =
     useWalletProvider();
 
@@ -216,7 +222,68 @@ export const TransferModal = () => {
     [networkConfig?.mempoolApiUrl],
   );
 
+  const {
+    approve: approveERC20,
+    checkAllowance,
+    approveError,
+    balanceOf,
+  } = useERC20(sourceTokenAddress as `0x${string}`);
+
+  const { data: sourceChainBalance } = useQuery({
+    queryKey: ["sourceChainBalance", protocol?.asset?.name, sourceChain?.chain],
+    queryFn: async () => {
+      if (!sourceChain) return BigInt(0);
+      let balance = BigInt(0);
+      if (isEvmChain(sourceChain)) {
+        balance = await balanceOf(evmAddress as `0x${string}`);
+      } else if (isBtcChain(sourceChain)) {
+        balance = BigInt(btcBalance);
+      }
+      return balance;
+    },
+    enabled: !!sourceChain,
+  });
+
   const { data: gateway } = useGateway(sourceChain?.chain);
+  const lockingAddress = useMemo(() => {
+    if (!vault) return null;
+    if (!btcNetwork) return null;
+    if (!sourceChain) return null;
+    if (!isBtcChain(sourceChain)) return null;
+    if (!protocol?.custodian_group?.custodians) return null;
+    if (!protocol?.custodian_group?.quorum) return null;
+
+    const custodianPubkeys = protocol?.custodian_group?.custodians.map(
+      (custodian) => custodian.btc_pubkey,
+    );
+    if (!custodianPubkeys) return null;
+    const custodianPubkeysBuffer = prepareCustodianPubkeys(
+      protocol?.custodian_group?.custodians,
+    );
+    if (!custodianPubkeysBuffer) return null;
+
+    if (!custodianPubkeysBuffer) throw new Error("Invalid custodian pubkeys");
+
+    const custodianPubkeysBufferArray = new Uint8Array(
+      custodianPubkeysBuffer.reduce(
+        (acc: number[], curr) => [...acc, ...Array.from(curr)],
+        [],
+      ),
+    );
+
+    const script = vault.custodianOnlyLockingScript({
+      custodianPubkeys: custodianPubkeysBufferArray,
+      custodianQuorum: protocol?.custodian_group?.quorum,
+    });
+    if (!script) return null;
+
+    try {
+      return bitcoin.address.fromOutputScript(script, btcNetwork);
+    } catch (error) {
+      console.error({ error });
+      return null;
+    }
+  }, [sourceChain, btcNetwork, protocol, vault]);
 
   const {
     sendToken,
@@ -224,13 +291,6 @@ export const TransferModal = () => {
     isPending,
     error: gatewayError,
   } = useGatewayContract(gateway?.address as `0x${string}`);
-
-  const {
-    approve: approveERC20,
-    checkAllowance,
-    approveError,
-    balanceOf,
-  } = useERC20(sourceTokenAddress as `0x${string}`);
 
   const sendEVMToEVM = useCallback(
     async (data: TransferFormData) => {
@@ -248,7 +308,7 @@ export const TransferModal = () => {
           throw new Error("Please connect your wallet first");
         }
 
-        const balance = await balanceOf(data.sourceChainAddress);
+        const balance = sourceChainBalance || 0n;
         if (balance < BigInt(data.transferAmount)) {
           throw new Error(
             `Insufficient balance, your balance is ${balance} ${protocol?.asset?.name}. Please try a smaller amount.`,
@@ -320,7 +380,6 @@ export const TransferModal = () => {
       }
     },
     [
-      balanceOf,
       approveERC20,
       sendToken,
       sourceTokenAddress,
@@ -329,6 +388,7 @@ export const TransferModal = () => {
       showSuccessTx,
       checkAllowance,
       evmAddress,
+      sourceChainBalance,
     ],
   );
 
@@ -356,14 +416,18 @@ export const TransferModal = () => {
           { checkAllowance, approveERC20 },
         );
 
-        const lockingScript = toOutputScript(
+        const lockingScript = bitcoin.address.toOutputScript(
           data.destRecipientAddress,
           btcNetwork,
         );
+
+        const reciepientChainIdentifier =
+          Buffer.from(lockingScript).toString("hex");
+
         const payload = scalarVaultModule.calculateContractCallWithTokenPayload(
           scalarVaultModule.BTCFeeOpts.MinimumFee,
           true,
-          `0x${lockingScript.toString("hex")}`,
+          `0x${reciepientChainIdentifier}`,
         );
 
         const contractCallTx = await callContractWithToken({
@@ -509,7 +573,9 @@ export const TransferModal = () => {
       );
       if (!signedPsbt) throw new Error("Failed to sign the PSBT");
 
-      const txHex = Psbt.fromHex(signedPsbt).extractTransaction().toHex();
+      const txHex = bitcoin.Psbt.fromHex(signedPsbt)
+        .extractTransaction()
+        .toHex();
       const txId = await walletProvider.pushTx(txHex);
 
       showSuccessTx(txId, data.sourceChain);
@@ -604,7 +670,29 @@ export const TransferModal = () => {
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-4 w-full"
           >
-            <div className="flex gap-4 w-full">
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <div className="col-span-1 flex items-center gap-2">
+                <WalletIcon size={16} />
+                {sourceChain && (
+                  <span className="text-sm font-bold text-orange-500">
+                    {sourceChainBalance
+                      ? (Number(sourceChainBalance) / 10 ** 8).toLocaleString(
+                          undefined,
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 8,
+                          },
+                        )
+                      : 0}{" "}
+                    $
+                    {(isBtcChain(sourceChain)
+                      ? "BTC"
+                      : protocol?.asset?.name
+                    )?.toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="col-span-1"></div>
               <SourceChainSection
                 form={form}
                 protocol={protocol}
@@ -612,6 +700,7 @@ export const TransferModal = () => {
                 sourceTokenAddress={sourceTokenAddress}
                 sourceChainAddress={watchSourceChainAddress}
                 gateway={gateway?.address || ""}
+                lockingAddress={lockingAddress || ""}
               />
               <DestinationChainSection
                 form={form}

@@ -1,7 +1,6 @@
-import { Wallet } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
+import { useConnect } from "wagmi";
 
-import { Button } from "@/app/components/ui/button";
 import {
   FormControl,
   FormField,
@@ -13,6 +12,7 @@ import { Input } from "@/app/components/ui/input";
 import { Select } from "@/app/components/ui/select";
 import { getDisplayedChainName } from "@/utils/scalar/chains";
 
+import { EVMConnectors } from "./EVMConnectors";
 import { TransferFormData } from "./schema";
 import { isEvmChain } from "./utils";
 
@@ -36,7 +36,7 @@ export const DestinationChainSection = ({
   evmAddress,
   onConnectWallet,
 }: DestinationChainSectionProps) => {
-  console.log({ selectedDestChain });
+  const { connect, connectors } = useConnect();
   return (
     <div className="space-y-4 w-full">
       <div className="space-y-2 -mt-2">
@@ -72,11 +72,16 @@ export const DestinationChainSection = ({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Destination address</FormLabel>
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-col gap-2">
               <FormControl>
                 <Input placeholder="" {...field} />
               </FormControl>
-              <Button
+              {isEvmChain(selectedDestChain) && !evmAddress && (
+                <div className="flex flex-wrap gap-2">
+                  <EVMConnectors connectors={connectors} connect={connect} />
+                </div>
+              )}
+              {/* <Button
                 type="button"
                 variant="outline"
                 disabled={
@@ -86,7 +91,7 @@ export const DestinationChainSection = ({
                 onClick={onConnectWallet}
               >
                 <Wallet className="w-4 h-4 text-orange-400" />
-              </Button>
+              </Button> */}
             </div>
             <FormMessage />
           </FormItem>

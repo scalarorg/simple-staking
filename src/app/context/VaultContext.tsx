@@ -1,6 +1,8 @@
 "use client";
 
+import * as ec from "@bitcoin-js/tiny-secp256k1-asmjs";
 import { TNetwork } from "@scalar-lab/bitcoin-vault";
+import * as bitcoin from "bitcoinjs-lib";
 import { memo, useCallback, useEffect, useState } from "react";
 
 import { decodeScalarBytesToString } from "@/utils/scalar/decode";
@@ -92,6 +94,9 @@ const VaultProvider: React.FC<{ children: React.ReactNode }> = ({
       );
       globalThis.scalarVaultModule = vaultModule;
     }
+
+    bitcoin.initEccLib(ec);
+
     setLoading(false);
   }, [setLoading]);
 

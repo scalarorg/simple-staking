@@ -95,13 +95,16 @@ export const useAddDestinationChainModal = create<IProtocolModalStore>(
 interface ITransferModalStore {
   isOpen: boolean;
   protocol?: TProtocol;
-  open: (protocol?: TProtocol) => void;
+  isUPC?: boolean;
+  open: (protocol?: TProtocol, isUPC?: boolean) => void;
   close: () => void;
 }
 
 export const useTransferModal = create<ITransferModalStore>((set) => ({
   isOpen: false,
   protocol: undefined,
-  open: (protocol?: TProtocol) => set({ isOpen: true, protocol }),
-  close: () => set({ isOpen: false, protocol: undefined }),
+  isUPC: undefined,
+  open: (protocol?: TProtocol, isUPC?: boolean) =>
+    set({ isOpen: true, protocol, isUPC }),
+  close: () => set({ isOpen: false, protocol: undefined, isUPC: undefined }),
 }));

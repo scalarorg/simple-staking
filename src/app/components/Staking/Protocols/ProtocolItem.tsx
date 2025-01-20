@@ -1,5 +1,4 @@
 import { ArrowLeftRight, BookOpen, CircleArrowDown } from "lucide-react";
-// import { Tooltip } from "react-tooltip";
 import { useEffect } from "react";
 import { useAccount, useConnect } from "wagmi";
 
@@ -45,6 +44,7 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
         `}
     >
       <td className="p-4">{index + 1}</td>
+      <td className="p-4">{protocol.asset?.name}</td>
       <td className="p-4">{protocol.name}</td>
       <td className="p-4">
         {protocol.tag ? decodeScalarBytesToString(protocol.tag) : ""}
@@ -71,7 +71,7 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
               className={`px-2 hover:text-red-600 flex items-center gap-2 justify-center text-red-700 ${
                 !address ? "opacity-50 pointer-events-none" : ""
               }`}
-              onClick={() => openMintTxModal(protocol)}
+              onClick={() => openTransferModal(protocol, true)}
               disabled={!address}
             >
               Stake
@@ -90,22 +90,9 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
                 Transfer
                 <ArrowLeftRight size={16} />
               </button>
-              {/* <button
-                className={`px-2 hover:text-cyan-600 flex items-center gap-2 justify-center text-cyan-700 ${
-                  !address ? "opacity-50 pointer-events-none" : ""
-                }`}
-                onClick={() => openUnstakeCustodianModal(protocol)}
-                disabled={!address}
-              >
-                Unstake
-                <CircleArrowUp size={16} />
-              </button> */}
             </>
           )}
         </div>
-        {/* <Tooltip
-          id={`tooltip-delegation-${protocol.btc_chain.btc_signer_pk}`}
-        /> */}
       </td>
     </tr>
   );

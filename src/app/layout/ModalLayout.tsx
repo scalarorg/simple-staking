@@ -5,17 +5,17 @@ import { Suspense } from "react";
 import { ConnectModal } from "../components/Modals/ConnectModal";
 import { ErrorModal } from "../components/Modals/ErrorModal";
 import { TransferModal } from "../components/Modals/TransferModal";
+import { TransferUPCModal } from "../components/Modals/TransferModal/TransferUPCModal";
 import { useError } from "../context/Error/ErrorContext";
 import { useGeneralModal, useTransferModal } from "../stores/modal";
 
 export const ModalLayout: React.FC<{}> = ({}) => {
   const { isErrorOpen, error, hideError, retryErrorAction } = useError();
-  const { isOpen: isTransferModalOpen } = useTransferModal();
+  const { isOpen: isTransferModalOpen, isUPC } = useTransferModal();
   const { isOpen } = useGeneralModal();
 
   return (
     <Suspense>
-      {/* <MintTxModal /> */}
       {isErrorOpen && (
         <ErrorModal
           open={isErrorOpen}
@@ -32,6 +32,7 @@ export const ModalLayout: React.FC<{}> = ({}) => {
       <StakeCustodianModal />
       {/* <UnstakeCustodianModal /> */}
       {isTransferModalOpen && <TransferModal />}
+      {isTransferModalOpen && isUPC && <TransferUPCModal />}
     </Suspense>
   );
 };

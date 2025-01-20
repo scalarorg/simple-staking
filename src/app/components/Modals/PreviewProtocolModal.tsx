@@ -2,10 +2,8 @@
 
 // import { XIcon } from "lucide-react";
 // import { useQuery } from "@tanstack/react-query";
-// import { LiquidityModel, ProtocolStatus } from "@scalar-lab/scalarjs-sdk/dist/types";
 
 // import { useProtocolModal } from "@/app/stores/modal";
-// import { useScalarClient } from "@/app/context/ScalarProvider";
 // import { useVault } from "@/app/context/VaultContext";
 // import { useWalletProvider } from "@/app/context/WalletProvider";
 

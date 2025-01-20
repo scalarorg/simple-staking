@@ -1,5 +1,4 @@
-import { Wallet } from "lucide-react";
-import Image from "next/image";
+import Link from "next/link";
 import { UseFormReturn } from "react-hook-form";
 import { useConnect } from "wagmi";
 
@@ -12,12 +11,12 @@ import {
 } from "@/app/components/ui/form";
 import { Input } from "@/app/components/ui/input";
 import { Select } from "@/app/components/ui/select";
+import { useWalletProvider } from "@/app/context/WalletProvider";
 import { getDisplayedChainName } from "@/utils/scalar/chains";
 
-import { Button } from "../../ui/button";
-
+import { EVMConnectors } from "./EVMConnectors";
 import { TransferFormData } from "./schema";
-import { isEvmChain } from "./utils";
+import { isBtcChain, isEvmChain } from "./utils";
 
 interface SourceChainSectionProps {
   form: UseFormReturn<TransferFormData>;
@@ -26,6 +25,7 @@ interface SourceChainSectionProps {
   sourceTokenAddress: string | undefined;
   sourceChainAddress: string;
   gateway: string;
+  lockingAddress: string;
 }
 
 export const SourceChainSection = ({
@@ -35,7 +35,9 @@ export const SourceChainSection = ({
   sourceTokenAddress,
   sourceChainAddress,
   gateway,
+  lockingAddress,
 }: SourceChainSectionProps) => {
+  const { networkConfig } = useWalletProvider();
   const { connect, connectors } = useConnect();
 
   return (
@@ -76,31 +78,7 @@ export const SourceChainSection = ({
 
           {isEvmChain(selectedSourceChain) && !sourceChainAddress && (
             <div className="flex flex-wrap gap-2">
-              {connectors.map((connector) => (
-                <Button
-                  key={connector.id}
-                  type="button"
-                  variant="outline"
-                  onClick={() => connect({ connector })}
-                >
-                  {connector.icon && (
-                    <Image
-                      src={connector.icon}
-                      alt={`${connector.name} icon`}
-                      className="rounded"
-                      width={18}
-                      height={18}
-                      priority
-                    />
-                  )}
-                  {!connector.icon && (
-                    <div className="flex items-center gap-2">
-                      <Wallet className="w-[18px] h-[18px] text-orange-400" />
-                      <span>{connector.name}</span>
-                    </div>
-                  )}
-                </Button>
-              ))}
+              <EVMConnectors connectors={connectors} connect={connect} />
             </div>
           )}
         </div>
@@ -138,6 +116,21 @@ export const SourceChainSection = ({
             <Input readOnly value={gateway || ""} />
           </div>
         </>
+      )}
+      {isBtcChain(selectedSourceChain) && (
+        <div className="space-y-2">
+          <FormLabel>Locking address</FormLabel>
+          <div className="flex flex-col gap-2">
+            <Input readOnly value={lockingAddress || ""} />
+            <Link
+              href={`${networkConfig?.mempoolApiUrl}/address/${lockingAddress}`}
+              target="_blank"
+              className="text-blue-500 hover:underline"
+            >
+              View on mempool
+            </Link>
+          </div>
+        </div>
       )}
     </div>
   );
