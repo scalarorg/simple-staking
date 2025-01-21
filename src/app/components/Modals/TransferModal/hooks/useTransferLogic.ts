@@ -37,7 +37,7 @@ export const useTransferLogic = (
   });
 
   const vault = useVault(
-    protocol?.tag ? decodeScalarBytesToString(protocol?.tag) : undefined,
+    protocol.tag ? decodeScalarBytesToString(protocol.tag) : undefined,
   );
 
   const { btcNetwork, walletProvider, networkConfig, mempoolClient } =

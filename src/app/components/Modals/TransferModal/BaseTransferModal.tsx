@@ -443,15 +443,13 @@ export const BaseTransferModal = ({
     }
   };
 
-  if (!protocol) return null;
-
   return (
     <GeneralModal open={true} big onClose={close}>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-bold">
           Transfer token{""}
           <span className="ml-2 text-orange-500 font-bold text-xl">
-            ${protocol?.asset?.name}
+            ${protocol.asset?.name}
           </span>
         </h3>
         <button className="btn btn-circle btn-ghost btn-sm" onClick={close}>
@@ -459,24 +457,22 @@ export const BaseTransferModal = ({
         </button>
       </div>
 
-      {protocol && (
-        <TransferForm
-          form={form}
-          handleSubmit={handleSubmit}
-          sourceChain={sourceChain}
-          destChain={destChain}
-          sourceTokenAddress={sourceTokenAddress}
-          watchSourceChainAddress={watchSourceChainAddress}
-          watchTransferAmount={watchTransferAmount}
-          onConnectWallet={onConnectWallet}
-          sourceChainBalance={sourceChainBalance?.toString()}
-          protocol={protocol}
-          gatewayAddress={gateway?.address}
-          lockingAddress={lockingAddress || undefined}
-          isPending={isInteractingWithGateway}
-          evmAddress={evmAddress}
-        />
-      )}
+      <TransferForm
+        form={form}
+        handleSubmit={handleSubmit}
+        sourceChain={sourceChain}
+        destChain={destChain}
+        sourceTokenAddress={sourceTokenAddress}
+        watchSourceChainAddress={watchSourceChainAddress}
+        watchTransferAmount={watchTransferAmount}
+        onConnectWallet={onConnectWallet}
+        sourceChainBalance={sourceChainBalance?.toString()}
+        protocol={protocol}
+        gatewayAddress={gateway?.address}
+        lockingAddress={lockingAddress || undefined}
+        isPending={isInteractingWithGateway}
+        evmAddress={evmAddress}
+      />
     </GeneralModal>
   );
 };
