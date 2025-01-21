@@ -18,7 +18,16 @@ export const FormSchema = z.object({
       required_error: "Please enter the amount.",
     })
     .min(1, "Amount must be greater than 0"),
-  btcFeeRate: z.string().default("hourFee"),
+  btcFeeRate: z
+    .enum([
+      "fastestFee",
+      "halfHourFee",
+      "hourFee",
+      "economyFee",
+      "minimumFee",
+      "customFee",
+    ])
+    .default("minimumFee"),
   customFeeRate: z.coerce
     .number()
     .int("Please enter a whole number.")

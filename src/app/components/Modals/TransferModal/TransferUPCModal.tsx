@@ -529,7 +529,7 @@ export const TransferUPCModal = () => {
       const txData = {
         utxos: addressUtxos.map((utxo) => ({ ...utxo, status: {} as any })),
         feeRate:
-          data.btcFeeRate === "custom"
+          data.btcFeeRate === "customFee"
             ? (data.customFeeRate ?? feeRates.fastestFee)
             : feeRates.minimumFee,
         addresses: {
