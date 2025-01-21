@@ -1,6 +1,7 @@
 import { Connector, CreateConnectorFn } from "@wagmi/core";
 import { Wallet } from "lucide-react";
 import Image from "next/image";
+
 import { Button } from "../../../ui/button";
 
 export const EVMConnectors: React.FC<{

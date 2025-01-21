@@ -1,5 +1,6 @@
-import { decodeScalarBytesToUint8Array } from "@/utils/scalar/decode";
 import { isHexString } from "ethers";
+
+import { decodeScalarBytesToUint8Array } from "@/utils/scalar/decode";
 
 export const EMPTY_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -113,4 +114,11 @@ export const handleTokenApproval = async (
       throw error;
     }
   }
+};
+
+export const formatTokenAmount = (amount: bigint, decimals = 8) => {
+  return (Number(amount) / 10 ** decimals).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 8,
+  });
 };

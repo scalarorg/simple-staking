@@ -8,14 +8,15 @@ import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useERC20 } from "@/app/hooks/useERC20";
 import { getWagmiChain, isSupportedChain } from "@/app/wagmi";
 import { getChainID } from "@/utils/scalar/chains";
-
 import { useVault } from "@/app/context/VaultContext";
 import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { decodeScalarBytesToString } from "@/utils/scalar/decode";
+
 import { toast } from "../../../ui/use-toast";
 import { ToastContent } from "../components/ToastContent";
 import { FormSchema, TransferFormData } from "../components/schema";
 import { isBtcChain, isEvmChain } from "../utils";
+
 import { useGateway } from "./useGateway";
 import { useGatewayContract } from "./useSendToken";
 
@@ -30,7 +31,7 @@ export const useTransferLogic = (
       sourceChainAddress: "",
       destinationChain: "",
       destRecipientAddress: "",
-      transferAmount: "100000",
+      transferAmount: "0",
       btcFeeRate: "hourFee",
       customFeeRate: undefined,
     },
@@ -211,6 +212,7 @@ export const useTransferLogic = (
     sourceTokenAddress,
     watchTransferAmount,
     watchSourceChainAddress,
+    mempoolClient,
     showSuccessTx,
     onConnectWallet,
     checkAllowance,

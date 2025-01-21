@@ -1,5 +1,6 @@
 import { UseFormReturn } from "react-hook-form";
 import { useConnect } from "wagmi";
+import { AddressTxsUtxo } from "@mempool/mempool.js/lib/interfaces/bitcoin/addresses";
 
 import {
   FormControl,
@@ -13,6 +14,7 @@ import { Select } from "@/app/components/ui/select";
 import { getDisplayedChainName } from "@/utils/scalar/chains";
 
 import { isEvmChain } from "../utils";
+
 import { EVMConnectors } from "./EVMConnectors";
 import { TransferFormData } from "./schema";
 
@@ -34,9 +36,14 @@ export const DestinationChainSection = ({
   watchTransferAmount,
   sourceChain,
   evmAddress,
-  onConnectWallet,
 }: DestinationChainSectionProps) => {
   const { connect, connectors } = useConnect();
+
+  const handleSelectUtxo = (selectedUtxo: AddressTxsUtxo) => {
+    console.log("Selected UTXO:", selectedUtxo);
+    // Handle the selected UTXO here
+  };
+
   return (
     <div className="space-y-4 w-full">
       <div className="space-y-2 -mt-2">
@@ -81,22 +88,18 @@ export const DestinationChainSection = ({
                   <EVMConnectors connectors={connectors} connect={connect} />
                 </div>
               )}
-              {/* <Button
-                type="button"
-                variant="outline"
-                disabled={
-                  !selectedDestChain ||
-                  (isEvmChain(selectedDestChain) && !evmAddress)
-                }
-                onClick={onConnectWallet}
-              >
-                <Wallet className="w-4 h-4 text-orange-400" />
-              </Button> */}
             </div>
             <FormMessage />
           </FormItem>
         )}
       />
+
+      {selectedDestChain?.address && (
+        <div className="space-y-2">
+          <FormLabel>Token address</FormLabel>
+          <Input readOnly value={selectedDestChain.address} />
+        </div>
+      )}
 
       <div className="space-y-2">
         <FormLabel>Receive amount</FormLabel>
@@ -109,13 +112,6 @@ export const DestinationChainSection = ({
           className="focus:ring-0 focus:border-0 focus:outline-none focus-visible:ring-0 focus-visible:border-0 focus-visible:outline-none"
         />
       </div>
-
-      {selectedDestChain?.address && (
-        <div className="space-y-2">
-          <FormLabel>Token address</FormLabel>
-          <Input readOnly value={selectedDestChain.address} />
-        </div>
-      )}
     </div>
   );
 };

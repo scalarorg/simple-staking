@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { UseFormReturn } from "react-hook-form";
 import { useConnect } from "wagmi";
+import { AddressTxsUtxo } from "@mempool/mempool.js/lib/interfaces/bitcoin/addresses";
+import { ExternalLinkIcon } from "lucide-react";
 
 import {
   FormControl,
@@ -15,8 +17,9 @@ import { useWalletProvider } from "@/app/context/WalletProvider";
 import { getDisplayedChainName } from "@/utils/scalar/chains";
 
 import { isBtcChain, isEvmChain } from "../utils";
-import { TransferFormData } from "./schema";
 
+import { TransferFormData } from "./schema";
+import { AvailableUtxos } from "./AvailableUtxos";
 import { EVMConnectors } from "./EVMConnectors";
 
 interface SourceChainSectionProps {
@@ -27,6 +30,8 @@ interface SourceChainSectionProps {
   sourceChainAddress: string;
   gateway: string;
   lockingAddress: string;
+  availableUnstakedUtxos?: AddressTxsUtxo[];
+  onSelectUtxo?: (utxo: AddressTxsUtxo) => void;
 }
 
 export const SourceChainSection = ({
@@ -37,6 +42,8 @@ export const SourceChainSection = ({
   sourceChainAddress,
   gateway,
   lockingAddress,
+  availableUnstakedUtxos,
+  onSelectUtxo,
 }: SourceChainSectionProps) => {
   const { networkConfig } = useWalletProvider();
   const { connect, connectors } = useConnect();
@@ -85,26 +92,6 @@ export const SourceChainSection = ({
         </div>
       </div>
 
-      <FormField
-        control={form.control}
-        name="transferAmount"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Transfer amount</FormLabel>
-            <FormControl>
-              <Input
-                inputMode="numeric"
-                step="any"
-                type="number"
-                placeholder=""
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
       {isEvmChain(selectedSourceChain) && (
         <>
           <div className="space-y-2">
@@ -120,18 +107,48 @@ export const SourceChainSection = ({
       )}
       {isBtcChain(selectedSourceChain) && (
         <div className="space-y-2">
-          <FormLabel>Locking address</FormLabel>
-          <div className="flex flex-col gap-2">
-            <Input readOnly value={lockingAddress || ""} />
+          <FormLabel className="flex items-center gap-2">
+            Locking address
             <Link
               href={`${networkConfig?.mempoolApiUrl}/address/${lockingAddress}`}
               target="_blank"
-              className="text-blue-500 hover:underline"
+              className="text-blue-500 hover:underline flex items-center gap-1"
             >
-              View on mempool
+              (View on mempool)
+              <ExternalLinkIcon className="w-4 h-4" />
             </Link>
-          </div>
+          </FormLabel>
+          <Input readOnly value={lockingAddress || ""} />
         </div>
+      )}
+
+      {availableUnstakedUtxos && availableUnstakedUtxos?.length > 0 && (
+        <AvailableUtxos
+          utxos={availableUnstakedUtxos}
+          onSelectUtxo={onSelectUtxo}
+        />
+      )}
+
+      {!(availableUnstakedUtxos && availableUnstakedUtxos?.length > 0) && (
+        <FormField
+          control={form.control}
+          name="transferAmount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Transfer amount</FormLabel>
+              <FormControl>
+                <Input
+                  inputMode="numeric"
+                  step="any"
+                  type="number"
+                  placeholder=""
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       )}
     </div>
   );

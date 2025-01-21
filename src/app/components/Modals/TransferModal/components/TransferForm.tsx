@@ -1,12 +1,13 @@
 import { WalletIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
+import { AddressTxsUtxo } from "@mempool/mempool.js/lib/interfaces/bitcoin/addresses";
 
 import { Button } from "@/app/components/ui/button";
 import { Form } from "@/app/components/ui/form";
 
-import { isBtcChain } from "../utils";
-import { TransferFormData } from "./schema";
+import { formatTokenAmount, isBtcChain } from "../utils";
 
+import { TransferFormData } from "./schema";
 import { DestinationChainSection } from "./DestinationChainSection";
 import { SourceChainSection } from "./SourceChainSection";
 
@@ -25,6 +26,8 @@ interface TransferFormProps {
   lockingAddress: string | undefined;
   isPending: boolean;
   evmAddress: string | undefined;
+  availableUnstakedUtxos?: AddressTxsUtxo[];
+  onSelectUtxo?: (utxo: AddressTxsUtxo) => void;
 }
 
 export const TransferForm = ({
@@ -42,6 +45,8 @@ export const TransferForm = ({
   lockingAddress,
   isPending,
   evmAddress,
+  availableUnstakedUtxos,
+  onSelectUtxo,
 }: TransferFormProps) => (
   <Form {...form}>
     <form
@@ -54,13 +59,7 @@ export const TransferForm = ({
           {sourceChain && (
             <span className="text-sm font-bold text-orange-500">
               {sourceChainBalance
-                ? (Number(sourceChainBalance) / 10 ** 8).toLocaleString(
-                    undefined,
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 8,
-                    },
-                  )
+                ? formatTokenAmount(BigInt(sourceChainBalance), 8)
                 : 0}{" "}
               $
               {(isBtcChain(sourceChain)
@@ -79,6 +78,8 @@ export const TransferForm = ({
           sourceChainAddress={watchSourceChainAddress}
           gateway={gatewayAddress || ""}
           lockingAddress={lockingAddress || ""}
+          availableUnstakedUtxos={availableUnstakedUtxos}
+          onSelectUtxo={onSelectUtxo}
         />
         <DestinationChainSection
           form={form}
