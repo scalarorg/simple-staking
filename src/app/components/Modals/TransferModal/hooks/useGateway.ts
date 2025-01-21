@@ -1,6 +1,6 @@
 import ScalarAPI from "@/apis/scalar";
 
-import { isEvmChain } from "./utils";
+import { isEvmChain } from "../utils";
 
 export const useGateway = (chain?: string) => {
   return ScalarAPI.useQuery(

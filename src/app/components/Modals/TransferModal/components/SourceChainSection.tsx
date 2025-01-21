@@ -14,9 +14,10 @@ import { Select } from "@/app/components/ui/select";
 import { useWalletProvider } from "@/app/context/WalletProvider";
 import { getDisplayedChainName } from "@/utils/scalar/chains";
 
-import { EVMConnectors } from "./EVMConnectors";
+import { isBtcChain, isEvmChain } from "../utils";
 import { TransferFormData } from "./schema";
-import { isBtcChain, isEvmChain } from "./utils";
+
+import { EVMConnectors } from "./EVMConnectors";
 
 interface SourceChainSectionProps {
   form: UseFormReturn<TransferFormData>;

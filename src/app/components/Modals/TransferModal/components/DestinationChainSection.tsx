@@ -12,9 +12,9 @@ import { Input } from "@/app/components/ui/input";
 import { Select } from "@/app/components/ui/select";
 import { getDisplayedChainName } from "@/utils/scalar/chains";
 
+import { isEvmChain } from "../utils";
 import { EVMConnectors } from "./EVMConnectors";
 import { TransferFormData } from "./schema";
-import { isEvmChain } from "./utils";
 
 interface DestinationChainSectionProps {
   form: UseFormReturn<TransferFormData>;

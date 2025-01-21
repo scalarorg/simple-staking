@@ -4,15 +4,13 @@ import { Suspense } from "react";
 
 import { ConnectModal } from "../components/Modals/ConnectModal";
 import { ErrorModal } from "../components/Modals/ErrorModal";
-import { TransferModal } from "../components/Modals/TransferModal";
-import { TransferUPCModal } from "../components/Modals/TransferModal/TransferUPCModal";
+import { BaseTransferModal } from "../components/Modals/TransferModal/BaseTransferModal";
 import { useError } from "../context/Error/ErrorContext";
-import { useGeneralModal, useTransferModal } from "../stores/modal";
+import { useTransferModal } from "../stores/modal";
 
 export const ModalLayout: React.FC<{}> = ({}) => {
   const { isErrorOpen, error, hideError, retryErrorAction } = useError();
-  const { isOpen: isTransferModalOpen, isUPC } = useTransferModal();
-  const { isOpen } = useGeneralModal();
+  const { isOpen: isTransferModalOpen, protocol, close } = useTransferModal();
 
   return (
     <Suspense>
@@ -27,12 +25,9 @@ export const ModalLayout: React.FC<{}> = ({}) => {
         />
       )}
       <ConnectModal />
-      {/* <PreviewProtocolModal /> */}
-      {/* <UnbondModal />
-      <StakeCustodianModal />
-      {/* <UnstakeCustodianModal /> */}
-      {isTransferModalOpen && !isUPC && <TransferModal />}
-      {isTransferModalOpen && isUPC && <TransferUPCModal />}
+      {isTransferModalOpen && protocol && (
+        <BaseTransferModal protocol={protocol} close={close} />
+      )}
     </Suspense>
   );
 };

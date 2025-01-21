@@ -4,11 +4,7 @@ import { useAccount, useConnect } from "wagmi";
 
 import { useWalletInfo } from "@/app/context/WalletProvider";
 import { fpStyles } from "@/app/scalar/theme";
-import {
-  useMintTxModal,
-  useProtocolModal,
-  useTransferModal,
-} from "@/app/stores/modal";
+import { useProtocolModal, useTransferModal } from "@/app/stores/modal";
 import { decodeScalarBytesToString } from "@/utils/scalar/decode";
 
 interface ProtocolProps {
@@ -25,7 +21,6 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
   const { open } = useProtocolModal();
   const { address } = useWalletInfo();
   const { address: evmAddress, connector } = useAccount();
-  const { open: openMintTxModal } = useMintTxModal();
   const { open: openTransferModal } = useTransferModal();
   const { connect } = useConnect();
 
@@ -71,7 +66,7 @@ export const ProtocolItem: React.FC<ProtocolProps> = ({ protocol, index }) => {
               className={`px-2 hover:text-red-600 flex items-center gap-2 justify-center text-red-700 ${
                 !address ? "opacity-50 pointer-events-none" : ""
               }`}
-              onClick={() => openTransferModal(protocol, true)}
+              onClick={() => openTransferModal(protocol)}
               disabled={!address}
             >
               Stake
