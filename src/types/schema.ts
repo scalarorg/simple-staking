@@ -727,6 +727,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/scalar/protocol/v1beta1/protocol_asset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProtocolAsset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/scalar/protocol/v1beta1/update_protocol": {
         parameters: {
             query?: never;
@@ -4057,6 +4073,11 @@ export interface components {
                 decimals?: number;
                 /** Format: byte */
                 capacity?: string;
+                /**
+                 * @default TOKEN_MODEL_POOL
+                 * @enum {string}
+                 */
+                model: "TOKEN_MODEL_POOL" | "TOKEN_MODEL_UTXO";
             };
             /** Format: byte */
             address?: string;
@@ -4084,11 +4105,21 @@ export interface components {
             tokens?: {
                 asset?: string;
                 symbol?: string;
+                /**
+                 * @default TOKEN_MODEL_POOL
+                 * @enum {string}
+                 */
+                model: "TOKEN_MODEL_POOL" | "TOKEN_MODEL_UTXO";
             }[];
         };
         "scalar.chains.v1beta1.ERC20TokensResponse.Token": {
             asset?: string;
             symbol?: string;
+            /**
+             * @default TOKEN_MODEL_POOL
+             * @enum {string}
+             */
+            model: "TOKEN_MODEL_POOL" | "TOKEN_MODEL_UTXO";
         };
         "scalar.chains.v1beta1.Event": {
             chain?: string;
@@ -4399,20 +4430,12 @@ export interface components {
         "scalar.chains.v1beta1.LinkResponse": {
             deposit_addr?: string;
         };
-        /**
-         * @default NETWORK_KIND_MAINNET
-         * @enum {string}
-         */
-        "scalar.chains.v1beta1.NetworkKind": "NETWORK_KIND_MAINNET" | "NETWORK_KIND_TESTNET";
         "scalar.chains.v1beta1.Params": {
             chain?: string;
             /** Format: uint64 */
             confirmation_height?: string;
-            /**
-             * @default NETWORK_KIND_MAINNET
-             * @enum {string}
-             */
-            network_kind: "NETWORK_KIND_MAINNET" | "NETWORK_KIND_TESTNET";
+            /** Format: int64 */
+            network_kind?: number;
             /** Format: byte */
             token_code?: string;
             /** Format: byte */
@@ -4450,11 +4473,8 @@ export interface components {
                 chain?: string;
                 /** Format: uint64 */
                 confirmation_height?: string;
-                /**
-                 * @default NETWORK_KIND_MAINNET
-                 * @enum {string}
-                 */
-                network_kind: "NETWORK_KIND_MAINNET" | "NETWORK_KIND_TESTNET";
+                /** Format: int64 */
+                network_kind?: number;
                 /** Format: byte */
                 token_code?: string;
                 /** Format: byte */
@@ -4579,6 +4599,11 @@ export interface components {
             decimals?: number;
             /** Format: byte */
             capacity?: string;
+            /**
+             * @default TOKEN_MODEL_POOL
+             * @enum {string}
+             */
+            model: "TOKEN_MODEL_POOL" | "TOKEN_MODEL_UTXO";
         };
         "scalar.chains.v1beta1.TokenInfoResponse": {
             asset?: string;
@@ -4589,6 +4614,11 @@ export interface components {
                 decimals?: number;
                 /** Format: byte */
                 capacity?: string;
+                /**
+                 * @default TOKEN_MODEL_POOL
+                 * @enum {string}
+                 */
+                model: "TOKEN_MODEL_POOL" | "TOKEN_MODEL_UTXO";
             };
             address?: string;
             /** Format: boolean */
@@ -4597,6 +4627,11 @@ export interface components {
             is_external?: boolean;
             burner_code_hash?: string;
         };
+        /**
+         * @default TOKEN_MODEL_POOL
+         * @enum {string}
+         */
+        "scalar.chains.v1beta1.TokenModel": "TOKEN_MODEL_POOL" | "TOKEN_MODEL_UTXO";
         /**
          * @default TOKEN_TYPE_UNSPECIFIED
          * @enum {string}
@@ -4675,9 +4710,11 @@ export interface components {
         "scalar.protocol.v1beta1.AddSupportedChainResponse": {
             protocol?: {
                 /** Format: byte */
-                pubkey?: string;
+                bitcoin_pubkey?: string;
                 /** Format: byte */
-                address?: string;
+                scalar_pubkey?: string;
+                /** Format: byte */
+                scalar_address?: string;
                 name?: string;
                 /** Format: byte */
                 tag?: string;
@@ -4789,9 +4826,11 @@ export interface components {
         "scalar.protocol.v1beta1.CreateProtocolResponse": {
             protocol?: {
                 /** Format: byte */
-                pubkey?: string;
+                bitcoin_pubkey?: string;
                 /** Format: byte */
-                address?: string;
+                scalar_pubkey?: string;
+                /** Format: byte */
+                scalar_address?: string;
                 name?: string;
                 /** Format: byte */
                 tag?: string;
@@ -4857,9 +4896,11 @@ export interface components {
         "scalar.protocol.v1beta1.LiquidityModel": "LIQUIDITY_MODEL_POOLING" | "LIQUIDITY_MODEL_TRANSACTIONAL";
         "scalar.protocol.v1beta1.Protocol": {
             /** Format: byte */
-            pubkey?: string;
+            bitcoin_pubkey?: string;
             /** Format: byte */
-            address?: string;
+            scalar_pubkey?: string;
+            /** Format: byte */
+            scalar_address?: string;
             name?: string;
             /** Format: byte */
             tag?: string;
@@ -4917,6 +4958,12 @@ export interface components {
                 address?: string;
             }[];
         };
+        "scalar.protocol.v1beta1.ProtocolAssetResponse": {
+            asset?: {
+                chain?: string;
+                name?: string;
+            };
+        };
         "scalar.protocol.v1beta1.ProtocolAttribute": {
             /**
              * @default LIQUIDITY_MODEL_POOLING
@@ -4927,9 +4974,11 @@ export interface components {
         "scalar.protocol.v1beta1.ProtocolsResponse": {
             protocols?: {
                 /** Format: byte */
-                pubkey?: string;
+                bitcoin_pubkey?: string;
                 /** Format: byte */
-                address?: string;
+                scalar_pubkey?: string;
+                /** Format: byte */
+                scalar_address?: string;
                 name?: string;
                 /** Format: byte */
                 tag?: string;
@@ -4987,6 +5036,8 @@ export interface components {
                     address?: string;
                 }[];
             }[];
+            /** Format: uint64 */
+            total?: string;
         };
         /**
          * @default STATUS_UNSPECIFIED
@@ -5009,9 +5060,11 @@ export interface components {
         "scalar.protocol.v1beta1.UpdateProtocolResponse": {
             protocol?: {
                 /** Format: byte */
-                pubkey?: string;
+                bitcoin_pubkey?: string;
                 /** Format: byte */
-                address?: string;
+                scalar_pubkey?: string;
+                /** Format: byte */
+                scalar_address?: string;
                 name?: string;
                 /** Format: byte */
                 tag?: string;
@@ -5085,9 +5138,11 @@ export interface components {
         "scalar.protocol.v1beta1.UpdateSupportedChainResponse": {
             protocol?: {
                 /** Format: byte */
-                pubkey?: string;
+                bitcoin_pubkey?: string;
                 /** Format: byte */
-                address?: string;
+                scalar_pubkey?: string;
+                /** Format: byte */
+                scalar_address?: string;
                 name?: string;
                 /** Format: byte */
                 tag?: string;
@@ -21983,6 +22038,11 @@ export interface operations {
                         decimals?: number;
                         /** Format: byte */
                         capacity?: string;
+                        /**
+                         * @default TOKEN_MODEL_POOL
+                         * @enum {string}
+                         */
+                        model?: "TOKEN_MODEL_POOL" | "TOKEN_MODEL_UTXO";
                     };
                     /** Format: byte */
                     address?: string;
@@ -22220,6 +22280,11 @@ export interface operations {
                         tokens?: {
                             asset?: string;
                             symbol?: string;
+                            /**
+                             * @default TOKEN_MODEL_POOL
+                             * @enum {string}
+                             */
+                            model: "TOKEN_MODEL_POOL" | "TOKEN_MODEL_UTXO";
                         }[];
                     };
                 };
@@ -22705,11 +22770,8 @@ export interface operations {
                             chain?: string;
                             /** Format: uint64 */
                             confirmation_height?: string;
-                            /**
-                             * @default NETWORK_KIND_MAINNET
-                             * @enum {string}
-                             */
-                            network_kind: "NETWORK_KIND_MAINNET" | "NETWORK_KIND_TESTNET";
+                            /** Format: int64 */
+                            network_kind?: number;
                             /** Format: byte */
                             token_code?: string;
                             /** Format: byte */
@@ -23233,6 +23295,11 @@ export interface operations {
                             decimals?: number;
                             /** Format: byte */
                             capacity?: string;
+                            /**
+                             * @default TOKEN_MODEL_POOL
+                             * @enum {string}
+                             */
+                            model: "TOKEN_MODEL_POOL" | "TOKEN_MODEL_UTXO";
                         };
                         address?: string;
                         /** Format: boolean */
@@ -23317,9 +23384,11 @@ export interface operations {
                     "*/*": {
                         protocols?: {
                             /** Format: byte */
-                            pubkey?: string;
+                            bitcoin_pubkey?: string;
                             /** Format: byte */
-                            address?: string;
+                            scalar_pubkey?: string;
+                            /** Format: byte */
+                            scalar_address?: string;
                             name?: string;
                             /** Format: byte */
                             tag?: string;
@@ -23377,6 +23446,8 @@ export interface operations {
                                 address?: string;
                             }[];
                         }[];
+                        /** Format: uint64 */
+                        total?: string;
                     };
                 };
             };
@@ -23462,9 +23533,11 @@ export interface operations {
                     "*/*": {
                         protocol?: {
                             /** Format: byte */
-                            pubkey?: string;
+                            bitcoin_pubkey?: string;
                             /** Format: byte */
-                            address?: string;
+                            scalar_pubkey?: string;
+                            /** Format: byte */
+                            scalar_address?: string;
                             name?: string;
                             /** Format: byte */
                             tag?: string;
@@ -23647,9 +23720,11 @@ export interface operations {
                     "*/*": {
                         protocol?: {
                             /** Format: byte */
-                            pubkey?: string;
+                            bitcoin_pubkey?: string;
                             /** Format: byte */
-                            address?: string;
+                            scalar_pubkey?: string;
+                            /** Format: byte */
+                            scalar_address?: string;
                             name?: string;
                             /** Format: byte */
                             tag?: string;
@@ -23761,6 +23836,84 @@ export interface operations {
             };
         };
     };
+    ProtocolAsset: {
+        parameters: {
+            query?: {
+                source_chain?: string;
+                destination_chain?: string;
+                token_address?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A successful response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        asset?: {
+                            chain?: string;
+                            name?: string;
+                        };
+                    };
+                };
+            };
+            /** @description An unexpected error response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        error?: string;
+                        /** Format: int32 */
+                        code?: number;
+                        message?: string;
+                        details?: {
+                            /** @description A URL/resource name that uniquely identifies the type of the serialized
+                             *     protocol buffer message. This string must contain at least
+                             *     one "/" character. The last segment of the URL's path must represent
+                             *     the fully qualified name of the type (as in
+                             *     `path/google.protobuf.Duration`). The name should be in a canonical form
+                             *     (e.g., leading "." is not accepted).
+                             *
+                             *     In practice, teams usually precompile into the binary all types that they
+                             *     expect it to use in the context of Any. However, for URLs which use the
+                             *     scheme `http`, `https`, or no scheme, one can optionally set up a type
+                             *     server that maps type URLs to message definitions as follows:
+                             *
+                             *     * If no scheme is provided, `https` is assumed.
+                             *     * An HTTP GET on the URL must yield a [google.protobuf.Type][]
+                             *       value in binary format, or produce an error.
+                             *     * Applications are allowed to cache lookup results based on the
+                             *       URL, or have them precompiled into a binary to avoid any
+                             *       lookup. Therefore, binary compatibility needs to be preserved
+                             *       on changes to types. (Use versioned type names to manage
+                             *       breaking changes.)
+                             *
+                             *     Note: this functionality is not currently available in the official
+                             *     protobuf release, and it is not used for type URLs beginning with
+                             *     type.googleapis.com.
+                             *
+                             *     Schemes other than `http`, `https` (or the empty scheme) might be
+                             *     used with implementation specific semantics. */
+                            type_url?: string;
+                            /**
+                             * Format: byte
+                             * @description Must be a valid serialized protocol buffer of the above specified type.
+                             */
+                            value?: string;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
     UpdateProtocol: {
         parameters: {
             query?: never;
@@ -23788,9 +23941,11 @@ export interface operations {
                     "*/*": {
                         protocol?: {
                             /** Format: byte */
-                            pubkey?: string;
+                            bitcoin_pubkey?: string;
                             /** Format: byte */
-                            address?: string;
+                            scalar_pubkey?: string;
+                            /** Format: byte */
+                            scalar_address?: string;
                             name?: string;
                             /** Format: byte */
                             tag?: string;
@@ -23935,9 +24090,11 @@ export interface operations {
                     "*/*": {
                         protocol?: {
                             /** Format: byte */
-                            pubkey?: string;
+                            bitcoin_pubkey?: string;
                             /** Format: byte */
-                            address?: string;
+                            scalar_pubkey?: string;
+                            /** Format: byte */
+                            scalar_address?: string;
                             name?: string;
                             /** Format: byte */
                             tag?: string;

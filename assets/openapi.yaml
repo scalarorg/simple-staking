@@ -5534,6 +5534,12 @@ paths:
                     capacity:
                       type: string
                       format: byte
+                    model:
+                      type: string
+                      enum:
+                        - TOKEN_MODEL_POOL
+                        - TOKEN_MODEL_UTXO
+                      default: TOKEN_MODEL_POOL
                 address:
                   type: string
                   format: byte
@@ -5951,6 +5957,12 @@ paths:
                           type: string
                         symbol:
                           type: string
+                        model:
+                          type: string
+                          enum:
+                            - TOKEN_MODEL_POOL
+                            - TOKEN_MODEL_UTXO
+                          default: TOKEN_MODEL_POOL
                 title: |-
                   ERC20TokensResponse describes the asset and symbol for all
                   ERC20 tokens requested for a chain
@@ -7141,11 +7153,8 @@ paths:
                         type: string
                         format: uint64
                       network_kind:
-                        type: string
-                        enum:
-                          - NETWORK_KIND_MAINNET
-                          - NETWORK_KIND_TESTNET
-                        default: NETWORK_KIND_MAINNET
+                        type: integer
+                        format: int64
                       token_code:
                         type: string
                         format: byte
@@ -8405,6 +8414,12 @@ paths:
                       capacity:
                         type: string
                         format: byte
+                      model:
+                        type: string
+                        enum:
+                          - TOKEN_MODEL_POOL
+                          - TOKEN_MODEL_UTXO
+                        default: TOKEN_MODEL_POOL
                   address:
                     type: string
                   confirmed:
@@ -8625,10 +8640,13 @@ paths:
                     items:
                       type: object
                       properties:
-                        pubkey:
+                        bitcoin_pubkey:
                           type: string
                           format: byte
-                        address:
+                        scalar_pubkey:
+                          type: string
+                          format: byte
+                        scalar_address:
                           type: string
                           format: byte
                         name:
@@ -8722,6 +8740,9 @@ paths:
                               address:
                                 type: string
                             title: DestinationChain represents a blockchain where tokens can be sent
+                  total:
+                    type: string
+                    format: uint64
         default:
           description: An unexpected error response
           content:
@@ -8935,10 +8956,13 @@ paths:
                   protocol:
                     type: object
                     properties:
-                      pubkey:
+                      bitcoin_pubkey:
                         type: string
                         format: byte
-                      address:
+                      scalar_pubkey:
+                        type: string
+                        format: byte
+                      scalar_address:
                         type: string
                         format: byte
                       name:
@@ -9239,10 +9263,13 @@ paths:
                   protocol:
                     type: object
                     properties:
-                      pubkey:
+                      bitcoin_pubkey:
                         type: string
                         format: byte
-                      address:
+                      scalar_pubkey:
+                        type: string
+                        format: byte
+                      scalar_address:
                         type: string
                         format: byte
                       name:
@@ -9594,6 +9621,212 @@ paths:
         required: true
       tags:
         - Msg
+  /scalar/protocol/v1beta1/protocol_asset:
+    get:
+      operationId: ProtocolAsset
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  asset:
+                    type: object
+                    properties:
+                      chain:
+                        type: string
+                      name:
+                        type: string
+        default:
+          description: An unexpected error response
+          content:
+            "*/*":
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: integer
+                    format: int32
+                  message:
+                    type: string
+                  details:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type_url:
+                          type: string
+                          description: >-
+                            A URL/resource name that uniquely identifies the
+                            type of the serialized
+
+                            protocol buffer message. This string must contain at least
+
+                            one "/" character. The last segment of the URL's path must represent
+
+                            the fully qualified name of the type (as in
+
+                            `path/google.protobuf.Duration`). The name should be in a canonical form
+
+                            (e.g., leading "." is not accepted).
+
+
+                            In practice, teams usually precompile into the binary all types that they
+
+                            expect it to use in the context of Any. However, for URLs which use the
+
+                            scheme `http`, `https`, or no scheme, one can optionally set up a type
+
+                            server that maps type URLs to message definitions as follows:
+
+
+                            * If no scheme is provided, `https` is assumed.
+
+                            * An HTTP GET on the URL must yield a [google.protobuf.Type][]
+                              value in binary format, or produce an error.
+                            * Applications are allowed to cache lookup results based on the
+                              URL, or have them precompiled into a binary to avoid any
+                              lookup. Therefore, binary compatibility needs to be preserved
+                              on changes to types. (Use versioned type names to manage
+                              breaking changes.)
+
+                            Note: this functionality is not currently available in the official
+
+                            protobuf release, and it is not used for type URLs beginning with
+
+                            type.googleapis.com.
+
+
+                            Schemes other than `http`, `https` (or the empty scheme) might be
+
+                            used with implementation specific semantics.
+                        value:
+                          type: string
+                          format: byte
+                          description: Must be a valid serialized protocol buffer of the above specified
+                            type.
+                      description: >-
+                        `Any` contains an arbitrary serialized protocol buffer
+                        message along with a
+
+                        URL that describes the type of the serialized message.
+
+
+                        Protobuf library provides support to pack/unpack Any values in the form
+
+                        of utility functions or additional generated methods of the Any type.
+
+
+                        Example 1: Pack and unpack a message in C++.
+
+                            Foo foo = ...;
+                            Any any;
+                            any.PackFrom(foo);
+                            ...
+                            if (any.UnpackTo(&foo)) {
+                              ...
+                            }
+
+                        Example 2: Pack and unpack a message in Java.
+
+                            Foo foo = ...;
+                            Any any = Any.pack(foo);
+                            ...
+                            if (any.is(Foo.class)) {
+                              foo = any.unpack(Foo.class);
+                            }
+
+                         Example 3: Pack and unpack a message in Python.
+
+                            foo = Foo(...)
+                            any = Any()
+                            any.Pack(foo)
+                            ...
+                            if any.Is(Foo.DESCRIPTOR):
+                              any.Unpack(foo)
+                              ...
+
+                         Example 4: Pack and unpack a message in Go
+
+                             foo := &pb.Foo{...}
+                             any, err := anypb.New(foo)
+                             if err != nil {
+                               ...
+                             }
+                             ...
+                             foo := &pb.Foo{}
+                             if err := any.UnmarshalTo(foo); err != nil {
+                               ...
+                             }
+
+                        The pack methods provided by protobuf library will by default use
+
+                        'type.googleapis.com/full.type.name' as the type URL and the unpack
+
+                        methods only use the fully qualified type name after the last '/'
+
+                        in the type URL, for example "foo.bar.com/x/y.z" will yield type
+
+                        name "y.z".
+
+
+
+                        JSON
+
+                        ====
+
+                        The JSON representation of an `Any` value uses the regular
+
+                        representation of the deserialized, embedded message, with an
+
+                        additional field `@type` which contains the type URL. Example:
+
+                            package google.profile;
+                            message Person {
+                              string first_name = 1;
+                              string last_name = 2;
+                            }
+
+                            {
+                              "@type": "type.googleapis.com/google.profile.Person",
+                              "firstName": <string>,
+                              "lastName": <string>
+                            }
+
+                        If the embedded message type is well-known and has a custom JSON
+
+                        representation, that representation will be embedded adding a field
+
+                        `value` which holds the custom JSON in addition to the `@type`
+
+                        field. Example (for message [google.protobuf.Duration][]):
+
+                            {
+                              "@type": "type.googleapis.com/google.protobuf.Duration",
+                              "value": "1.212s"
+                            }
+      parameters:
+        - name: source_chain
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: destination_chain
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: token_address
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - Query
   /scalar/protocol/v1beta1/update_protocol:
     post:
       operationId: UpdateProtocol
@@ -9608,10 +9841,13 @@ paths:
                   protocol:
                     type: object
                     properties:
-                      pubkey:
+                      bitcoin_pubkey:
                         type: string
                         format: byte
-                      address:
+                      scalar_pubkey:
+                        type: string
+                        format: byte
+                      scalar_address:
                         type: string
                         format: byte
                       name:
@@ -9907,10 +10143,13 @@ paths:
                   protocol:
                     type: object
                     properties:
-                      pubkey:
+                      bitcoin_pubkey:
                         type: string
                         format: byte
-                      address:
+                      scalar_pubkey:
+                        type: string
+                        format: byte
+                      scalar_address:
                         type: string
                         format: byte
                       name:
@@ -51861,6 +52100,12 @@ components:
             capacity:
               type: string
               format: byte
+            model:
+              type: string
+              enum:
+                - TOKEN_MODEL_POOL
+                - TOKEN_MODEL_UTXO
+              default: TOKEN_MODEL_POOL
         address:
           type: string
           format: byte
@@ -51910,6 +52155,12 @@ components:
                 type: string
               symbol:
                 type: string
+              model:
+                type: string
+                enum:
+                  - TOKEN_MODEL_POOL
+                  - TOKEN_MODEL_UTXO
+                default: TOKEN_MODEL_POOL
       title: |-
         ERC20TokensResponse describes the asset and symbol for all
         ERC20 tokens requested for a chain
@@ -51920,6 +52171,12 @@ components:
           type: string
         symbol:
           type: string
+        model:
+          type: string
+          enum:
+            - TOKEN_MODEL_POOL
+            - TOKEN_MODEL_UTXO
+          default: TOKEN_MODEL_POOL
     scalar.chains.v1beta1.Event:
       type: object
       properties:
@@ -52453,12 +52710,6 @@ components:
       properties:
         deposit_addr:
           type: string
-    scalar.chains.v1beta1.NetworkKind:
-      type: string
-      enum:
-        - NETWORK_KIND_MAINNET
-        - NETWORK_KIND_TESTNET
-      default: NETWORK_KIND_MAINNET
     scalar.chains.v1beta1.Params:
       type: object
       properties:
@@ -52468,11 +52719,8 @@ components:
           type: string
           format: uint64
         network_kind:
-          type: string
-          enum:
-            - NETWORK_KIND_MAINNET
-            - NETWORK_KIND_TESTNET
-          default: NETWORK_KIND_MAINNET
+          type: integer
+          format: int64
         token_code:
           type: string
           format: byte
@@ -52530,11 +52778,8 @@ components:
               type: string
               format: uint64
             network_kind:
-              type: string
-              enum:
-                - NETWORK_KIND_MAINNET
-                - NETWORK_KIND_TESTNET
-              default: NETWORK_KIND_MAINNET
+              type: integer
+              format: int64
             token_code:
               type: string
               format: byte
@@ -52737,6 +52982,12 @@ components:
         capacity:
           type: string
           format: byte
+        model:
+          type: string
+          enum:
+            - TOKEN_MODEL_POOL
+            - TOKEN_MODEL_UTXO
+          default: TOKEN_MODEL_POOL
     scalar.chains.v1beta1.TokenInfoResponse:
       type: object
       properties:
@@ -52755,6 +53006,12 @@ components:
             capacity:
               type: string
               format: byte
+            model:
+              type: string
+              enum:
+                - TOKEN_MODEL_POOL
+                - TOKEN_MODEL_UTXO
+              default: TOKEN_MODEL_POOL
         address:
           type: string
         confirmed:
@@ -52765,6 +53022,12 @@ components:
           format: boolean
         burner_code_hash:
           type: string
+    scalar.chains.v1beta1.TokenModel:
+      type: string
+      enum:
+        - TOKEN_MODEL_POOL
+        - TOKEN_MODEL_UTXO
+      default: TOKEN_MODEL_POOL
     scalar.chains.v1beta1.TokenType:
       type: string
       enum:
@@ -52882,10 +53145,13 @@ components:
         protocol:
           type: object
           properties:
-            pubkey:
+            bitcoin_pubkey:
               type: string
               format: byte
-            address:
+            scalar_pubkey:
+              type: string
+              format: byte
+            scalar_address:
               type: string
               format: byte
             name:
@@ -53067,10 +53333,13 @@ components:
         protocol:
           type: object
           properties:
-            pubkey:
+            bitcoin_pubkey:
               type: string
               format: byte
-            address:
+            scalar_pubkey:
+              type: string
+              format: byte
+            scalar_address:
               type: string
               format: byte
             name:
@@ -53173,10 +53442,13 @@ components:
     scalar.protocol.v1beta1.Protocol:
       type: object
       properties:
-        pubkey:
+        bitcoin_pubkey:
           type: string
           format: byte
-        address:
+        scalar_pubkey:
+          type: string
+          format: byte
+        scalar_address:
           type: string
           format: byte
         name:
@@ -53270,6 +53542,16 @@ components:
               address:
                 type: string
             title: DestinationChain represents a blockchain where tokens can be sent
+    scalar.protocol.v1beta1.ProtocolAssetResponse:
+      type: object
+      properties:
+        asset:
+          type: object
+          properties:
+            chain:
+              type: string
+            name:
+              type: string
     scalar.protocol.v1beta1.ProtocolAttribute:
       type: object
       properties:
@@ -53287,10 +53569,13 @@ components:
           items:
             type: object
             properties:
-              pubkey:
+              bitcoin_pubkey:
                 type: string
                 format: byte
-              address:
+              scalar_pubkey:
+                type: string
+                format: byte
+              scalar_address:
                 type: string
                 format: byte
               name:
@@ -53384,6 +53669,9 @@ components:
                     address:
                       type: string
                   title: DestinationChain represents a blockchain where tokens can be sent
+        total:
+          type: string
+          format: uint64
     scalar.protocol.v1beta1.Status:
       type: string
       enum:
@@ -53418,10 +53706,13 @@ components:
         protocol:
           type: object
           properties:
-            pubkey:
+            bitcoin_pubkey:
               type: string
               format: byte
-            address:
+            scalar_pubkey:
+              type: string
+              format: byte
+            scalar_address:
               type: string
               format: byte
             name:
@@ -53539,10 +53830,13 @@ components:
         protocol:
           type: object
           properties:
-            pubkey:
+            bitcoin_pubkey:
               type: string
               format: byte
-            address:
+            scalar_pubkey:
+              type: string
+              format: byte
+            scalar_address:
               type: string
               format: byte
             name:

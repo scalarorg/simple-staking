@@ -1,6 +1,7 @@
 type TProtocol = {
-  pubkey?: string;
-  address?: string;
+  bitcoin_pubkey?: string;
+  scalar_pubkey?: string;
+  scalar_address?: string;
   asset?: TAsset;
   name?: string;
   tag?: string;

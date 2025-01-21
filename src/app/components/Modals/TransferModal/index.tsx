@@ -262,8 +262,6 @@ export const TransferModal = () => {
     );
     if (!custodianPubkeysBuffer) return null;
 
-    if (!custodianPubkeysBuffer) throw new Error("Invalid custodian pubkeys");
-
     const custodianPubkeysBufferArray = new Uint8Array(
       custodianPubkeysBuffer.reduce(
         (acc: number[], curr) => [...acc, ...Array.from(curr)],

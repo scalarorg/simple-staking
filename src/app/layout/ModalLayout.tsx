@@ -31,7 +31,7 @@ export const ModalLayout: React.FC<{}> = ({}) => {
       {/* <UnbondModal />
       <StakeCustodianModal />
       {/* <UnstakeCustodianModal /> */}
-      {isTransferModalOpen && <TransferModal />}
+      {isTransferModalOpen && !isUPC && <TransferModal />}
       {isTransferModalOpen && isUPC && <TransferUPCModal />}
     </Suspense>
   );
