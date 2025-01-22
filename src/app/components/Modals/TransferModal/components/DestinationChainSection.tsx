@@ -1,6 +1,6 @@
+import { AddressTxsUtxo } from "@mempool/mempool.js/lib/interfaces/bitcoin/addresses";
 import { UseFormReturn } from "react-hook-form";
 import { useConnect } from "wagmi";
-import { AddressTxsUtxo } from "@mempool/mempool.js/lib/interfaces/bitcoin/addresses";
 
 import {
   FormControl,

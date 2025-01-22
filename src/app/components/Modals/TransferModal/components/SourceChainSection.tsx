@@ -1,8 +1,8 @@
+import { AddressTxsUtxo } from "@mempool/mempool.js/lib/interfaces/bitcoin/addresses";
+import { ExternalLinkIcon } from "lucide-react";
 import Link from "next/link";
 import { UseFormReturn } from "react-hook-form";
 import { useConnect } from "wagmi";
-import { AddressTxsUtxo } from "@mempool/mempool.js/lib/interfaces/bitcoin/addresses";
-import { ExternalLinkIcon } from "lucide-react";
 
 import {
   FormControl,
@@ -18,9 +18,9 @@ import { getDisplayedChainName } from "@/utils/scalar/chains";
 
 import { isBtcChain, isEvmChain } from "../utils";
 
-import { TransferFormData } from "./schema";
 import { AvailableUtxos } from "./AvailableUtxos";
 import { EVMConnectors } from "./EVMConnectors";
+import { TransferFormData } from "./schema";
 
 interface SourceChainSectionProps {
   form: UseFormReturn<TransferFormData>;

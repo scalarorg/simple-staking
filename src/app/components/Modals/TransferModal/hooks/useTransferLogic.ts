@@ -4,12 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 
+import { useVault } from "@/app/context/VaultContext";
 import { useWalletInfo, useWalletProvider } from "@/app/context/WalletProvider";
 import { useERC20 } from "@/app/hooks/useERC20";
+import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { getWagmiChain, isSupportedChain } from "@/app/wagmi";
 import { getChainID } from "@/utils/scalar/chains";
-import { useVault } from "@/app/context/VaultContext";
-import { useFeeRates } from "@/app/hooks/useFeeRates";
 import { decodeScalarBytesToString } from "@/utils/scalar/decode";
 
 import { toast } from "../../../ui/use-toast";
@@ -78,12 +78,19 @@ export const useTransferLogic = (
   } = useGatewayContract(gateway?.address as `0x${string}`);
 
   const { data: sourceChainBalance } = useQuery({
-    queryKey: ["sourceChainBalance", protocol?.asset?.name, sourceChain?.chain],
+    queryKey: [
+      "sourceChainBalance",
+      protocol?.asset?.name,
+      sourceChain?.chain,
+      evmAddress,
+    ],
     queryFn: async () => {
       if (!sourceChain) return BigInt(0);
       let balance = BigInt(0);
       if (isEvmChain(sourceChain)) {
+        console.log({ evmAddress });
         balance = await balanceOf(evmAddress as `0x${string}`);
+        console.log({ balance });
       } else if (isBtcChain(sourceChain)) {
         balance = BigInt(btcBalance);
       }

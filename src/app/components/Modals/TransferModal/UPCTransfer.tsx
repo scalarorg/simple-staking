@@ -93,17 +93,20 @@ export const UPCTransferModal = ({ protocol }: { protocol: TProtocol }) => {
 
   // TODO: use api to aggerate the utxos from scalar-core also
   const { data: availableUnstakedUtxos } = useQuery({
-    queryKey: ["availableUnstakedUtxos", lockingAddress],
+    queryKey: ["availableUnstakedUtxos", lockingAddress, destChain],
     queryFn: async () => {
+      if (!isBtcChain(destChain)) return [];
       const addressUtxos = await mempoolClient!.addresses.getAddressTxsUtxo({
         address: lockingAddress!,
       });
       if (!addressUtxos) return [];
       return addressUtxos
         .filter((utxo) => utxo.status.confirmed)
-        .sort((a, b) => b.value - a.value);
+        .sort((a, b) => {
+          return b.value - a.value || b.txid.localeCompare(a.txid);
+        });
     },
-    enabled: !!lockingAddress && isBtcChain(destChain) && !!mempoolClient,
+    enabled: !!lockingAddress && !!mempoolClient,
   });
 
   const [selectedUtxo, setSelectedUtxo] = useState<AddressTxsUtxo | null>(null);
@@ -200,8 +203,6 @@ export const UPCTransferModal = ({ protocol }: { protocol: TProtocol }) => {
             },
           ],
         });
-
-        console.log({ signedPsbt });
 
         const balance = await balanceOf(data.sourceChainAddress);
         if (balance < BigInt(data.transferAmount)) {
