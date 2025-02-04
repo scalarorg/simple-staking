@@ -109,6 +109,8 @@ export const UPCTransferModal = ({ protocol }: { protocol: TProtocol }) => {
     enabled: !!lockingAddress && !!mempoolClient,
   });
 
+  console.log({ availableUnstakedUtxos });
+
   const [selectedUtxo, setSelectedUtxo] = useState<AddressTxsUtxo | null>(null);
 
   const onSelectUtxo = useCallback(
@@ -186,12 +188,10 @@ export const UPCTransferModal = ({ protocol }: { protocol: TProtocol }) => {
           custodianQuorum: protocol?.custodian_group?.quorum!,
           feeRate: BigInt(1),
           rbf: true,
-          type: "user_protocol",
+          type: "user_custodian",
         });
 
         const hexPsbt = scalarVaultModule.bytesToHex(unsignedPsbtHex);
-
-        console.log({ hexPsbt });
 
         const signedPsbt = await walletProvider?.signPsbt(hexPsbt, {
           autoFinalized: false,
@@ -203,6 +203,8 @@ export const UPCTransferModal = ({ protocol }: { protocol: TProtocol }) => {
             },
           ],
         });
+
+        console.log({ signedPsbt });
 
         const balance = await balanceOf(data.sourceChainAddress);
         if (balance < BigInt(data.transferAmount)) {

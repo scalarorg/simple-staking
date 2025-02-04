@@ -82,21 +82,21 @@ export const useTransferLogic = (
       "sourceChainBalance",
       protocol?.asset?.name,
       sourceChain?.chain,
-      evmAddress,
+      evmAddress ?? "",
     ],
     queryFn: async () => {
-      if (!sourceChain) return BigInt(0);
+      if (!sourceChain?.chain) return BigInt(0);
       let balance = BigInt(0);
       if (isEvmChain(sourceChain)) {
-        console.log({ evmAddress });
         balance = await balanceOf(evmAddress as `0x${string}`);
-        console.log({ balance });
       } else if (isBtcChain(sourceChain)) {
         balance = BigInt(btcBalance);
       }
       return balance;
     },
-    enabled: !!sourceChain,
+    enabled:
+      !!sourceChain?.chain &&
+      ((isEvmChain(sourceChain) && !!evmAddress) || isBtcChain(sourceChain)),
   });
 
   useEffect(() => {
